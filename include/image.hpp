@@ -20,7 +20,7 @@ typedef unsigned char   uint8_t;
 typedef unsigned short  uint16_t;
 enum ImageType
 {
-    IMAGE_TYPE_UNKNOW,
+    IMAGE_TYPE_UNKNOWN,
     IMAGE_TYPE_UINT8,
     IMAGE_TYPE_UINT16,
     IMAGE_TYPE_UINT32,
@@ -129,13 +129,34 @@ public:
     *  @return     char const *  在子类中实现时返回图像指针，否则返回nullptr
     */
     virtual char const *get_byte_pointer() const;
-    
+
     /*
     *  @property   获取图像数据指针
     *  @func       虚函数，具体实现需要在子类中进行重载
     *  @return     char *  在子类中实现时返回图像指针，否则返回nullptr
     */
     virtual char *get_byte_pointer();
+
+    /*
+    *  @property   获取图像数据类型
+    *  @func       虚函数，具体实现需要在子类中进行重载
+    *  @return    ImageType  在子类中实现时返回图像枚举类型，否则返回IMAGE_TYPE_UNKNOW
+    */
+    virtual ImageType get_type() const;
+
+    /*
+    *  @property   获取图像数据类型
+    *  @func       虚函数，具体实现需要在子类中进行重载
+    *  @return     char const*  在子类中实现时返回图像类型，否则返回IMAGE_TYPE_UNKNOW
+    */
+    virtual char const* get_type_string() const;
+
+    /*
+    *  @property   获取图像数据类型
+    *  @func       虚函数，具体实现需要在子类中进行重载
+    *  @return     ImageType 在子类中实现时返回图像类型，否则返回IMAGE_TYPE_UNKNOW string是什么就返回什么图像枚举类型
+    */
+    virtual ImageType get_type_for_string(std::string const& type_string);
 protected:
     int w;
     int h;
@@ -157,6 +178,8 @@ typedef Image<char>         CharImage;
 typedef Image<float>        FloatImage;
 typedef Image<double>       DoubleImage;
 typedef Image<int>          IntImage;
+
+
 
 
 /********************************************************************
@@ -291,6 +314,47 @@ IMAGE_NAMESPACE_BEGIN
     {
         return nullptr;
     }
+
+    inline ImageType
+    ImageBase::get_type() const
+    {
+        return IMAGE_TYPE_UNKNOWN;
+    }
+
+    inline char const*
+    ImageBase::get_type_string() const
+    {
+        return "unknown";
+    }
+
+
+    inline ImageType
+    ImageBase::get_type_for_string(std::string const &type_string)
+    {
+        if (type_string == "sint8")
+            return IMAGE_TYPE_SINT8;
+        else if (type_string == "sint16")
+            return IMAGE_TYPE_SINT16;
+        else if (type_string == "sint32")
+            return IMAGE_TYPE_SINT32;
+        else if (type_string == "sint64")
+            return IMAGE_TYPE_SINT64;
+        else if (type_string == "uint8")
+            return IMAGE_TYPE_UINT8;
+        else if (type_string == "uint16")
+            return IMAGE_TYPE_UINT16;
+        else if (type_string == "uint32")
+            return IMAGE_TYPE_UINT32;
+        else if (type_string == "uint64")
+            return IMAGE_TYPE_UINT64;
+        else if (type_string == "float")
+            return IMAGE_TYPE_FLOAT;
+        else if (type_string == "double")
+            return IMAGE_TYPE_DOUBLE;
+        else
+            return IMAGE_TYPE_UNKNOWN;
+    }
+
 
 /********************************************************************
 *~~~~~~~~~~~~~~~~~~~~~Image成员函数实现~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
