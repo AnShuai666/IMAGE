@@ -45,6 +45,7 @@ enum ImageType
 */
 class ImageBase
 {
+
 /*********************************************************************
 *~~~~~~~~~~~~~~~~~~~~~~ImageBase常用容器别名定义~~~~~~~~~~~~~~~~~~~~~~~~
 ********************************************************************/
@@ -79,6 +80,10 @@ public:
     *  @func       获取图像的宽
     *  @return     int
     */
+
+/********************************************************************
+ *~~~~~~~~~~~~~~~~~~~~~~~ImageBase管理函数~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *******************************************************************/
     int width() const;
 
     /*
@@ -95,6 +100,42 @@ public:
     */
     int channels() const;
 
+    /*
+    *  @property   判断图像是否合法
+    *  @func       如果图像w,h,c任意为0，则返回false
+    *  @return     bool
+    */
+    bool valid() const;
+
+    /*
+    *  @property   重定义图像尺寸
+    *  @func       将图像长宽通道数改变，但是三者乘积需与原来乘积相同，否则失败
+    *  @return     bool
+    */
+    bool reinterpret(int new_w,int new_h,int new_c);
+
+    /*
+    *  @property   获取图像字节数
+    *  @func       虚函数，具体实现需要在子类中进行
+    *  @return     std::size_t  在子类中实现时返回图像字节数，否则返回0
+    */
+    virtual std::size_t get_byte_size() const;
+
+    /*
+    *  @property   获取图像数据指针
+    *  @func       虚函数，具体实现需要在子类中进行重载
+    *  @const1     指针指向内容不能变，也就是图像数据
+    *  @const2     防止改变类成员变量
+    *  @return     char const *  在子类中实现时返回图像指针，否则返回nullptr
+    */
+    virtual char const *get_byte_pointer() const;
+    
+    /*
+    *  @property   获取图像数据指针
+    *  @func       虚函数，具体实现需要在子类中进行重载
+    *  @return     char *  在子类中实现时返回图像指针，否则返回nullptr
+    */
+    virtual char *get_byte_pointer();
 protected:
     int w;
     int h;
@@ -214,6 +255,42 @@ IMAGE_NAMESPACE_BEGIN
         return this->c;
     }
 
+    inline bool
+    ImageBase::valid() const
+    {
+        return this->w && this->h && this->c;
+    }
+
+    inline bool
+    ImageBase::reinterpret(int new_w, int new_h, int new_c)
+    {
+        if(new_w * new_h * new_c != this->w * this->h * this->c)
+        {
+            return false;
+        }
+        this->w = new_w;
+        this->h = new_h;
+        this->c = new_c;
+        return true;
+    }
+
+    inline std::size_t
+    ImageBase::get_byte_size() const
+    {
+        return 0;
+    }
+
+    inline char const*
+    ImageBase::get_byte_pointer() const
+    {
+        return nullptr;
+    }
+
+    inline char *
+    ImageBase::get_byte_pointer()
+    {
+        return nullptr;
+    }
 
 /********************************************************************
 *~~~~~~~~~~~~~~~~~~~~~Image成员函数实现~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
