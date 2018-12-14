@@ -264,7 +264,7 @@ typedef Image<int>          IntImage;
   * @func   RGB图，通道分离
  */
 template <typename T>
-class Image
+class Image : public TypedImageBase<T>
 {
 
 /********************************************************************
@@ -290,24 +290,63 @@ public:
 
     Image(Image<T> const& image1);
 
+
+
+  /*******************************************************************
+  *~~~~~~~~~~~~~~~~~~~~~~~~~Image管理函数~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  *******************************************************************/
+
     static Ptr create();
 
     static Ptr create(int width, int height, int channels);
 
     static Ptr create(Image<T> const&image1);
 
-  /*******************************************************************
-  *~~~~~~~~~~~~~~~~~~~~~~~~~Image管理函数~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  *******************************************************************/
-
     Ptr duplicate() const;
 
-    void fill_color(T )
+    void fill_color(T const* color);
 
+    void add_channels(int amount, T const& value = T(0));
 
+    void swap_channels(int channel1, int channel2);
 
+    void copy_channel(int src,int dest);
 
-};
+    void delete_channel(int channel);
+
+    T const& at(int index) const;
+
+    T const& at(int index, int channel) const;
+
+    T const& at(int x, int y, int channel) const;
+
+    T& at(int index);
+
+    T& at(int index, int channel);
+
+    T& at(int x, int y, int channel);
+
+    T linear_at(float x, float y, int channel) const;
+
+    void linear_at(float x, float y, T* px) const;
+
+    T& operator[] (int index);
+
+    T const& operator[] (int index) const;
+
+    T const& operator() (int index) const;
+
+    T const&operator() (int index, int channel) const;
+
+    T const&operator() (int x, int y, int channel) const;
+
+    T&operator()(int index);
+
+    T&operator()(int index, int channel);
+
+    T&operator()(int x, int y, int channel);
+
+ };
 
 IMAGE_NAMESPACE_END
 
@@ -429,7 +468,6 @@ IMAGE_NAMESPACE_BEGIN
         else
             return IMAGE_TYPE_UNKNOWN;
     }
-
 
 
 /********************************************************************
@@ -580,8 +618,6 @@ IMAGE_NAMESPACE_BEGIN
     {
         return reinterpret_cast<char *>(this->get_data_pointer());
     }
-
-
 
     template <typename T>
     inline char const*
@@ -805,21 +841,173 @@ IMAGE_NAMESPACE_BEGIN
     }
 
     template <typename T>
-    inline static Ptr
+    inline typename Image<T>::Ptr
     Image<T>::create(int width, int height, int channels)
     {
 
     }
 
-    static Ptr create(Image<T> const&image1);
+    template <typename T>
+    inline typename Image<T>::Ptr
+    Image<T>::create(Image<T> const&image1)
+    {
+
+    }
 
     template <typename T>
-    inline Ptr
+    inline typename Image<T>::Ptr
     Image<T>::duplicate() const
     {
 
     }
 
+    template <typename T>
+    inline void
+    Image<T>::fill_color(T const *color)
+    {
+
+    }
+
+    template <typename T>
+    void
+    Image<T>::add_channels(int amount, const T &value)
+    {
+
+    }
+
+    template <typename T>
+    void
+    Image<T>::swap_channels(int channel1, int channel2)
+    {
+
+    }
+
+    template <typename T>
+    void
+    Image<T>::copy_channel(int src, int dest)
+    {
+
+    }
+
+    template <typename T>
+    void
+    Image<T>::delete_channel(int channel)
+    {
+
+    }
+
+    template <typename T>
+    inline T const&
+    Image<T>::at(int index) const
+    {
+
+    }
+
+    template <typename T>
+    inline T const&
+    Image<T>::at(int index, int channel) const
+    {
+
+    }
+
+    template <typename T>
+    inline T const&
+    Image<T>::at(int x, int y, int channel) const
+    {
+
+    }
+
+    template <typename T>
+    inline T&
+    Image<T>::at(int index)
+    {
+
+    }
+
+    template <typename T>
+    inline T&
+    Image<T>::at(int index, int channel)
+    {
+
+    }
+
+    template <typename T>
+    inline T&
+    Image<T>::at(int x, int y, int channel)
+    {
+
+    }
+
+    template <typename T>
+    T
+    Image<T>::linear_at(float x, float y, int channel) const
+    {
+
+    }
+
+    template <typename T>
+    void
+    Image<T>::linear_at(float x, float y, T *px) const
+    {
+
+    }
+
+    template <typename T>
+    inline T const&
+    Image<T>::operator[](int index) const
+    {
+
+    }
+
+    template <typename T>
+    inline T&
+    Image<T>::operator[](int index)
+    {
+
+    }
+
+    template <typename T>
+    inline T const&
+    Image<T>::operator()(int index) const
+    {
+
+    }
+
+    template <typename T>
+    inline T const&
+    Image<T>::operator()(int index, int channel) const
+    {
+
+    }
+
+    template <typename T>
+    inline T const&
+    Image<T>::operator()(int x, int y, int channel) const
+    {
+
+    }
+
+    template <typename T>
+    inline T&
+    Image<T>::operator()(int index)
+    {
+
+    }
+
+    template <typename T>
+    inline T& Image<T>::operator()(int index, int channel)
+    {
+
+    }
+
+    template <typename T>
+    inline T&
+    Image<T>::operator()(int x, int y, int channel)
+    {
+
+    }
+
+    
 IMAGE_NAMESPACE_END
 
 #endif //IMAGE_IMAGE_HPP
