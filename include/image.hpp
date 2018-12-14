@@ -14,10 +14,8 @@
 
 IMAGE_NAMESPACE_BEGIN
 /*******************************************************************
-*~~~~~~~~~~~~~~~~~~~~~常用数据类型别名声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*~~~~~~~~~~~~~~~~~~~~~图像数据类型枚举声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 *******************************************************************/
-typedef unsigned char   uint8_t;
-typedef unsigned short  uint16_t;
 enum ImageType
 {
     IMAGE_TYPE_UNKNOWN,
@@ -211,9 +209,7 @@ public:
 
     T* get_data_pointer();
 
-    virtual ImageType get_type() const;
 
-    char const* get_type_string() const;
 
 
     int get_pixel_amount() const;
@@ -225,6 +221,10 @@ public:
     char const* get_byte_pointer() const;
 
     char* get_byte_pointer();
+    char const* get_type_string() const;
+    virtual ImageType get_type() const;
+
+
 
     T* begin();
 
@@ -242,11 +242,6 @@ protected:
 };
 
 
-/********************************************************************
- *~~~~~~~~~~~~~~~~~~~~~常用数据类型别名声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- *******************************************************************/
-typedef unsigned char   uint8_t;
-typedef unsigned short  uint16_t;
 
 /********************************************************************
  *~~~~~~~~~~~~~~~~~~~~~常用矩阵类型别名声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -548,22 +543,127 @@ IMAGE_NAMESPACE_BEGIN
         return &this->data[0];
     }
 
+    template <typename T>
+    inline int
+    TypedImageBase<T>::get_pixel_amount() const
+    {
+        return this->w * this->h;
+    }
+
+    template <typename T>
+    inline int
+    TypedImageBase<T>::get_value_amount() const
+    {
+        return this->get_pixel_amount() * this->c;
+    }
+
+    template <typename T>
+    inline size_t
+    TypedImageBase<T>::get_byte_size() const
+    {
+        return this->get_value_amount() * sizeof(T);
+    }
+
+    template <typename T>
+    inline char const*
+    TypedImageBase<T>::get_byte_pointer() const
+    {
+        return
+    }
+
+    template <typename T>
+    inline char*
+    TypedImageBase<T>::get_byte_pointer()
+    {
+
+    }
 
 
-    virtual ImageType get_type() const;
 
-    char const* get_type_string() const;
+    template <typename T>
+    inline char const*
+    TypedImageBase<T>::get_type_string() const
+    {
+        return
+    }
 
+    template <typename T>
+    inline ImageType
+    TypedImageBase<T>::get_type() const
+    {
+        return IMAGE_TYPE_UNKNOWN;
+    }
 
-    int get_pixel_amount() const;
+    template <>
+    inline ImageType
+    TypedImageBase<int8_t>::get_type() const
+    {
+        return IMAGE_TYPE_SINT8;
+    }
 
-    int get_value_amount() const;
+    template <>
+    inline ImageType
+    TypedImageBase<int16_t>::get_type() const
+    {
+        return IMAGE_TYPE_SINT16;
+    }
 
-    std::size_t get_byte_size() const;
+    template <>
+    inline ImageType
+    TypedImageBase<int32_t>::get_type() const
+    {
+        return IMAGE_TYPE_SINT32;
+    }
 
-    char const* get_byte_pointer() const;
+    template <>
+    inline ImageType
+    TypedImageBase<int64_t>::get_type() const
+    {
+        return IMAGE_TYPE_SINT64;
+    }
 
-    char* get_byte_pointer();
+    template <>
+    inline ImageType
+    TypedImageBase<uint8_t>::get_type() const
+    {
+        return IMAGE_TYPE_UINT8;
+    }
+
+    template <>
+    inline ImageType
+    TypedImageBase<uint16_t>::get_type() const
+    {
+        return IMAGE_TYPE_UINT16;
+    }
+
+    template <>
+    inline ImageType
+    TypedImageBase<uint32_t>::get_type() const
+    {
+        return IMAGE_TYPE_UINT32;
+    }
+
+    template <>
+    inline ImageType
+    TypedImageBase<uint64_t>::get_type() const
+    {
+        return IMAGE_TYPE_UINT64;
+    }
+
+    template <>
+    inline ImageType
+    TypedImageBase<float>::get_type() const
+    {
+        return IMAGE_TYPE_FLOAT;
+    }
+
+    template <>
+    inline ImageType
+    TypedImageBase<double>::get_type() const
+    {
+        return IMAGE_TYPE_DOUBLE;
+    }
+
 
     template <typename T>
     inline T *
@@ -595,10 +695,7 @@ IMAGE_NAMESPACE_BEGIN
 
 
 
-
-
-
-    /********************************************************************
+/********************************************************************
 *~~~~~~~~~~~~~~~~~~~~~Image成员函数实现~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ********************************************************************/
     template <typename T>
