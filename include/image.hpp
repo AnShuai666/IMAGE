@@ -221,7 +221,9 @@ public:
     char const* get_byte_pointer() const;
 
     char* get_byte_pointer();
-    char const* get_type_string() const;
+
+    virtual char const* get_type_string() const;
+
     virtual ImageType get_type() const;
 
 
@@ -571,11 +573,11 @@ IMAGE_NAMESPACE_BEGIN
         return
     }
 
-    template <typename T>
-    inline char*
+    template <>
+    inline char *
     TypedImageBase<T>::get_byte_pointer()
     {
-
+        return
     }
 
 
@@ -584,7 +586,84 @@ IMAGE_NAMESPACE_BEGIN
     inline char const*
     TypedImageBase<T>::get_type_string() const
     {
-        return
+        return "unknown";
+    }
+
+    template <>
+    inline char const*
+    TypedImageBase<int8_t>::get_type_string() const
+    {
+        return "sint8";
+    }
+
+    template <>
+    inline char const*
+    TypedImageBase<char>::get_type_string() const
+    {
+        return "sint8";
+    }
+
+    template <>
+    inline char const*
+    TypedImageBase<int16_t>::get_type_string() const
+    {
+        return "sint16";
+    }
+
+    template <>
+    inline char const*
+    TypedImageBase<int32_t>::get_type_string() const
+    {
+        return "sint32";
+    }
+
+    template <>
+    inline char const*
+    TypedImageBase<int64_t>::get_type_string() const
+    {
+        return "sint64";
+    }
+
+    template <>
+    inline char const*
+    TypedImageBase<uint8_t>::get_type_string() const
+    {
+        return "uint8";
+    }
+
+    template <>
+    inline char const*
+    TypedImageBase<uint16_t>::get_type_string() const
+    {
+        return "uint16";
+    }
+
+    template <>
+    inline char const*
+    TypedImageBase<uint32_t>::get_type_string() const
+    {
+        return "uint32";
+    }
+
+    template <>
+    inline char const*
+    TypedImageBase<uint64_t>::get_type_string() const
+    {
+        return "uint64";
+    }
+
+    template <>
+    inline char const*
+    TypedImageBase<float>::get_type_string() const
+    {
+        return "float";
+    }
+
+    template <>
+    inline char const*
+    TypedImageBase<double>::get_type_string() const
+    {
+        return "double";
     }
 
     template <typename T>
@@ -692,7 +771,6 @@ IMAGE_NAMESPACE_BEGIN
     {
         return this->data.empty() ? nullptr : &this->data[0] + this->data.size();
     }
-
 
 
 /********************************************************************
