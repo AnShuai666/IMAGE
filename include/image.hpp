@@ -201,15 +201,19 @@ public:
 
     void swap(TypedImageBase<T>& typedImageBase1);
 
-    virtual ImageType get_type() const;
 
-    char const* get_type_string() const;
 
     ImageData const& get_data() const;
 
     ImageData& get_data();
 
     T const* get_data_pointer() const;
+
+    T* get_data_pointer();
+
+    virtual ImageType get_type() const;
+
+    char const* get_type_string() const;
 
     T* begin();
 
@@ -496,22 +500,50 @@ IMAGE_NAMESPACE_BEGIN
         std::fill(this->data.begin(),this,data.end(),value);
     }
 
+    template <typename T>
+    inline void
+    TypedImageBase<T>::swap(image::TypedImageBase<T> &typedImageBase1)
+    {
+        std::swap(this->w,typedImageBase1->w);
+        std::swap(this->h,typedImageBase1->h);
+        std::swap(this->c,typedImageBase1->c);
+        std::swap(this->data,typedImageBase1.data);
+    }
+
+    template <typename T>
+    inline typename TypedImageBase<T>::ImageData const&
+    TypedImageBase<T>::get_data() const
+    {
+        return this->data;
+    }
+
+    template <typename T>
+    inline typename TypedImageBase<T>::ImageData&
+    TypedImageBase<T>::get_data()
+    {
+        return this->data;
+    }
+
+    template <typename T>
+    inline T const*
+    TypedImageBase<T>::get_data_pointer() const
+    {
+
+    }
+
+    template <typename T>
+    inline T *
+    TypedImageBase<T>::get_data_pointer()
+    {
+
+    }
+
+
     
-
-
-    void fill(T const& value);
-
-    void swap(TypedImageBase<T>& typedImageBase1);
 
     virtual ImageType get_type() const;
 
     char const* get_type_string() const;
-
-    ImageData const& get_data() const;
-
-    ImageData& get_data();
-
-    T const* get_data_pointer() const;
 
     T* begin();
 
@@ -534,7 +566,8 @@ IMAGE_NAMESPACE_BEGIN
 
 
 
-/********************************************************************
+
+    /********************************************************************
 *~~~~~~~~~~~~~~~~~~~~~Image成员函数实现~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ********************************************************************/
     template <typename T>
