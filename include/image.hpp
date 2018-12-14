@@ -218,6 +218,7 @@ public:
 
     std::size_t get_byte_size() const;
 
+    //用reinterpret_cast没有数位丢失
     char const* get_byte_pointer() const;
 
     char* get_byte_pointer();
@@ -570,14 +571,14 @@ IMAGE_NAMESPACE_BEGIN
     inline char const*
     TypedImageBase<T>::get_byte_pointer() const
     {
-        return
+        return reinterpret_cast<char const*>(this->get_data_pointer());
     }
 
-    template <>
+    template <typename T>
     inline char *
     TypedImageBase<T>::get_byte_pointer()
     {
-        return
+        return reinterpret_cast<char *>(this->get_data_pointer());
     }
 
 
