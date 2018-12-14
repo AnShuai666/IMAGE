@@ -280,27 +280,46 @@ public:
  *~~~~~~~~~~~~~~~~~~~~~~~Image构造函数与析构函数~~~~~~~~~~~~~~~~~~~~~~~~
  *******************************************************************/
  public:
+
     /*
     *  @property   默认构造函数
     *  @func       将图像进行初始化，w=h=c=0
     */
     Image();
 
+     /*
+     *  @property   普通构造函数
+     *  @func       将图像进行初始化,设置宽高与通道数
+     *  @param_in   width
+     *  @param_in   height
+     *  @param_in   channels
+     */
     Image(int width, int height, int channels);
 
+     /*
+     *  @property   拷贝构造函数
+     *  @func       将图像进行初始化,
+     *  @param_in   image1
+     */
     Image(Image<T> const& image1);
 
+    /*
+    *  @property   智能指针构造函数
+    *  @func       为图像动态分配内存，并赋给智能指针
+    *  @static
+    *  @return     static Ptr
+    */
+     static Ptr create();
 
+     static Ptr create(int width, int height, int channels);
+
+     static Ptr create(Image<T> const&image1);
 
   /*******************************************************************
   *~~~~~~~~~~~~~~~~~~~~~~~~~Image管理函数~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   *******************************************************************/
 
-    static Ptr create();
 
-    static Ptr create(int width, int height, int channels);
-
-    static Ptr create(Image<T> const&image1);
 
     Ptr duplicate() const;
 
@@ -824,20 +843,22 @@ IMAGE_NAMESPACE_BEGIN
     inline
     Image<T>::Image(int width, int height, int channels)
     {
-
+        this->allocate(width,height,channels);
     }
 
     template <typename T>
     inline
     Image<T>::Image(Image<T> const& image1)
+        : TypedImageBase<T>(image1)
     {
 
     }
+
     template <typename T>
     inline typename Image<T>::Ptr
     Image<T>::create()
     {
-
+        return Ptr(new Image<T>());
     }
 
     template <typename T>
@@ -1007,7 +1028,7 @@ IMAGE_NAMESPACE_BEGIN
 
     }
 
-    
+
 IMAGE_NAMESPACE_END
 
 #endif //IMAGE_IMAGE_HPP
