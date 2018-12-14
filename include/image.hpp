@@ -73,7 +73,7 @@ public:
     *  @func       为图像动态分配内存，并以该内存区域对共享指针进行初始化
     *  @return     Ptr
     */
-    virtual Ptr duplicate_base() const;
+    virtual ImageBase::Ptr duplicate_base() const;
 
     /*
     *  @property   获取图像宽度
@@ -157,17 +157,91 @@ public:
     *  @return     ImageType 在子类中实现时返回图像类型，否则返回IMAGE_TYPE_UNKNOW string是什么就返回什么图像枚举类型
     */
     virtual ImageType get_type_for_string(std::string const& type_string);
+
+
 protected:
     int w;
     int h;
     int c;
+
 };
+
+/********************************************************************
+*~~~~~~~~~~~~~~~~~~~~~~~~~Image 类的声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
+*******************************************************************/
+/*
+ * @func   有类型图像基类
+*/
+template <typename T>
+class TypedImageBase : public ImageBase
+{
+
+ /********************************************************************
+ *~~~~~~~~~~~~~~~~~~~~~~TypedImageBase常用容器别名定义~~~~~~~~~~~~~~~~~~
+ *******************************************************************/
+public:
+    typedef T ValueType;
+    typedef std::shared_ptr<TypedImageBase<T>> Ptr;
+    typedef std::shared_ptr<TypedImageBase<T> const> ConstPtr;
+    typedef std::vector<T> ImageData;
+
+public:
+    TypedImageBase();
+    TypedImageBase(TypedImageBase<T> const& typedImageBase1);
+    virtual ~TypedImageBase();
+    virtual ImageBase::Ptr duplicate_base() const;
+
+    virtual void clear();
+
+    void resize(int width, int height, int channels);
+
+    void allocate(int width,int height, int channels);
+
+    void fill(T const& value);
+
+    void swap(TypedImageBase<T>& typedImageBase1);
+
+    virtual ImageType get_type() const;
+
+    char const* get_type_string() const;
+
+    ImageData const& get_data() const;
+
+    ImageData& get_data();
+
+    T const* get_data_pointer() const;
+
+    T* begin();
+
+    T const* begin() const;
+
+    T* end();
+
+    T const* end() const;
+
+    int get_pixel_amount() const;
+
+    int get_value_amount() const;
+
+    std::size_t get_byte_size() const;
+
+    char const* get_byte_pointer() const;
+
+    char* get_byte_pointer();
+
+
+protected:
+    ImageData data;
+
+};
+
 
 /********************************************************************
  *~~~~~~~~~~~~~~~~~~~~~常用数据类型别名声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *******************************************************************/
 typedef unsigned char   uint8_t;
 typedef unsigned short  uint16_t;
+
 /********************************************************************
  *~~~~~~~~~~~~~~~~~~~~~常用矩阵类型别名声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *******************************************************************/
@@ -178,9 +252,6 @@ typedef Image<char>         CharImage;
 typedef Image<float>        FloatImage;
 typedef Image<double>       DoubleImage;
 typedef Image<int>          IntImage;
-
-
-
 
 /********************************************************************
 *~~~~~~~~~~~~~~~~~~~~~~~~~Image 类的声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
@@ -354,6 +425,113 @@ IMAGE_NAMESPACE_BEGIN
         else
             return IMAGE_TYPE_UNKNOWN;
     }
+
+
+
+/********************************************************************
+*~~~~~~~~~~~~~~~~~~~~~TypedImageBase成员函数实现~~~~~~~~~~~~~~~~~~~~~~~
+********************************************************************/
+
+    template <typename T>
+    inline
+    TypedImageBase<T>::TypedImageBase()
+    {
+
+    }
+
+    template <typename T>
+    inline
+    TypedImageBase<T>::TypedImageBase(TypedImageBase<T> const& typedImageBase1)
+        : ImageBase(typedImageBase1),data(typedImageBase1.data)
+    {
+
+    }
+
+    template <typename T>
+    inline
+    TypedImageBase<T>::~TypedImageBase()
+    {
+
+    }
+
+    template <typename T>
+    inline ImageBase::Ptr
+    TypedImageBase<T>::duplicate_base() const
+    {
+        return ImageBase::Ptr(new TypedImageBase<T>(*this));
+    }
+
+    template <typename T>
+    inline void
+    TypedImageBase<T>::clear()
+    {
+        this->w = 0;
+        this->h = 0;
+        this->c = 0;
+        this->data.clear();
+    }
+
+    template <typename T>
+    inline void
+    TypedImageBase<T>::resize(int width, int height, int channels)
+    {
+        this->w = width;
+        this->h = height;
+        this->c = channels;
+        data.resize(width*height*channels);
+    }
+
+    template <typename T>
+    inline void
+    TypedImageBase<T>::allocate(int width, int height, int channels)
+    {
+        this->clear();
+        this->resize(width,height,channels);
+    }
+
+    template <typename T>
+    inline void
+    TypedImageBase<T>::fill(const T &value)
+    {
+        std::fill(this->data.begin(),this,data.end(),value);
+    }
+
+    
+
+
+    void fill(T const& value);
+
+    void swap(TypedImageBase<T>& typedImageBase1);
+
+    virtual ImageType get_type() const;
+
+    char const* get_type_string() const;
+
+    ImageData const& get_data() const;
+
+    ImageData& get_data();
+
+    T const* get_data_pointer() const;
+
+    T* begin();
+
+    T const* begin() const;
+
+    T* end();
+
+    T const* end() const;
+
+    int get_pixel_amount() const;
+
+    int get_value_amount() const;
+
+    std::size_t get_byte_size() const;
+
+    char const* get_byte_pointer() const;
+
+    char* get_byte_pointer();
+
+
 
 
 /********************************************************************
