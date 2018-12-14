@@ -215,13 +215,6 @@ public:
 
     char const* get_type_string() const;
 
-    T* begin();
-
-    T const* begin() const;
-
-    T* end();
-
-    T const* end() const;
 
     int get_pixel_amount() const;
 
@@ -232,6 +225,15 @@ public:
     char const* get_byte_pointer() const;
 
     char* get_byte_pointer();
+
+    T* begin();
+
+    T const* begin() const;
+
+    T* end();
+
+    T const* end() const;
+
 
 
 protected:
@@ -528,30 +530,30 @@ IMAGE_NAMESPACE_BEGIN
     inline T const*
     TypedImageBase<T>::get_data_pointer() const
     {
-
+        if (this->data.empty())
+        {
+            return nullptr;
+        }
+        return &this->data[0];
     }
 
     template <typename T>
     inline T *
     TypedImageBase<T>::get_data_pointer()
     {
-
+        if (this->data.empty())
+        {
+            return nullptr;
+        }
+        return &this->data[0];
     }
 
 
-    
 
     virtual ImageType get_type() const;
 
     char const* get_type_string() const;
 
-    T* begin();
-
-    T const* begin() const;
-
-    T* end();
-
-    T const* end() const;
 
     int get_pixel_amount() const;
 
@@ -562,6 +564,35 @@ IMAGE_NAMESPACE_BEGIN
     char const* get_byte_pointer() const;
 
     char* get_byte_pointer();
+
+    template <typename T>
+    inline T *
+    TypedImageBase<T>::begin()
+    {
+        return this->data.empty() ? nullptr : &this->data[0];
+    }
+
+    template <typename T>
+    inline T const*
+    TypedImageBase<T>::begin() const
+    {
+        return this->data.empty() ? nullptr : &this->data[0];
+    }
+
+    template <typename T>
+    inline T *
+    TypedImageBase<T>::end()
+    {
+        return this->data.empty() ? nullptr : &this->data[0] + this->data.size();
+    }
+
+    template <typename T>
+    inline T const*
+    TypedImageBase<T>::end() const
+    {
+        return this->data.empty() ? nullptr : &this->data[0] + this->data.size();
+    }
+
 
 
 
