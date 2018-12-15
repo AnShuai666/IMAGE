@@ -356,11 +356,13 @@ public:
     void fill_color(T const* color);
 
     /*
-    *  @property   复制图先锋
-    *  @func       复制图像
-    *  @return     void
+    *  @property    给图像添加通道
+    *  @func        为图像添加num_channels的通道，值为value
+    *  @param_in    num_channels    要添加的通道数
+    *  @param_in    value           新通道分量的值
+    *  @return      void
     */
-    void add_channels(int amount, T const& value = T(0));
+    void add_channels(int num_channels, T const& value = T(0));
 
     /*
     *  @property   复制图先锋
@@ -1024,8 +1026,14 @@ IMAGE_NAMESPACE_BEGIN
 
     template <typename T>
     void
-    Image<T>::add_channels(int amount, const T &value)
+    Image<T>::add_channels(int num_channels, const T &value)
     {
+        if(!num_channels || !this->valid())
+        {
+            return;
+        }
+
+        
 
     }
 
