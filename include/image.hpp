@@ -303,66 +303,196 @@ public:
      */
     Image(Image<T> const& image1);
 
+     /*
+     *  @property   智能指针构造函数
+     *  @func       为图像动态分配内存，并赋给智能指针
+     *  @static     静态成员函数在类加载时就会分配内存，可以通过类名直接访问，
+     *              调用此函数不会访问或修改任何非static数据成员。
+     *              用static修饰的函数，限定在本源码文件中，不能被本源码
+     *              文件以外的代码文件调用
+     *  @return     static Ptr
+     */
+     static Ptr create();
+
     /*
     *  @property   智能指针构造函数
     *  @func       为图像动态分配内存，并赋给智能指针
-    *  @static
+    *  @static     静态成员函数在类加载时就会分配内存，可以通过类名直接访问，
+    *              调用此函数不会访问或修改任何非static数据成员。
+    *              用static修饰的函数，限定在本源码文件中，不能被本源码
+    *              文件以外的代码文件调用
     *  @return     static Ptr
     */
-     static Ptr create();
-
      static Ptr create(int width, int height, int channels);
 
+     /*
+     *  @property   智能指针构造函数
+     *  @func       为图像动态分配内存，并赋给智能指针
+     *  @static     静态成员函数在类加载时就会分配内存，可以通过类名直接访问，
+     *              调用此函数不会访问或修改任何非static数据成员。
+     *              用static修饰的函数，限定在本源码文件中，不能被本源码
+     *              文件以外的代码文件调用
+     *  @return     static Ptr
+     */
      static Ptr create(Image<T> const&image1);
 
   /*******************************************************************
   *~~~~~~~~~~~~~~~~~~~~~~~~~Image管理函数~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   *******************************************************************/
 
-
-
+    /*
+    *  @property   复制图先锋
+    *  @func       复制图像
+    *  @return     Ptr
+    */
     Ptr duplicate() const;
 
+    /*
+    *  @property   填充图像
+    *  @func       为每一个像素填充color数组的颜色数组
+    *  @param_in    T const* color      颜色数组
+    *  @return     void
+    */
     void fill_color(T const* color);
 
+    /*
+    *  @property   复制图先锋
+    *  @func       复制图像
+    *  @return     void
+    */
     void add_channels(int amount, T const& value = T(0));
 
+    /*
+    *  @property   复制图先锋
+    *  @func       复制图像
+    *  @return     Ptr
+    */
     void swap_channels(int channel1, int channel2);
 
+    /*
+    *  @property   复制图先锋
+    *  @func       复制图像
+    *  @return     Ptr
+    */
     void copy_channel(int src,int dest);
 
+    /*
+    *  @property   复制图先锋
+    *  @func       复制图像
+    *  @return     Ptr
+    */
     void delete_channel(int channel);
 
+    /*
+    *  @property   复制图先锋
+    *  @func       复制图像
+    *  @return     Ptr
+    */
     T const& at(int index) const;
 
+    /*
+    *  @property   复制图先锋
+    *  @func       复制图像
+    *  @return     Ptr
+    */
     T const& at(int index, int channel) const;
 
+     /*
+ *  @property   复制图先锋
+ *  @func       复制图像
+ *  @return     Ptr
+ */
     T const& at(int x, int y, int channel) const;
 
+     /*
+ *  @property   复制图先锋
+ *  @func       复制图像
+ *  @return     Ptr
+ */
     T& at(int index);
 
+     /*
+ *  @property   复制图先锋
+ *  @func       复制图像
+ *  @return     Ptr
+ */
     T& at(int index, int channel);
 
+     /*
+ *  @property   复制图先锋
+ *  @func       复制图像
+ *  @return     Ptr
+ */
     T& at(int x, int y, int channel);
 
+     /*
+ *  @property   复制图先锋
+ *  @func       复制图像
+ *  @return     Ptr
+ */
     T linear_at(float x, float y, int channel) const;
 
+     /*
+ *  @property   复制图先锋
+ *  @func       复制图像
+ *  @return     Ptr
+ */
     void linear_at(float x, float y, T* px) const;
 
+     /*
+ *  @property   复制图先锋
+ *  @func       复制图像
+ *  @return     Ptr
+ */
     T& operator[] (int index);
 
+     /*
+ *  @property   复制图先锋
+ *  @func       复制图像
+ *  @return     Ptr
+ */
     T const& operator[] (int index) const;
 
+     /*
+ *  @property   复制图先锋
+ *  @func       复制图像
+ *  @return     Ptr
+ */
     T const& operator() (int index) const;
 
+     /*
+ *  @property   复制图先锋
+ *  @func       复制图像
+ *  @return     Ptr
+ */
     T const&operator() (int index, int channel) const;
 
+     /*
+ *  @property   复制图先锋
+ *  @func       复制图像
+ *  @return     Ptr
+ */
     T const&operator() (int x, int y, int channel) const;
 
+     /*
+ *  @property   复制图先锋
+ *  @func       复制图像
+ *  @return     Ptr
+ */
     T&operator()(int index);
 
+     /*
+ *  @property   复制图先锋
+ *  @func       复制图像
+ *  @return     Ptr
+ */
     T&operator()(int index, int channel);
 
+     /*
+ *  @property   复制图先锋
+ *  @func       复制图像
+ *  @return     Ptr
+ */
     T&operator()(int x, int y, int channel);
 
  };
@@ -865,28 +995,31 @@ IMAGE_NAMESPACE_BEGIN
     inline typename Image<T>::Ptr
     Image<T>::create(int width, int height, int channels)
     {
-
+        return Ptr(new Image<T>(width,height,channels));
     }
 
     template <typename T>
     inline typename Image<T>::Ptr
     Image<T>::create(Image<T> const&image1)
     {
-
+        return Ptr(new Image<T>(image1));
     }
 
     template <typename T>
     inline typename Image<T>::Ptr
     Image<T>::duplicate() const
     {
-
+        return Ptr(new Image<T>(*this));
     }
 
     template <typename T>
     inline void
     Image<T>::fill_color(T const *color)
     {
-
+        for (T* iter = this->begin(); iter != this->end() ; iter += this->c)
+        {
+            std::copy(iter,iter + this->c, color);
+        }
     }
 
     template <typename T>
