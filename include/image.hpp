@@ -8,6 +8,7 @@
 #include "define.h"
 #include <memory>
 #include <vector>
+#include <algorithm>
 
 #ifndef IMAGE_IMAGE_HPP
 #define IMAGE_IMAGE_HPP
@@ -686,16 +687,16 @@ IMAGE_NAMESPACE_BEGIN
     inline void
     TypedImageBase<T>::fill(const T &value)
     {
-        std::fill(this->data.begin(),this,data.end(),value);
+        std::fill(this->data.begin(),this->data.end(),value);
     }
 
     template <typename T>
     inline void
     TypedImageBase<T>::swap(image::TypedImageBase<T> &typedImageBase1)
     {
-        std::swap(this->w,typedImageBase1->w);
-        std::swap(this->h,typedImageBase1->h);
-        std::swap(this->c,typedImageBase1->c);
+        std::swap(this->w,typedImageBase1.w);
+        std::swap(this->h,typedImageBase1.h);
+        std::swap(this->c,typedImageBase1.c);
         std::swap(this->data,typedImageBase1.data);
     }
 
@@ -1033,7 +1034,17 @@ IMAGE_NAMESPACE_BEGIN
             return;
         }
 
-        
+        std::vector<T> tmp(this->w * this->h * (this->c + num_channels));
+        std::vector<T>::iterator iter_tmp = tmp.end();
+        std::vector<T>::iterator iter_this = this->end();
+
+        for (int i = 0; i < this->get_pixel_amount(); ++i)
+        {
+            for(auto &a : tmp[i])
+            {
+
+            }
+        }
 
     }
 
@@ -1062,42 +1073,46 @@ IMAGE_NAMESPACE_BEGIN
     inline T const&
     Image<T>::at(int index) const
     {
-
+        return this->data[index];
     }
 
     template <typename T>
     inline T const&
     Image<T>::at(int index, int channel) const
     {
-
+        int offset = index * this->c + channel;
+        return this->data[offset];
     }
 
     template <typename T>
     inline T const&
     Image<T>::at(int x, int y, int channel) const
     {
-
+        int offset = y * this->w * this->c + x * this->c +channel;
+        return data[offset];
     }
 
     template <typename T>
     inline T&
     Image<T>::at(int index)
     {
-
+        return this->data[index];
     }
 
     template <typename T>
     inline T&
     Image<T>::at(int index, int channel)
     {
-
+        int offset = index * this->c + channel;
+        return this->data[offset];
     }
 
     template <typename T>
     inline T&
     Image<T>::at(int x, int y, int channel)
     {
-
+        int offset = y * this->w * this->c + x * this->c +channel;
+        return data[offset];
     }
 
     template <typename T>
