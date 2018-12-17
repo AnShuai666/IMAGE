@@ -387,45 +387,57 @@ public:
     void delete_channel(int channel);
 
     /*
-    *  @property   复制图先锋
-    *  @func       复制图像
-    *  @return     Ptr
+    *  @property   访问图像数据
+    *  @func       线性访问图像数据
+    *  @param_in   index    图像数据线性索引值
+    *  @return     T const&
     */
     T const& at(int index) const;
 
     /*
-    *  @property   复制图先锋
-    *  @func       复制图像
-    *  @return     Ptr
+    *  @property   访问图像数据
+    *  @func       线性访问图像数据
+    *  @param_in   index    图像像素线性索引值
+    *  @param_in   channel  待访问像素通道索引值
+    *  @return     T const&
     */
     T const& at(int index, int channel) const;
 
      /*
- *  @property   复制图先锋
- *  @func       复制图像
- *  @return     Ptr
- */
+     *  @property   访问图像数据
+     *  @func       二维索引访问图像数据  更加耗时
+     *  @param_in   x    图像像素x方向索引值
+     *  @param_in   y    图像像素x方向索引值
+     *  @param_in   channel
+     *  @return     T const&
+     */
     T const& at(int x, int y, int channel) const;
 
-     /*
- *  @property   复制图先锋
- *  @func       复制图像
- *  @return     Ptr
- */
+    /*
+    *  @property   访问图像数据
+    *  @func       线性访问图像数据
+    *  @param_in   index    图像数据线性索引值
+    *  @return     T &
+    */
     T& at(int index);
 
-     /*
- *  @property   复制图先锋
- *  @func       复制图像
- *  @return     Ptr
- */
+    /*
+    *  @property   访问图像数据
+    *  @func       线性访问图像数据
+    *  @param_in   index    图像像素线性索引值
+    *  @param_in   channel  待访问像素通道索引值
+    *  @return     T const&
+    */
     T& at(int index, int channel);
 
-     /*
- *  @property   复制图先锋
- *  @func       复制图像
- *  @return     Ptr
- */
+    /*
+    *  @property   访问图像数据
+    *  @func       二维索引访问图像数据  更加耗时
+    *  @param_in   x    图像像素x方向索引值
+    *  @param_in   y    图像像素x方向索引值
+    *  @param_in   channel
+    *  @return     T const&
+    */
     T& at(int x, int y, int channel);
 
      /*
@@ -442,61 +454,75 @@ public:
  */
     void linear_at(float x, float y, T* px) const;
 
-     /*
- *  @property   复制图先锋
- *  @func       复制图像
- *  @return     Ptr
- */
-    T& operator[] (int index);
-
-     /*
- *  @property   复制图先锋
- *  @func       复制图像
- *  @return     Ptr
- */
+    /*
+    *  @property   重载运算符[]
+    *  @func       访问图像数据
+    *  @param_in   index    图像数据线性索引值
+    *  @return     T const&
+    */
     T const& operator[] (int index) const;
 
-     /*
- *  @property   复制图先锋
- *  @func       复制图像
- *  @return     Ptr
- */
+    /*
+    *  @property   重载运算符[]
+    *  @func       访问图像数据
+    *  @param_in   index    图像数据线性索引值
+    *  @return     T&
+    */
+     T& operator[] (int index);
+
+    /*
+    *  @property   重载运算符()
+    *  @func       访问图像数据
+    *  @param_in   index    图像数据线性索引值
+    *  @return     T const&
+    */
     T const& operator() (int index) const;
 
-     /*
- *  @property   复制图先锋
- *  @func       复制图像
- *  @return     Ptr
- */
-    T const&operator() (int index, int channel) const;
+    /*
+    *  @property   重载运算符()
+    *  @func       访问图像数据
+    *  @param_in   index    图像像素索引值
+    *  @param_in   channel  图像像素通道索引值
+    *  @return     T const&
+    */
+    T const& operator() (int index, int channel) const;
 
-     /*
- *  @property   复制图先锋
- *  @func       复制图像
- *  @return     Ptr
- */
-    T const&operator() (int x, int y, int channel) const;
+    /*
+    *  @property   重载运算符()
+    *  @func       访问图像数据
+    *  @param_in   x        图像像素x方向索引值
+    *  @param_in   y        图像像素y方向索引值
+    *  @param_in   channel  图像像素通道索引值
+    *  @return     T const&
+    */
+    T const& operator() (int x, int y, int channel) const;
 
-     /*
- *  @property   复制图先锋
- *  @func       复制图像
- *  @return     Ptr
- */
-    T&operator()(int index);
+    /*
+    *  @property   重载运算符()
+    *  @func       访问图像数据
+    *  @param_in   index    图像数据线性索引值
+    *  @return     T&
+    */
+    T& operator()(int index);
 
-     /*
- *  @property   复制图先锋
- *  @func       复制图像
- *  @return     Ptr
- */
-    T&operator()(int index, int channel);
+    /*
+    *  @property   重载运算符()
+    *  @func       访问图像数据
+    *  @param_in   index    图像像素索引值
+    *  @param_in   channel  图像像素通道索引值
+    *  @return     T&
+    */
+    T& operator()(int index, int channel);
 
-     /*
- *  @property   复制图先锋
- *  @func       复制图像
- *  @return     Ptr
- */
-    T&operator()(int x, int y, int channel);
+    /*
+    *  @property   重载运算符()
+    *  @func       访问图像数据
+    *  @param_in   x        图像像素x方向索引值
+    *  @param_in   y        图像像素y方向索引值
+    *  @param_in   channel  图像像素通道索引值
+    *  @return     T&
+    */
+    T& operator()(int x, int y, int channel);
 
  };
 
@@ -1035,8 +1061,8 @@ IMAGE_NAMESPACE_BEGIN
         }
 
         std::vector<T> tmp(this->w * this->h * (this->c + num_channels));
-        std::vector<T>::iterator iter_tmp = tmp.end();
-        std::vector<T>::iterator iter_this = this->end();
+        typename std::vector<T>::iterator iter_tmp = tmp.end();
+        typename std::vector<T>::iterator iter_this = this->end();
 
         for (int i = 0; i < this->get_pixel_amount(); ++i)
         {
@@ -1089,7 +1115,7 @@ IMAGE_NAMESPACE_BEGIN
     Image<T>::at(int x, int y, int channel) const
     {
         int offset = y * this->w * this->c + x * this->c +channel;
-        return data[offset];
+        return this->data[offset];
     }
 
     template <typename T>
@@ -1112,7 +1138,7 @@ IMAGE_NAMESPACE_BEGIN
     Image<T>::at(int x, int y, int channel)
     {
         int offset = y * this->w * this->c + x * this->c +channel;
-        return data[offset];
+        return this->data[offset];
     }
 
     template <typename T>
@@ -1133,55 +1159,55 @@ IMAGE_NAMESPACE_BEGIN
     inline T const&
     Image<T>::operator[](int index) const
     {
-
+        return this->data[index];
     }
 
     template <typename T>
     inline T&
     Image<T>::operator[](int index)
     {
-
+        return this->data[index];
     }
 
     template <typename T>
     inline T const&
     Image<T>::operator()(int index) const
     {
-
+        return this->at(index);
     }
 
     template <typename T>
     inline T const&
     Image<T>::operator()(int index, int channel) const
     {
-
+        return this->at(index,channel);
     }
 
     template <typename T>
     inline T const&
     Image<T>::operator()(int x, int y, int channel) const
     {
-
+        return this->at(x,y,channel);
     }
 
     template <typename T>
     inline T&
     Image<T>::operator()(int index)
     {
-
+        return this->at(index);
     }
 
     template <typename T>
     inline T& Image<T>::operator()(int index, int channel)
     {
-
+        return this->at(index,channel);
     }
 
     template <typename T>
     inline T&
     Image<T>::operator()(int x, int y, int channel)
     {
-
+        return this->at(x,y,channel);
     }
 
 
