@@ -35,7 +35,7 @@ enum ImageType
 };
 
 /*******************************************************************
-*~~~~~~~~~~~~~~~~~~~~~图像交换方法枚举声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*~~~~~~~~~~~~~~~~~~~~~图像访问方法枚举声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 *******************************************************************/
 enum SWAP_METHOD
 {
@@ -223,54 +223,163 @@ public:
     *  @func       将图像进行析构
     */
     virtual ~TypedImageBase();
+
+    /*
+    *  @property   图像复制
+    *  @func       为图像动态分配内存，并以该内存区域对共享指针进行初始化
+    *  @return     Ptr
+    */
     virtual ImageBase::Ptr duplicate_base() const;
 
+    /*
+    *  @property   图像清理
+    *  @func       将图像从内存中清除, 即长、宽、通道及图像数据都清零
+    *  @return     void
+    */
     virtual void clear();
 
+    /*
+    *  @property   图像大小重定义
+    *  @func       改变图像的尺寸以及数据大小，原来存在的数据继续保留，
+                   如果图像缩小，则原多余的图像仍然会占据内存
+    *  @param_in   width        新图像宽
+    *  @param_in   height       新图像高
+    *  @param_in   channels     新图像通道数
+    *  @return     void
+    */
     void resize(int width, int height, int channels);
 
+    /*
+    *  @property   图像大小重定义
+    *  @func       重新分配图像空间，原来存在的数据清空
+    *  @param_in   width        新图像宽
+    *  @param_in   height       新图像高
+    *  @param_in   channels     新图像通道数
+    *  @return     void
+    */
     void allocate(int width,int height, int channels);
 
+    /*
+    *  @property   图像数据填充
+    *  @func       将图像所有像素填充数据value
+    *  @param_in   value    待填充数据值
+    *  @return     void
+    */
     void fill(T const& value);
 
+    /*
+    *  @property   两图像交换
+    *  @func       将两幅图像所有值进行交换
+    *  @param_in   typedImageBase1    待交换图像
+    *  @return     void
+    */
     void swap(TypedImageBase<T>& typedImageBase1);
 
-
-
+    /*
+    *  @property   获取图像数据换
+    *  @func       获取图像数据vector
+    *  @return     ImageData const&
+    */
     ImageData const& get_data() const;
 
+    /*
+    *  @property   获取图像数据换
+    *  @func       获取图像数据vector
+    *  @return     ImageDatat&
+    */
     ImageData& get_data();
 
+    /*
+    *  @property   获取图像数据换指针
+    *  @func       获取图像数据vector的指针，图像为空返回空指针
+    *  @return     T const*
+    */
     T const* get_data_pointer() const;
 
+    /*
+    *  @property   获取图像数据换指针
+    *  @func       获取图像数据vector的指针，图像为空返回空指针
+    *  @return     T*
+    */
     T* get_data_pointer();
 
-
-
-
+    /*
+    *  @property   获取图像总像素大小
+    *  @func       获取图像总像素个数
+    *  @return     int
+    */
     int get_pixel_amount() const;
 
+    /*
+    *  @property   获取图像总数据大小
+    *  @func       获取图像总像数据个数，即数据大小
+    *  @return     int
+    */
     int get_value_amount() const;
 
+    /*
+    *  @property   获取图像数据总字节大小
+    *  @func       获取图像总数据字节大小，
+    *  @return     std::size_t
+    */
     std::size_t get_byte_size() const;
 
+    /*
+    *  @property   获取图像数据字符指针
+    *  @func       获取字符指针后，访问图像则以8bit长度进行访问
+    *  @const1     指针指向数据不能更改
+    *  @return     char const*
+    */
     //用reinterpret_cast没有数位丢失
     char const* get_byte_pointer() const;
 
+    /*
+    *  @property   获取图像数据字符指针
+    *  @func       获取字符指针后，访问图像则以8bit长度进行访问
+    *  @return     char*
+    */
     char* get_byte_pointer();
 
+    /*
+    *  @property   获取图像数据类型字符串
+    *  @func       根据图像类型，获取对应的字符串数据，多个重载函数实现该虚函数
+    *  @return     char const*
+    */
     virtual char const* get_type_string() const;
 
+    /*
+    *  @property   获取图像数据枚举类型
+    *  @func       根据图像类型，获取对应的枚举类型，多个重载函数实现该虚函数
+    *  @return     ImageType
+    */
     virtual ImageType get_type() const;
 
-
-
+    /*
+    *  @property   获取图像起始迭代器
+    *  @func       获取图像数据初始指针，指向图像第一个数据
+    *  @return     T*
+    */
     T* begin();
 
+    /*
+    *  @property   获取图像起始迭代器
+    *  @func       获取图像数据初始指针，指向图像第一个数据
+    *  @return     T*
+    */
     T const* begin() const;
 
+    /*
+    *  @property   获取图像末尾迭代器
+    *  @func       获取图像数据末尾指针，指向图像最后一个数据的下一个位置
+    *  @return     T*
+    */
     T* end();
 
+    /*
+    *  @property   获取图像末尾迭代器
+    *  @func       获取图像数据初始指针，指向图像最后一个数据的下一个位置
+    *  @return     T const*
+    */
     T const* end() const;
 
 protected:
