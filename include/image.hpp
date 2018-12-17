@@ -9,6 +9,7 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include <iostream>
 
 #ifndef IMAGE_IMAGE_HPP
 #define IMAGE_IMAGE_HPP
@@ -32,6 +33,11 @@ enum ImageType
     IMAGE_TYPE_DOUBLE
 };
 
+enum SWAP_METHOD
+{
+    AT,
+    ITERATOR
+};
 /********************************************************************
 *~~~~~~~~~~~~~~~~~~~~~~~~~~ImageBase类的声明~~~~~~~~~~~~~~~~~~~~~~~~~~
 ********************************************************************/
@@ -358,19 +364,24 @@ public:
 
     /*
     *  @property    给图像添加通道
-    *  @func        为图像添加num_channels的通道，值为value
+    *  @func        为图像添加num_channels数量的通道，值为value
     *  @param_in    num_channels    要添加的通道数
     *  @param_in    value           新通道分量的值
     *  @return      void
     */
     void add_channels(int num_channels, T const& value = T(0));
 
+
+    //TODO: 对比下面两种访问时间差 直接访问at（）与迭代器方式
     /*
-    *  @property   复制图先锋
-    *  @func       复制图像
-    *  @return     Ptr
+    *  @property   交换图像两通道的值
+    *  @func       将两通道的值互换
+    *  @param_in    channel1    要交换的通道
+    *  @param_in    channel2    要交换的另一个通道
+    *  @return     void
     */
-    void swap_channels(int channel1, int channel2);
+    void swap_channels(int channel1, int channel2, SWAP_METHOD swap_method = AT);
+
 
     /*
     *  @property   复制图先锋
@@ -1066,19 +1077,52 @@ IMAGE_NAMESPACE_BEGIN
 
         for (int i = 0; i < this->get_pixel_amount(); ++i)
         {
-            for(auto &a : tmp[i])
+            for (int j = 0; j < num_channels; ++j)
             {
+                *(--iter_tmp) = value;
+            }
 
+            for (int k = 0; k < this->c; ++k)
+            {
+                *(--iter_tmp) = *(--iter_this);
             }
         }
 
+        this->c += num_channels;
+
+        std::swap(this->data,tmp);
     }
 
     template <typename T>
     void
-    Image<T>::swap_channels(int channel1, int channel2)
+    Image<T>::swap_channels(int channel1, int channel2, SWAP_METHOD swap_method)
     {
+        if (!this->valid() || channel1 == channel2)
+        {
+            return;
+        }
 
+        if (swap_method != AT && swap_method != ITERATOR)
+        {
+            std::cout<<"交换方式错误!\n"<<std::endl;
+            return;
+        }
+
+        if (swap_method == AT)
+        {
+            for (int i = 0; i < this->get_pixel_amount(); ++i)
+            {
+                std::swap(this->at(i,channel1),this->at(i,channel2));
+            }
+        } else
+        {
+            T* iter1 = &this->at(0,channel1);
+            T* iter2 = &this->at(0,channel2);
+            for (int i = 0; i < this->get_pixel_amount(); iter1 += this->c, iter2 += this->c)
+            {
+                std::swap(*iter1,*iter2);
+            }
+        }
     }
 
     template <typename T>
