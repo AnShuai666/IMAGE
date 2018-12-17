@@ -15,6 +15,7 @@
 #define IMAGE_IMAGE_HPP
 
 IMAGE_NAMESPACE_BEGIN
+
 /*******************************************************************
 *~~~~~~~~~~~~~~~~~~~~~图像数据类型枚举声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 *******************************************************************/
@@ -33,12 +34,18 @@ enum ImageType
     IMAGE_TYPE_DOUBLE
 };
 
+/*******************************************************************
+*~~~~~~~~~~~~~~~~~~~~~图像交换方法枚举声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*******************************************************************/
 enum SWAP_METHOD
 {
     AT,
     ITERATOR
 };
 
+/*******************************************************************
+*~~~~~~~~~~~~~~~~~~~~~图像数据类型别名声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*******************************************************************/
 typedef unsigned char uint8_t;
 typedef unsigned short int uint16_t;
 typedef unsigned int  uint32_t;
@@ -190,14 +197,31 @@ class TypedImageBase : public ImageBase
  *~~~~~~~~~~~~~~~~~~~~~~TypedImageBase常用容器别名定义~~~~~~~~~~~~~~~~~~
  *******************************************************************/
 public:
-    typedef T ValueType;
     typedef std::shared_ptr<TypedImageBase<T>> Ptr;
     typedef std::shared_ptr<TypedImageBase<T> const> ConstPtr;
     typedef std::vector<T> ImageData;
 
+/********************************************************************
+*~~~~~~~~~~~~~~~~~~TypedImageBase构造函数与析构函数~~~~~~~~~~~~~~~~~~~~~
+********************************************************************/
 public:
+    /*
+    *  @property   默认构造函数
+    *  @func       将图像进行初始化，产生一幅空图
+    */
     TypedImageBase();
+
+    /*
+    *  @property   拷贝构造函数
+    *  @func       将图像用typedImageBase1进行初始化
+    *  @param_in   typedImageBase1  已存在的图
+    */
     TypedImageBase(TypedImageBase<T> const& typedImageBase1);
+
+    /*
+    *  @property   析构函数
+    *  @func       将图像进行析构
+    */
     virtual ~TypedImageBase();
     virtual ImageBase::Ptr duplicate_base() const;
 
@@ -248,8 +272,6 @@ public:
     T* end();
 
     T const* end() const;
-
-
 
 protected:
     ImageData data;
