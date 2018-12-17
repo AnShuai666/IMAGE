@@ -38,6 +38,11 @@ enum SWAP_METHOD
     AT,
     ITERATOR
 };
+
+typedef unsigned char uint8_t;
+typedef unsigned short int uint16_t;
+typedef unsigned int  uint32_t;
+typedef unsigned long int uint64_t;
 /********************************************************************
 *~~~~~~~~~~~~~~~~~~~~~~~~~~ImageBase类的声明~~~~~~~~~~~~~~~~~~~~~~~~~~
 ********************************************************************/
@@ -167,7 +172,7 @@ public:
 protected:
     int w;
     int h;
-    int c;
+    int c;//指的是图像通道数 正整数
 
 };
 
@@ -384,16 +389,19 @@ public:
 
 
     /*
-    *  @property   复制图先锋
-    *  @func       复制图像
-    *  @return     Ptr
+    *  @property   复制图像通道
+    *  @func       复制图像通道src->dest；dest=-1,则会新建一个图像通道
+    *  @src        图像源通道
+    *  @dest       图像目的通道，dest=-1,则会新建一个图像通道
+    *  @return     void
     */
     void copy_channel(int src,int dest);
 
     /*
-    *  @property   复制图先锋
-    *  @func       复制图像
-    *  @return     Ptr
+    *  @property   删除图像通道
+    *  @func       将第channel通道删除
+    *  @param_in   channel
+    *  @return     void
     */
     void delete_channel(int channel);
 
@@ -451,18 +459,24 @@ public:
     */
     T& at(int x, int y, int channel);
 
-     /*
- *  @property   复制图先锋
- *  @func       复制图像
- *  @return     Ptr
- */
+    /*
+    *  @property    像素插值
+    *  @func        计算（x,y）浮点坐标经过双线性插值之后的像素单通道值
+    *  @param_in    x           待插值坐标x
+    *  @param_in    y           待插值坐标x
+    *  @param_in    channel     待插值像素（x,y）的第channel个通道
+    *  @return      T           插值后的通道值
+    */
     T linear_at(float x, float y, int channel) const;
 
-     /*
- *  @property   复制图先锋
- *  @func       复制图像
- *  @return     Ptr
- */
+    /*
+    *  @property    像素插值
+    *  @func        计算（x,y）浮点坐标经过双线性插值之后的所有像素通道值
+    *  @param_in    x           待插值坐标x
+    *  @param_in    y           待插值坐标x
+    *  @param_in    T* px       待插值像素（x,y）
+    *  @return      void
+    */
     void linear_at(float x, float y, T* px) const;
 
     /*
@@ -1071,9 +1085,9 @@ IMAGE_NAMESPACE_BEGIN
             return;
         }
 
-        std::vector<T> tmp(this->w * this->h * (this->c + num_channels));
-        typename std::vector<T>::iterator iter_tmp = tmp.end();
-        typename std::vector<T>::iterator iter_this = this->end();
+        ImageData tmp(this->w * this->h * (this->c + num_channels));
+        typename ImageData::iterator iter_tmp = tmp.end();
+        typename ImageData::iterator iter_this = this->end();
 
         for (int i = 0; i < this->get_pixel_amount(); ++i)
         {
@@ -1129,14 +1143,48 @@ IMAGE_NAMESPACE_BEGIN
     void
     Image<T>::copy_channel(int src, int dest)
     {
+        if(!this->valid() || src == dest)
+        {
+            return;
+        }
 
+        if (dest < 0)
+        {
+            this->add_channels(1);
+            dest = this->c;
+        }
+
+        T const* src_iter = &this->at(0,src);
+        T* dest_iter = &this->at(0,dest);
+        for (int i = 0; i < this->get_pixel_amount(); src_iter += this->c, dest_iter += this->c)
+        {
+            *dest_iter = *src_iter;
+        }
     }
 
     template <typename T>
     void
     Image<T>::delete_channel(int channel)
     {
+        if (channel < 0 || channel > this->channels())
+        {
+            return;
+        }
 
+        typename Image<T>::ImageData::iterator src_iter = this->begin();
+        typename Image<T>::ImageData::iterator dest_iter = this->begin();
+
+        for (int i = 0; i < this->data.size(); ++i)
+        {
+            if(i % this->c == channel-1)
+            {
+                src_iter++;
+            } else
+            {
+                *(dest_iter++) = *(src_iter++);
+            }
+        }
+        this->resize(this->w, this->h, this->c - 1);
     }
 
     template <typename T>
@@ -1150,7 +1198,7 @@ IMAGE_NAMESPACE_BEGIN
     inline T const&
     Image<T>::at(int index, int channel) const
     {
-        int offset = index * this->c + channel;
+        int offset = index * this->c + channel - 1;
         return this->data[offset];
     }
 
@@ -1158,7 +1206,7 @@ IMAGE_NAMESPACE_BEGIN
     inline T const&
     Image<T>::at(int x, int y, int channel) const
     {
-        int offset = y * this->w * this->c + x * this->c +channel;
+        int offset = y * this->w * this->c + x * this->c + channel - 1;
         return this->data[offset];
     }
 
@@ -1173,7 +1221,7 @@ IMAGE_NAMESPACE_BEGIN
     inline T&
     Image<T>::at(int index, int channel)
     {
-        int offset = index * this->c + channel;
+        int offset = index * this->c + channel - 1;
         return this->data[offset];
     }
 
@@ -1181,7 +1229,7 @@ IMAGE_NAMESPACE_BEGIN
     inline T&
     Image<T>::at(int x, int y, int channel)
     {
-        int offset = y * this->w * this->c + x * this->c +channel;
+        int offset = y * this->w * this->c + x * this->c +channel - 1;
         return this->data[offset];
     }
 
@@ -1189,14 +1237,50 @@ IMAGE_NAMESPACE_BEGIN
     T
     Image<T>::linear_at(float x, float y, int channel) const
     {
+        if(x < 0 || x > this->w - 1 || y < 0 || y > this->h - 1)
+        {
+            std::cerr<<"插值坐标越界！\n"<<std::endl;
+            std::exit(0);
+        }
 
+        int const floor_x = static_cast<int>(x);
+        int const floor_y = static_cast<int>(y);
+        int const ceil_x = static_cast<int>(x+1);
+        int const ceil_y = static_cast<int>(y+1);
+
+        float delta_x = x - static_cast<float >(floor_x);
+        float delta_y = y - static_cast<float >(floor_y);
+
+        if (x == 0 || x == this->h - 1)
+        {
+            return this->at(x, floor_y,channel) * (1-delta_y) + this->at(x, ceil_y,channel) * delta_y;
+        }
+
+        if(y == 0 || y == this->h -1)
+        {
+            return this->at(floor_x, y ,channel) * (1-delta_x) + this->at(ceil_x,y,channel) * delta_x;
+        }
+
+        T const px_f_x_f_y = this->at(floor_x,floor_y,channel);
+        T const px_c_x_f_y = this->at(ceil_x,floor_y,channel);
+        T const px_f_x_c_y = this->at(floor_x,ceil_y,channel);
+        T const px_c_x_c_y = this->at(ceil_x,ceil_y,channel);
+
+        T const px_x_floor_mid = (1-delta_x) * px_f_x_f_y + delta_x * px_c_x_f_y;
+        T const px_x_ceil_mid = (1-delta_x) * px_c_x_f_y + delta_x * px_c_x_c_y;
+
+        T px = (1 - delta_y) * px_x_floor_mid + delta_y * px_x_ceil_mid;
+        return px;
     }
 
     template <typename T>
     void
     Image<T>::linear_at(float x, float y, T *px) const
     {
-
+        for (int i = 0; i < this->c; ++i)
+        {
+            px[i] = this->linear_at(x,y,1 + i);
+        }
     }
 
     template <typename T>
