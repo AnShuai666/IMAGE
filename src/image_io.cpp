@@ -7,6 +7,37 @@
 #include "image_io.h"
 IMAGE_NAMESPACE_BEGIN
 
+ByteImage::Ptr
+load_image(std::string& filename)
+{
 
+}
+
+ImageHeaders
+load_image_headers(std::string const filename)
+{
+
+}
+
+void
+save_image(ByteImage::ConstPtr image, std::string const& filename)
+{
+
+}
+
+void save_image(ByteImage::Ptr image, std::string const& filename)
+{
+
+}
+
+void save_image(FloatImage::ConstPtr image, std::string const& filename)
+{
+
+}
+
+void save_image(FloatImage::Ptr image, std::string const& filename)
+{
+
+}
 
 IMAGE_NAMESPACE_END
