@@ -5,6 +5,8 @@
  * @e-mail   1028792866@qq.com
 */
 #include "image_io.h"
+#include <fstream>
+#include <png.h>
 IMAGE_NAMESPACE_BEGIN
 
 ByteImage::Ptr
@@ -38,6 +40,22 @@ void save_image(FloatImage::ConstPtr image, std::string const& filename)
 void save_image(FloatImage::Ptr image, std::string const& filename)
 {
 
+}
+
+ByteImage::Ptr
+load_png_image(std::string const& filename)
+{
+    FILE* fp = std::fopen(filename.c_str(),"rb");
+    if (!fp)
+    {
+        std::exit(0);
+        //TODO:写一个文件异常类，此处抛出异常
+    }
+
+    ImageHeaders imageHeaders;
+    png_structp png = nullptr;
+    png_infop png_info = nullptr;
+    loa
 }
 
 IMAGE_NAMESPACE_END

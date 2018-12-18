@@ -87,20 +87,60 @@ void save_image(FloatImage::ConstPtr image, std::string const& filename);
 */
 void save_image(FloatImage::Ptr image, std::string const& filename);
 
-
 /*******************************************************************
 *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~png图像加载~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 *******************************************************************/
 
-
+/*
+*  @property   图像加载
+*  @func       加载png格式的图像
+                通道数           图像类型
+                  1              gray
+                  2            gray-alpha
+                  3               RGB
+                  4               RGBA
+*  @param_in   filename         图像路径及图像名
+*  @return     ByteImage::Ptr   图像类型为uint8的ByteImage
+*/
 ByteImage::Ptr
 load_png_image(std::string const& filename);
+
 
 ImageHeaders
 load_png_image_headers(std::string const& filename);
 
+
 void
 save_png_image(ByteImage::ConstPtr image, std::string const& filename, int compression_level = 1);
+
+/*******************************************************************
+*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~jpg图像加载~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*******************************************************************/
+
+ByteImage::Ptr
+load_jpg_image(std::string const& filename,std::string* exif = nullptr);
+
+
+ImageHeaders
+load_jpg_image_headers(std::string const& filename);
+
+
+void
+save_jpg_image(ByteImage::ConstPtr image, std::string const& filename, int quality);
+
+
+/*******************************************************************
+*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~jpg图像加载~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*******************************************************************/
+
+ByteImage::Ptr
+load_tiff_image(std::string const& filename);
+
+RawImage::Ptr
+load_tiff_16_image(std::string const& filename);
+
+void
+save_tiff_image(ByteImage::ConstPtr image, std::string const& filename);
 
 
 IMAGE_NAMESPACE_END
