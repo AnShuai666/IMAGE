@@ -1,11 +1,13 @@
-include_directories(../../include)
+include_directories(../include)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 set(HEADERS
         ${PROJECT_SOURCE_DIR}/include/define.h
         ${PROJECT_SOURCE_DIR}/include/image.hpp
+        ../include/image_io.h
         )
+
 set(SOURCE_FILES
-        a.cpp
+        image_io.cpp
         )
 add_library(image SHARED ${HEADERS} ${SOURCE_FILES})
