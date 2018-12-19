@@ -55,7 +55,7 @@ load_png_image(std::string const& filename)
     ImageHeaders imageHeaders;
     png_structp png = nullptr;
     png_infop png_info = nullptr;
-    loa
+
 }
 
 IMAGE_NAMESPACE_END
