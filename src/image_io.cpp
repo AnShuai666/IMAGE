@@ -12,7 +12,10 @@ IMAGE_NAMESPACE_BEGIN
 ByteImage::Ptr
 load_image(std::string& filename)
 {
-
+    if()
+    {
+        return load_png_image(filename);
+    }
 }
 
 ImageHeaders
@@ -48,6 +51,7 @@ load_png_image(std::string const& filename)
     FILE* fp = std::fopen(filename.c_str(),"rb");
     if (!fp)
     {
+        checkImageioerror(fp);
         std::exit(0);
         //TODO:写一个文件异常类，此处抛出异常
     }
@@ -56,6 +60,37 @@ load_png_image(std::string const& filename)
     png_structp png = nullptr;
     png_infop png_info = nullptr;
 
+    png_byte signature[PNG_FILE_NAME_NUM];
+    if (std::fread(signature,1,PNG_FILE_NAME_NUM,fp) != PNG_FILE_NAME_NUM)
+    {
+
+        std::fclose(fp);
+        fp = NULL;
+    }
+
+    int is_png = !png_sig_cmp(signature,0,8);
+    if ( !is_png)
+    {
+
+        std::fclose(fp);
+        fp = NULL;
+    }
+
+    png = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+    if()
+    {
+
+    }
+
+    png_info = png_create_info_struct(png);
+
+    if()
+    {
+
+    }
+    png_init_io(png,fp);
+    std::fclose(fp);
+    return ;
 }
 
 IMAGE_NAMESPACE_END

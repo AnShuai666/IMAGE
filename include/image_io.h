@@ -11,7 +11,7 @@
 #include "image.hpp"
 using namespace image;
 IMAGE_NAMESPACE_BEGIN
-
+#define PNG_FILE_NAME_NUM 8
 
 /*******************************************************************
 *~~~~~~~~~~~~~~~~~~~~~图像元数据结构体声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
