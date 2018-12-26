@@ -77,16 +77,17 @@ load_png_image(std::string const& filename)
     }
 
     png = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
-    if()
+    if(!png)
     {
-
+        std::fclose(fp);
+        fp =NULL;
     }
 
     png_info = png_create_info_struct(png);
 
-    if()
+    if(!png_info)
     {
-
+        png_destroy_read_struct(&png, nullptr, nullptr);
     }
     png_init_io(png,fp);
     std::fclose(fp);
