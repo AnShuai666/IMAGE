@@ -4,3 +4,7 @@
 /home/as/IMAGE/cmake-build-debug/examples/CMakeFiles/edit_cache.dir
 /home/as/IMAGE/cmake-build-debug/src/CMakeFiles/rebuild_cache.dir
 /home/as/IMAGE/cmake-build-debug/src/CMakeFiles/edit_cache.dir
+/home/as/IMAGE/cmake-build-debug/src/CMakeFiles/image.dir
+/home/as/IMAGE/cmake-build-debug/src_bin/CMakeFiles/edit_cache.dir
+/home/as/IMAGE/cmake-build-debug/src_bin/CMakeFiles/rebuild_cache.dir
+/home/as/IMAGE/cmake-build-debug/src_bin/CMakeFiles/image_main.dir

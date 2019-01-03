@@ -5,7 +5,7 @@
 		<Option title="image"/>
 		<Option makefile_is_custom="1"/>
 		<Option compiler="gcc"/>
-		<Option virtualFolders="CMake Files\;CMake Files\examples\;CMake Files\src\;"/>
+		<Option virtualFolders="CMake Files\;CMake Files\examples\;CMake Files\src\;CMake Files\src_bin\;"/>
 		<Build>
 			<Target title="all">
 				<Option working_dir="/home/as/IMAGE/cmake-build-debug"/>
@@ -37,7 +37,123 @@
 					<DistClean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
+			<Target title="image">
+				<Option output="/home/as/IMAGE/lib/libimage.so" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/as/IMAGE/cmake-build-debug/src"/>
+				<Option object_output="./"/>
+				<Option type="3"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/as/IMAGE/src/../include"/>
+					<Add directory="/usr/include/c++/5"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/5"/>
+					<Add directory="/usr/include/c++/5/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 image"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="image/fast">
+				<Option output="/home/as/IMAGE/lib/libimage.so" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/as/IMAGE/cmake-build-debug/src"/>
+				<Option object_output="./"/>
+				<Option type="3"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/as/IMAGE/src/../include"/>
+					<Add directory="/usr/include/c++/5"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/5"/>
+					<Add directory="/usr/include/c++/5/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 image/fast"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="image_main">
+				<Option output="/home/as/IMAGE/examples_bin/image_main" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/as/IMAGE/examples_bin"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/as/IMAGE/src_bin/../../MATH/include"/>
+					<Add directory="/home/as/IMAGE/src_bin/../include"/>
+					<Add directory="/usr/include/c++/5"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/5"/>
+					<Add directory="/usr/include/c++/5/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 image_main"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="image_main/fast">
+				<Option output="/home/as/IMAGE/examples_bin/image_main" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/as/IMAGE/examples_bin"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/as/IMAGE/src_bin/../../MATH/include"/>
+					<Add directory="/home/as/IMAGE/src_bin/../include"/>
+					<Add directory="/usr/include/c++/5"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/5"/>
+					<Add directory="/usr/include/c++/5/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 image_main/fast"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
 		</Build>
+		<Unit filename="/home/as/IMAGE/include/define.h">
+			<Option target="image"/>
+		</Unit>
+		<Unit filename="/home/as/IMAGE/include/exception.h">
+			<Option target="image"/>
+		</Unit>
+		<Unit filename="/home/as/IMAGE/include/image.hpp">
+			<Option target="image"/>
+		</Unit>
+		<Unit filename="/home/as/IMAGE/include/image_io.h">
+			<Option target="image"/>
+		</Unit>
+		<Unit filename="/home/as/IMAGE/src/image_io.cpp">
+			<Option target="image"/>
+		</Unit>
+		<Unit filename="/home/as/IMAGE/src_bin/image_main.cpp">
+			<Option target="image_main"/>
+		</Unit>
 		<Unit filename="/home/as/IMAGE/CMakeLists.txt">
 			<Option virtualFolder="CMake Files\"/>
 		</Unit>
@@ -46,6 +162,9 @@
 		</Unit>
 		<Unit filename="/home/as/IMAGE/src/CMakeLists.txt">
 			<Option virtualFolder="CMake Files\src\"/>
+		</Unit>
+		<Unit filename="/home/as/IMAGE/src_bin/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\src_bin\"/>
 		</Unit>
 	</Project>
 </CodeBlocks_project_file>

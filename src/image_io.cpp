@@ -7,15 +7,31 @@
 #include "image_io.h"
 #include <fstream>
 #include <png.h>
+#include <exception.h>
+
 IMAGE_NAMESPACE_BEGIN
 
 ByteImage::Ptr
 load_image(std::string& filename)
 {
-    if()
+    try
     {
         return load_png_image(filename);
     }
+    catch(image::FileException &e)
+    {
+        e.what();
+    }
+
+    try
+    {
+        return load_jpg_image(filename);
+    }
+    catch(image::FileException &e)
+    {
+        e.what();
+    }
+
 }
 
 ImageHeaders
@@ -49,17 +65,17 @@ ByteImage::Ptr
 load_png_image(std::string const& filename)
 {
     FILE* fp = std::fopen(filename.c_str(),"rb");
+
     if (!fp)
     {
-        checkImageioerror(fp);
-        std::exit(0);
+        checkFileerror(fp);
+        std::fclose(fp);
+        fp = NULL;
+        throw FileException(filename);
         //TODO:写一个文件异常类，此处抛出异常
     }
 
-    ImageHeaders imageHeaders;
-    png_structp png = nullptr;
-    png_infop png_info = nullptr;
-
+    //89 50 4E 47 0D 0A 1A 0A 是PNG头部署名域，表示这是一个PNG图片
     png_byte signature[PNG_FILE_NAME_NUM];
     if (std::fread(signature,1,PNG_FILE_NAME_NUM,fp) != PNG_FILE_NAME_NUM)
     {
@@ -75,6 +91,14 @@ load_png_image(std::string const& filename)
         std::fclose(fp);
         fp = NULL;
     }
+
+    ImageHeaders imageHeaders;
+    png_structp png = nullptr;
+    png_infop png_info = nullptr;
+
+
+
+
 
     png = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
     if(!png)

@@ -56,17 +56,6 @@ CMAKE_BINARY_DIR = /home/as/IMAGE/cmake-build-debug
 #=============================================================================
 # Targets provided globally by CMake.
 
-# Special rule for the target rebuild_cache
-rebuild_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
-	/home/yhl/software/clion-2018.2.6/bin/cmake/linux/bin/cmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
-.PHONY : rebuild_cache
-
-# Special rule for the target rebuild_cache
-rebuild_cache/fast: rebuild_cache
-
-.PHONY : rebuild_cache/fast
-
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
@@ -78,16 +67,27 @@ edit_cache/fast: edit_cache
 
 .PHONY : edit_cache/fast
 
+# Special rule for the target rebuild_cache
+rebuild_cache:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
+	/home/yhl/software/clion-2018.2.6/bin/cmake/linux/bin/cmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+.PHONY : rebuild_cache
+
+# Special rule for the target rebuild_cache
+rebuild_cache/fast: rebuild_cache
+
+.PHONY : rebuild_cache/fast
+
 # The main all target
 all: cmake_check_build_system
-	cd /home/as/IMAGE/cmake-build-debug && $(CMAKE_COMMAND) -E cmake_progress_start /home/as/IMAGE/cmake-build-debug/CMakeFiles /home/as/IMAGE/cmake-build-debug/src/CMakeFiles/progress.marks
-	cd /home/as/IMAGE/cmake-build-debug && $(MAKE) -f CMakeFiles/Makefile2 src/all
+	cd /home/as/IMAGE/cmake-build-debug && $(CMAKE_COMMAND) -E cmake_progress_start /home/as/IMAGE/cmake-build-debug/CMakeFiles /home/as/IMAGE/cmake-build-debug/src_bin/CMakeFiles/progress.marks
+	cd /home/as/IMAGE/cmake-build-debug && $(MAKE) -f CMakeFiles/Makefile2 src_bin/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/as/IMAGE/cmake-build-debug/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /home/as/IMAGE/cmake-build-debug && $(MAKE) -f CMakeFiles/Makefile2 src/clean
+	cd /home/as/IMAGE/cmake-build-debug && $(MAKE) -f CMakeFiles/Makefile2 src_bin/clean
 .PHONY : clean
 
 # The main clean target
@@ -97,12 +97,12 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /home/as/IMAGE/cmake-build-debug && $(MAKE) -f CMakeFiles/Makefile2 src/preinstall
+	cd /home/as/IMAGE/cmake-build-debug && $(MAKE) -f CMakeFiles/Makefile2 src_bin/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /home/as/IMAGE/cmake-build-debug && $(MAKE) -f CMakeFiles/Makefile2 src/preinstall
+	cd /home/as/IMAGE/cmake-build-debug && $(MAKE) -f CMakeFiles/Makefile2 src_bin/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
@@ -111,46 +111,46 @@ depend:
 .PHONY : depend
 
 # Convenience name for target.
-src/CMakeFiles/image.dir/rule:
-	cd /home/as/IMAGE/cmake-build-debug && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/image.dir/rule
-.PHONY : src/CMakeFiles/image.dir/rule
+src_bin/CMakeFiles/image_main.dir/rule:
+	cd /home/as/IMAGE/cmake-build-debug && $(MAKE) -f CMakeFiles/Makefile2 src_bin/CMakeFiles/image_main.dir/rule
+.PHONY : src_bin/CMakeFiles/image_main.dir/rule
 
 # Convenience name for target.
-image: src/CMakeFiles/image.dir/rule
+image_main: src_bin/CMakeFiles/image_main.dir/rule
 
-.PHONY : image
+.PHONY : image_main
 
 # fast build rule for target.
-image/fast:
-	cd /home/as/IMAGE/cmake-build-debug && $(MAKE) -f src/CMakeFiles/image.dir/build.make src/CMakeFiles/image.dir/build
-.PHONY : image/fast
+image_main/fast:
+	cd /home/as/IMAGE/cmake-build-debug && $(MAKE) -f src_bin/CMakeFiles/image_main.dir/build.make src_bin/CMakeFiles/image_main.dir/build
+.PHONY : image_main/fast
 
-image_io.o: image_io.cpp.o
+image_main.o: image_main.cpp.o
 
-.PHONY : image_io.o
+.PHONY : image_main.o
 
 # target to build an object file
-image_io.cpp.o:
-	cd /home/as/IMAGE/cmake-build-debug && $(MAKE) -f src/CMakeFiles/image.dir/build.make src/CMakeFiles/image.dir/image_io.cpp.o
-.PHONY : image_io.cpp.o
+image_main.cpp.o:
+	cd /home/as/IMAGE/cmake-build-debug && $(MAKE) -f src_bin/CMakeFiles/image_main.dir/build.make src_bin/CMakeFiles/image_main.dir/image_main.cpp.o
+.PHONY : image_main.cpp.o
 
-image_io.i: image_io.cpp.i
+image_main.i: image_main.cpp.i
 
-.PHONY : image_io.i
+.PHONY : image_main.i
 
 # target to preprocess a source file
-image_io.cpp.i:
-	cd /home/as/IMAGE/cmake-build-debug && $(MAKE) -f src/CMakeFiles/image.dir/build.make src/CMakeFiles/image.dir/image_io.cpp.i
-.PHONY : image_io.cpp.i
+image_main.cpp.i:
+	cd /home/as/IMAGE/cmake-build-debug && $(MAKE) -f src_bin/CMakeFiles/image_main.dir/build.make src_bin/CMakeFiles/image_main.dir/image_main.cpp.i
+.PHONY : image_main.cpp.i
 
-image_io.s: image_io.cpp.s
+image_main.s: image_main.cpp.s
 
-.PHONY : image_io.s
+.PHONY : image_main.s
 
 # target to generate assembly for a file
-image_io.cpp.s:
-	cd /home/as/IMAGE/cmake-build-debug && $(MAKE) -f src/CMakeFiles/image.dir/build.make src/CMakeFiles/image.dir/image_io.cpp.s
-.PHONY : image_io.cpp.s
+image_main.cpp.s:
+	cd /home/as/IMAGE/cmake-build-debug && $(MAKE) -f src_bin/CMakeFiles/image_main.dir/build.make src_bin/CMakeFiles/image_main.dir/image_main.cpp.s
+.PHONY : image_main.cpp.s
 
 # Help Target
 help:
@@ -158,12 +158,12 @@ help:
 	@echo "... all (the default if no target is provided)"
 	@echo "... clean"
 	@echo "... depend"
-	@echo "... rebuild_cache"
 	@echo "... edit_cache"
-	@echo "... image"
-	@echo "... image_io.o"
-	@echo "... image_io.i"
-	@echo "... image_io.s"
+	@echo "... rebuild_cache"
+	@echo "... image_main"
+	@echo "... image_main.o"
+	@echo "... image_main.i"
+	@echo "... image_main.s"
 .PHONY : help
 
 

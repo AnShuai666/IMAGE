@@ -13,6 +13,7 @@ set(CMAKE_MAKEFILE_DEPENDS
   "CMakeFiles/3.12.3/CMakeSystem.cmake"
   "../examples/CMakeLists.txt"
   "../src/CMakeLists.txt"
+  "../src_bin/CMakeLists.txt"
   "/home/yhl/software/clion-2018.2.6/bin/cmake/linux/share/cmake-3.12/Modules/CMakeCInformation.cmake"
   "/home/yhl/software/clion-2018.2.6/bin/cmake/linux/share/cmake-3.12/Modules/CMakeCXXInformation.cmake"
   "/home/yhl/software/clion-2018.2.6/bin/cmake/linux/share/cmake-3.12/Modules/CMakeCommonLanguageInclude.cmake"
@@ -27,12 +28,17 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/home/yhl/software/clion-2018.2.6/bin/cmake/linux/share/cmake-3.12/Modules/Compiler/GNU-C.cmake"
   "/home/yhl/software/clion-2018.2.6/bin/cmake/linux/share/cmake-3.12/Modules/Compiler/GNU-CXX.cmake"
   "/home/yhl/software/clion-2018.2.6/bin/cmake/linux/share/cmake-3.12/Modules/Compiler/GNU.cmake"
+  "/home/yhl/software/clion-2018.2.6/bin/cmake/linux/share/cmake-3.12/Modules/FindPNG.cmake"
+  "/home/yhl/software/clion-2018.2.6/bin/cmake/linux/share/cmake-3.12/Modules/FindPackageHandleStandardArgs.cmake"
+  "/home/yhl/software/clion-2018.2.6/bin/cmake/linux/share/cmake-3.12/Modules/FindPackageMessage.cmake"
+  "/home/yhl/software/clion-2018.2.6/bin/cmake/linux/share/cmake-3.12/Modules/FindZLIB.cmake"
   "/home/yhl/software/clion-2018.2.6/bin/cmake/linux/share/cmake-3.12/Modules/Platform/Linux-GNU-C.cmake"
   "/home/yhl/software/clion-2018.2.6/bin/cmake/linux/share/cmake-3.12/Modules/Platform/Linux-GNU-CXX.cmake"
   "/home/yhl/software/clion-2018.2.6/bin/cmake/linux/share/cmake-3.12/Modules/Platform/Linux-GNU.cmake"
   "/home/yhl/software/clion-2018.2.6/bin/cmake/linux/share/cmake-3.12/Modules/Platform/Linux.cmake"
   "/home/yhl/software/clion-2018.2.6/bin/cmake/linux/share/cmake-3.12/Modules/Platform/UnixPaths.cmake"
   "/home/yhl/software/clion-2018.2.6/bin/cmake/linux/share/cmake-3.12/Modules/ProcessorCount.cmake"
+  "/home/yhl/software/clion-2018.2.6/bin/cmake/linux/share/cmake-3.12/Modules/SelectLibraryConfigurations.cmake"
   )
 
 # The corresponding makefile is:
@@ -46,8 +52,11 @@ set(CMAKE_MAKEFILE_PRODUCTS
   "CMakeFiles/CMakeDirectoryInformation.cmake"
   "examples/CMakeFiles/CMakeDirectoryInformation.cmake"
   "src/CMakeFiles/CMakeDirectoryInformation.cmake"
+  "src_bin/CMakeFiles/CMakeDirectoryInformation.cmake"
   )
 
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
+  "src/CMakeFiles/image.dir/DependInfo.cmake"
+  "src_bin/CMakeFiles/image_main.dir/DependInfo.cmake"
   )

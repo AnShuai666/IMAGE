@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC -fPIC -g  -shared -Wl,-soname,libimage.so -o ../../lib/libimage.so CMakeFiles/image.dir/image_io.cpp.o 

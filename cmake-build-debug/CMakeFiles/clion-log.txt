@@ -1,4 +1,5 @@
 /home/yhl/software/clion-2018.2.6/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/as/IMAGE
+PNG FOUND: /usr/lib/x86_64-linux-gnu/libpng.so;/usr/lib/x86_64-linux-gnu/libz.so
 -- Configuring done
 -- Generating done
 -- Build files have been written to: /home/as/IMAGE/cmake-build-debug

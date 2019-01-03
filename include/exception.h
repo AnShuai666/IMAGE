@@ -14,12 +14,29 @@
 
 IMAGE_NAMESPACE_BEGIN
 
-class Exception : public std::exception, public std::string
+class Exception : public std::exception
 {
 public:
-
+    Exception();
+    virtual ~Exception(void);
+    virtual const char* what() const noexcept
+    {
+        std::cout<<"Got an Exception!"<<std::endl;
+    }
 };
 
+class FileException : public std::exception
+{
+public:
+    FileException(const std::string errMsg = "")
+        :_errMsg(errMsg){}
+    virtual ~FileException(void);
+    virtual const char* what() const noexcept
+    {
+        std::cout<<"File Exception at: "<<_errMsg<<std::endl;
+    }
+    std::string _errMsg;
+};
 IMAGE_NAMESPACE_END
 
 #endif //IMAGE_EXCEPTION_H

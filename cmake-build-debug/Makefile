@@ -110,6 +110,32 @@ depend:
 	$(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
+#=============================================================================
+# Target rules for targets named image
+
+# Build rule for target.
+image: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 image
+.PHONY : image
+
+# fast build rule for target.
+image/fast:
+	$(MAKE) -f src/CMakeFiles/image.dir/build.make src/CMakeFiles/image.dir/build
+.PHONY : image/fast
+
+#=============================================================================
+# Target rules for targets named image_main
+
+# Build rule for target.
+image_main: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 image_main
+.PHONY : image_main
+
+# fast build rule for target.
+image_main/fast:
+	$(MAKE) -f src_bin/CMakeFiles/image_main.dir/build.make src_bin/CMakeFiles/image_main.dir/build
+.PHONY : image_main/fast
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -118,6 +144,8 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
+	@echo "... image"
+	@echo "... image_main"
 .PHONY : help
 
 

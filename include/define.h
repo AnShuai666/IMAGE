@@ -14,15 +14,25 @@
 
 #define checkImageioerror(val) checkimage((val),#val,__FILE__,__LINE__);
 
+#define checkFileerror(fp) checkfile((fp),__FILE__,__LINE__);
+
 template <typename T>
 void checkimage(T val, char const* const funcname,char const* const filename,int const linenum)
 {
     if(val != 1)
     {
-        std::cerr<<" IMAGE IO ERROR AT: "<<filename<<": "<<linenum<<std::endl;
+        std::cerr<<"IMAGE IO ERROR AT: "<<filename<<": "<<linenum<<std::endl;
         std::cerr<<"ERROR FUNCNAME IS: "<<funcname<<std::endl;
     }
     return;
 }
 
+void checkfile(FILE *fp, char const* const filename, int const linenum)
+{
+    if(fp == NULL)
+    {
+        std::cerr<<"FILE LOAD ERROR AT: "<<filename<<": "<<linenum<<std::endl;
+    }
+    return;
+}
 #endif //IMAGE_DEFINE_H
