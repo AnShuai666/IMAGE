@@ -14,6 +14,10 @@
 
 IMAGE_NAMESPACE_BEGIN
 
+/********************************************************************
+*~~~~~~~~~~~~~~~~~~~~~~~~~~Exception类的声明与实现~~~~~~~~~~~~~~~~~~~~~
+********************************************************************/
+
 class Exception : public std::exception
 {
 public:
@@ -25,17 +29,24 @@ public:
     }
 };
 
+/********************************************************************
+*~~~~~~~~~~~~~~~~~~~~~~FileException类的声明与实现~~~~~~~~~~~~~~~~~~~~~
+********************************************************************/
 class FileException : public std::exception
 {
 public:
-    FileException(const std::string errMsg = "")
-        :_errMsg(errMsg){}
+    FileException(const std::string errMsg = "",const std::string errInfo = "")
+        :_errMsg(errMsg),_errInfo(errInfo){}
     virtual ~FileException(void);
+    //noexcept c11关键字代替原来的throw
     virtual const char* what() const noexcept
     {
         std::cout<<"File Exception at: "<<_errMsg<<std::endl;
+        std::cout<<"Exception content "<<_errInfo<<std::endl;
+
     }
     std::string _errMsg;
+    std::string _errInfo;
 };
 IMAGE_NAMESPACE_END
 
