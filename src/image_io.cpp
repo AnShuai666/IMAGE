@@ -39,13 +39,35 @@ load_image(std::string& filename)
 ImageHeaders
 load_image_headers(std::string const filename)
 {
+    try
+    {
+        return load_png_image_headers(filename);
+    }
+    catch (image::FileException &e)
+    {
+        e.what();
+    }
+    catch (image::Exception&)
+    {}
+
+    try
+    {
+        return load_jpg_image_headers(filename);
+    }
+    catch (image::FileException &e)
+    {
+        e.what();
+    }
+    catch (image::Exception&)
+    {}
+
 
 }
 
 void
 save_image(ByteImage::ConstPtr image, std::string const& filename)
 {
-
+    std::string 
 }
 
 void save_image(ByteImage::Ptr image, std::string const& filename)
@@ -137,7 +159,7 @@ load_png_image(std::string const& filename)
 
     int const bit_depth = png_get_bit_depth(png_ptr,png_info);
     if (bit_depth <= 8)
-        imageHeaders.imageType = IMAGE_TYPE_UNKNOWN;
+        imageHeaders.imageType = IMAGE_TYPE_UINT8;
     else if(bit_depth == 16)
         imageHeaders.imageType = IMAGE_TYPE_UINT16;
     else
@@ -182,7 +204,7 @@ load_png_image(std::string const& filename)
 }
 
 ImageHeaders
-load_jpg_image_headers(std::string const& filename)
+load_png_image_headers(std::string const& filename)
 {
     FILE *fp = std::fopen(filename.c_str(),"rb");
     if(fp == NULL)
@@ -196,8 +218,72 @@ load_jpg_image_headers(std::string const& filename)
     png_structp  png_ptr = NULL;
     png_infop png_info = NULL;
 
+    png_byte signature[8];
+    if (std::fread(signature,1,8,fp) != PNG_FILE_NAME_NUM)
+    {
+        std::fclose(fp);
+        fp = NULL;
+        throw image::FileException(filename,"PNG签名不能读取！");
+    }
+
+    //判断是否为png图
+    int is_png = !png_sig_cmp(signature,0,8);
+    if ( !is_png)
+    {
+        std::fclose(fp);
+        fp = NULL;
+        throw image::FileException(filename,"并不是PNG图");
+    }
+
+    // 1.初始化png_structp类型指针,png_create_read_struct()函数返回一个png_struct_p类型的指针，如果结构体指针分配失败，返回NULL
+    png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+    if(!png_ptr)
+    {
+        std::fclose(fp);
+        fp =NULL;
+        throw image::FileException(filename,"png_structp初始化失败！");
+    }
+
+    // 2.初始化png_infop变量
+    png_info = png_create_info_struct(png_ptr);
+    if(!png_info)
+    {
+        png_destroy_read_struct(&png_ptr, nullptr, nullptr);
+        std::fclose(fp);
+        fp = NULL;
+        throw image::FileException(filename,"初始化png_infop失败！");
+    }
+    //复位文件指针
+    rewind(fp);
+    //开始读取文件，将文件与png_structp相关联
+    png_init_io(png_ptr,fp);
+    //由于文件头8个字节是png标识符，需要跳过
+    png_set_sig_bytes(png_ptr,PNG_FILE_NAME_NUM);
+    //查询图像信息 读取png图像信息头
+    png_read_info(png_ptr,png_info);
+
+    imageHeaders.width = png_get_image_width(png_ptr,png_info);
+    imageHeaders.height = png_get_image_height(png_ptr,png_info);
+    imageHeaders.channels = png_get_channels(png_ptr,png_info);
+
+    int const bit_depth = png_get_bit_depth(png_ptr,png_info);
+    if (bit_depth <= 8)
+        imageHeaders.imageType = IMAGE_TYPE_UINT8;
+    else if(bit_depth == 16)
+        imageHeaders.imageType = IMAGE_TYPE_UINT16;
+    else
+    {
+        png_destroy_read_struct(&png_ptr,&png_info, nullptr);
+        std::fclose(fp);
+        fp = NULL;
+        throw image::FileException(filename,"PNG图像深度未知！");
+    }
+
+    png_destroy_read_struct(&png_ptr,&png_info, nullptr);
+
     std::fclose(fp);
     fp = NULL;
+    return imageHeaders;
 }
 
 ByteImage::Ptr
