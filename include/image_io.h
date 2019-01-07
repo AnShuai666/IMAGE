@@ -117,6 +117,13 @@ save_png_image(ByteImage::ConstPtr image, std::string const& filename, int compr
 *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~jpg图像加载~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 *******************************************************************/
 
+/*
+*  @property   图像加载
+*  @func       加载jpg格式的图像
+*  @param_in   filename         图像路径及图像名        常指针
+*  @param_in   exif             图像元信息
+*  @return     ByteImage::Ptr
+*/
 ByteImage::Ptr
 load_jpg_image(std::string const& filename,std::string* exif = nullptr);
 

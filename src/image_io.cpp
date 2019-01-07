@@ -8,6 +8,8 @@
 #include <fstream>
 #include <png.h>
 #include <exception.h>
+#include <jpeglib.h>
+#include <string.h>
 
 IMAGE_NAMESPACE_BEGIN
 
@@ -176,6 +178,119 @@ load_png_image(std::string const& filename)
     png_destroy_read_struct(&png_ptr,&png_info, nullptr);
     std::fclose(fp);
     fp = NULL;
+    return image;
+}
+
+ImageHeaders
+load_jpg_image_headers(std::string const& filename)
+{
+    FILE *fp = std::fopen(filename.c_str(),"rb");
+    if(fp == NULL)
+    {
+        std::fclose(fp);
+        fp =NULL;
+        image::FileException(filename,strerror(errno));
+    }
+
+    ImageHeaders imageHeaders;
+    png_structp  png_ptr = NULL;
+    png_infop png_info = NULL;
+
+    std::fclose(fp);
+    fp = NULL;
+}
+
+ByteImage::Ptr
+load_jpg_image(std::string const& filename,std::string* exif )
+{
+    FILE *fp = std::fopen(filename.c_str(),"rb");
+    if(fp == NULL)
+    {
+        fclose(fp);
+        fp = NULL;
+        throw image::FileException(filename,"jpg file open failed!");
+    }
+
+    // 分配和初始化一个d
+    // ecompression结构体
+    // 指定源文件
+    // 用jpeg_read_header获得jpg信息
+    // 设置解压参数,比如放大、缩小
+    // 启动解压：jpeg_start_decompress
+    // while (scan lines remain to be read)
+    //   循环调用jpeg_read_scanlines
+    // jpeg_finish_decompress
+    // 释放decompression结构体
+
+    jpeg_decompress_struct cinfo;
+    jpeg_error_mgr jerr{};
+    ByteImage::Ptr image;
+
+    try
+    {
+        //分配和初始化一个decompression结构体
+        cinfo.err = jpeg_std_error(&jerr);
+
+        jpeg_create_decompress(&cinfo);
+
+        //指定源文件
+        jpeg_stdio_src (&cinfo,fp);
+
+        //图像元信息
+        if(exif)
+        {
+            jpeg_save_markers(&cinfo,JPEG_APP0 + 1,0xffff);
+        }
+
+        //读取jpeg头 获得jpg信息
+        int ret = jpeg_read_header(&cinfo,FALSE);
+        if (ret != JPEG_HEADER_OK)
+        {
+            throw image::FileException(filename,"JPEG header 识别不了！");
+        }
+
+        //检查jpeg marker标记
+        if (exif)
+        {
+
+        }
+
+        if(cinfo.out_color_space != JCS_GRAYSCALE && cinfo.out_color_space != JCS_RGB)
+        {
+            throw image::FileException(filename,"非法JPEG图像空间！");
+        }
+
+        //创建图像
+        int const width = cinfo.image_width;
+        int const height = cinfo.image_height;
+        int const channels = (cinfo.out_color_space == JCS_RGB ? 3 : 1);
+        image = ByteImage::create(width,height,channels);
+        ByteImage::ImageData& data = image->get_data();
+        //开始解压
+        jpeg_start_decompress(&cinfo);
+
+        unsigned char* data_ptr = &data[0];
+        //循环调用jpeg_read_scanlines来一行一行地获得解压的数据
+        while (cinfo.output_scanline < cinfo.output_height)
+        {
+            jpeg_read_scanlines(&cinfo,&data_ptr,1);
+            data_ptr += channels * cinfo.output_width;
+        }
+
+        //停止图像解压
+        jpeg_finish_decompress(&cinfo);
+        jpeg_destroy_decompress(&cinfo);
+        fclose(fp);
+        fp = NULL;
+    }
+
+    catch (...)
+    {
+        jpeg_destroy_decompress(&cinfo);
+        std::fclose(fp);
+        fp =NULL;
+    }
+
     return image;
 }
 
