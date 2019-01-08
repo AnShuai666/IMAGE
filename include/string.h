@@ -57,19 +57,19 @@ IMAGE_NAMESPACE_BEGIN
 *~~~~~~~~~~~~~~~~~~~~~常用字符串处理函数实现~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 *******************************************************************/
 std::string
-image::left(std::string const &str, std::size_t size)
+left(std::string const &str, std::size_t size)
 {
     return str.substr(0,size);
 }
 
 std::string
-image::right(std::string const &str, std::size_t size)
+right(std::string const &str, std::size_t size)
 {
     return str.substr(str.size() - size);
 }
 
 std::string
-image::lowercase(std::string const &str)
+lowercase(std::string const &str)
 {
     std::string string(str);
     for (int i = 0; i < str.size(); ++i)
@@ -83,7 +83,7 @@ image::lowercase(std::string const &str)
 }
 
 std::string
-image::uppercase(std::string const &str)
+uppercase(std::string const &str)
 {
     std::string string(str);
     for (int i = 0; i < str.size(); ++i)

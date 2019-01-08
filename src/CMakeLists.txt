@@ -1,4 +1,4 @@
-include_directories(../include)
+include_directories(..)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 find_package(PNG REQUIRED)

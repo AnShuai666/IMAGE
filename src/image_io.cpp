@@ -4,12 +4,14 @@
  * @date    2018-12-18
  * @e-mail   1028792866@qq.com
 */
-#include "image_io.h"
+#include "include/image_io.h"
+#include "include/string.h"
+#include "include/exception.h"
 #include <fstream>
 #include <png.h>
-#include <exception.h>
 #include <jpeglib.h>
-#include "string.h"
+#include <string.h>
+#include <errno.h>
 IMAGE_NAMESPACE_BEGIN
 
 ByteImage::Ptr
