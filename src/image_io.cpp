@@ -9,8 +9,7 @@
 #include <png.h>
 #include <exception.h>
 #include <jpeglib.h>
-#include <string.h>
-
+#include "string.h"
 IMAGE_NAMESPACE_BEGIN
 
 ByteImage::Ptr
@@ -62,12 +61,29 @@ load_image_headers(std::string const filename)
     {}
 
 
+
 }
 
 void
 save_image(ByteImage::ConstPtr image, std::string const& filename)
 {
-    std::string 
+    std::string fext4 = image::lowercase(right(filename,4));
+    std::string fext5 = image::lowercase(right(filename,5));
+
+    if (fext4 == ".jpg" || fext5 == ".jpeg")
+    {
+        save_jpg_image(image,filename,85);
+        return;
+    }
+    else if(fext4 == ".png")
+    {
+        save_png_image(image, filename);
+        return;
+    }
+    else
+    {
+        throw image::FileException(filename,"你所输入的格式目前不支持！");
+    }
 }
 
 void save_image(ByteImage::Ptr image, std::string const& filename)

@@ -12,6 +12,9 @@
 #include <string>
 IMAGE_NAMESPACE_BEGIN
 
+/*******************************************************************
+*~~~~~~~~~~~~~~~~~~~~~常用字符串处理函数声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*******************************************************************/
 /*
 *  @property   截取字符串
 *  @func       截取字符串左边size个字符
@@ -47,4 +50,51 @@ std::string lowercase(std::string const &str);
 std::string uppercase(std::string const &str);
 
 IMAGE_NAMESPACE_END
+
+IMAGE_NAMESPACE_BEGIN
+
+/*******************************************************************
+*~~~~~~~~~~~~~~~~~~~~~常用字符串处理函数实现~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*******************************************************************/
+std::string
+image::left(std::string const &str, std::size_t size)
+{
+    return str.substr(0,size);
+}
+
+std::string
+image::right(std::string const &str, std::size_t size)
+{
+    return str.substr(str.size() - size);
+}
+
+std::string
+image::lowercase(std::string const &str)
+{
+    std::string string(str);
+    for (int i = 0; i < str.size(); ++i)
+    {
+        if(string[i] >= 0x41 && string[i] <= 0x5a)
+        {
+            string[i] += 0x20;
+        }
+    }
+    return string;
+}
+
+std::string
+image::uppercase(std::string const &str)
+{
+    std::string string(str);
+    for (int i = 0; i < str.size(); ++i)
+    {
+        if(string[i] >= 0x61 && string[i] <= 0x7a)
+        {
+            string[i] -= 0x20;
+        }
+    }
+    return string;
+}
+IMAGE_NAMESPACE_END
+
 #endif //IMAGE_STRING_H
