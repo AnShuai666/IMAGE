@@ -304,6 +304,42 @@ load_png_image_headers(std::string const& filename)
     return imageHeaders;
 }
 
+void
+save_png_image(ByteImage::ConstPtr image, std::string const &filename, int compression_level)
+{
+    if (image == nullptr)
+    {
+        throw std::invalid_argument("待存储图像为空！");
+    }
+
+    FILE *fp = std::fopen(filename.c_str(),"wb");
+    if(fp == NULL)
+    {
+        fclose(fp);
+        throw image::FileException(filename,strerror(errno));
+    }
+    png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING,NULL,NULL,NULL);
+
+    if (!png_ptr)
+    {
+        std::fclose(fp);
+        fp = NULL;
+        throw image::FileException(filename,"内存不足，空间分配失败！");
+    }
+
+    png_infop info_ptr = png_create_info_struct(png_ptr);
+
+    if (!info_ptr)
+    {
+        std::fclose(fp);
+        fp = NULL;
+        throw image::FileException(filename,"内存不足，")
+    }
+
+    fclose(fp);
+    fp = NULL;
+}
+
 ByteImage::Ptr
 load_jpg_image(std::string const& filename,std::string* exif )
 {
@@ -315,8 +351,7 @@ load_jpg_image(std::string const& filename,std::string* exif )
         throw image::FileException(filename,"jpg file open failed!");
     }
 
-    // 分配和初始化一个d
-    // ecompression结构体
+    // 分配和初始化一个decompression结构体
     // 指定源文件
     // 用jpeg_read_header获得jpg信息
     // 设置解压参数,比如放大、缩小
@@ -396,6 +431,78 @@ load_jpg_image(std::string const& filename,std::string* exif )
     }
 
     return image;
+}
+
+ImageHeaders
+load_jpg_image_headers(std::string const &filename)
+{
+
+}
+
+void
+save_jpg_image(ByteImage::ConstPtr image, std::string const &filename, int quality)
+{
+    if (image == NULL)
+    {
+        throw std::invalid_argument("待存储图像为空！");
+    }
+
+    if(image->channels() != 1 && image->channels() != 3)
+    {
+        throw image::FileException(filename,"图像通道数不是1和3！");
+    }
+
+    FILE *fp = std::fopen(filename.c_str(),"wb");
+    if(fp == NULL)
+    {
+        std::fclose(fp);
+        throw image::FileException(filename,strerror(errno));
+    }
+
+    j_compress_ptr cinfo_ptr;
+    struct jpeg_error_mgr jerr;
+
+    cinfo_ptr->err = jpeg_std_error(&jerr);
+    jpeg_create_compress(cinfo_ptr);
+    jpeg_stdio_dest(cinfo_ptr,fp);
+
+    cinfo_ptr->image_width = image->width();
+    cinfo_ptr->image_height = image->height();
+    cinfo_ptr->input_components = image->channels();
+
+    switch (image->channels())
+    {
+        case 1:
+            cinfo_ptr->in_color_space = JCS_GRAYSCALE;
+            break;
+        case 2:
+            cinfo_ptr->in_color_space = JCS_RGB;
+            break;
+        default:
+            jpeg_destroy_compress(cinfo_ptr);
+            std::fclose(fp);
+            fp = NULL;
+            throw image::FileException(filename,"非法的颜色空间！");
+    }
+
+    //设置默认的压缩参数
+    jpeg_set_defaults(cinfo_ptr);
+    jpeg_set_quality(cinfo_ptr,quality,TRUE);
+    jpeg_start_compress(cinfo_ptr,TRUE);
+
+    ByteImage::ImageData const &data = image->get_data();
+    int row_stride = image->width() * image->channels();
+    while (cinfo_ptr->next_scanline < cinfo_ptr->image_height)
+    {
+        JSAMPROW row_pointer = const_cast<JSAMPROW >(&data[cinfo_ptr->next_scanline * row_stride]);
+        jpeg_write_scanlines(cinfo_ptr,&row_pointer,1);
+    }
+
+    jpeg_finish_compress(cinfo_ptr);
+    jpeg_destroy_compress(cinfo_ptr);
+
+    std::fclose(fp);
+    fp = NULL;
 }
 
 IMAGE_NAMESPACE_END

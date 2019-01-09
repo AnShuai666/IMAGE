@@ -109,7 +109,14 @@ load_png_image(std::string const& filename);
 ImageHeaders
 load_png_image_headers(std::string const& filename);
 
-
+/*
+*  @property   图像存储
+*  @func       存储png格式的图像
+*  @param_in   image                待存储图像
+*  @param_in   filename             图像路径及图像名        常指针
+*  @param_in   compression_level    0-9 0:无压缩 9：最大压缩 常用3-6
+*  @return     void
+*/
 void
 save_png_image(ByteImage::ConstPtr image, std::string const& filename, int compression_level = 1);
 
@@ -131,13 +138,20 @@ load_jpg_image(std::string const& filename,std::string* exif = nullptr);
 ImageHeaders
 load_jpg_image_headers(std::string const& filename);
 
-
+/*
+*  @property   图像存储
+*  @func       存储jpg格式的图像
+*  @param_in   image             待存储图像
+*  @param_in   filename          图像路径及图像名        常指针
+*  @param_in   quality           图像压缩质量，一般在80%以上比较清晰
+*  @return     void
+*/
 void
 save_jpg_image(ByteImage::ConstPtr image, std::string const& filename, int quality);
 
 
 /*******************************************************************
-*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~jpg图像加载~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tiff图像加载~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 *******************************************************************/
 
 ByteImage::Ptr
