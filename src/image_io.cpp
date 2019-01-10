@@ -333,8 +333,65 @@ save_png_image(ByteImage::ConstPtr image, std::string const &filename, int compr
     {
         std::fclose(fp);
         fp = NULL;
-        throw image::FileException(filename,"内存不足，")
+        throw image::FileException(filename,"内存不足，空间分配失败！");
     }
+
+    png_init_io(png_ptr,fp);
+
+    int color_type;
+    switch (image->channels())
+    {
+        case 1:
+            color_type = PNG_COLOR_TYPE_GRAY;
+            break;
+        case 2:
+            color_type = PNG_COLOR_TYPE_GRAY_ALPHA;
+            break;
+        case 3:
+            color_type = PNG_COLOR_TYPE_RGB;
+            break;
+        case 4:
+            color_type = PNG_COLOR_TYPE_RGB_ALPHA;
+            break;
+        default:
+            png_destroy_write_struct(&png_ptr,&info_ptr);
+            std::fclose(fp);
+            fp = NULL;
+            throw image::FileException(filename,"非法的图像空间");
+    }
+
+
+    png_set_compression_level(png_ptr,compression_level);
+
+    //图像写入文件
+    //设置PNG文件头
+    png_set_IHDR(png_ptr,info_ptr,
+            image->width(),          //图像宽度
+            image->height(),         //图像高度
+            8,                       //图像位深 8
+            color_type,              //图像颜色类型
+            PNG_INTERLACE_NONE,       //不交错PNG_INTERLACE_ADAM7表示这个PNG文件是交错格式。
+                                     // 交错格式的PNG文件在网络传输的时候能以最快速度显示出图像的大致样子。
+            PNG_COMPRESSION_TYPE_BASE,//压缩方式
+            PNG_FILTER_TYPE_BASE
+            );
+
+    //设置行指针
+    std::vector<png_bytep> row_pointers;
+    row_pointers.resize(image->width());
+    ByteImage::ImageData const &data = image->get_data();
+    for (int i = 0; i < image->height(); ++i)
+    {
+        row_pointers[i] = const_cast<png_bytep >(&data[i * image->width() * image->channels()]);
+    }
+
+    //写入文件
+    png_set_rows(png_ptr,info_ptr,&row_pointers[0]);
+    //无需转换
+    png_write_png(png_ptr,info_ptr, PNG_TRANSFORM_IDENTITY, nullptr);
+    png_write_end(png_ptr,info_ptr);
+
+    png_destroy_write_struct(&png_ptr,&info_ptr);
 
     fclose(fp);
     fp = NULL;
