@@ -90,7 +90,7 @@ save_image(ByteImage::ConstPtr image, std::string const& filename)
 
 void save_image(ByteImage::Ptr image, std::string const& filename)
 {
-
+   save_image(ByteImage::ConstPtr(image),filename);
 }
 
 void save_image(FloatImage::ConstPtr image, std::string const& filename)

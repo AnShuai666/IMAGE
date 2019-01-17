@@ -13,9 +13,9 @@ set(HEADERS
         ${PROJECT_SOURCE_DIR}/include/define.h
         ${PROJECT_SOURCE_DIR}/include/image.hpp
         ../include/image_io.h
-        ../include/exception.h ../include/string.h)
+        ../include/exception.h ../include/string.h sift.cpp ../include/sift.h)
 
 set(SOURCE_FILES
         image_io.cpp
-        )
+        sift.cpp ../include/sift.h)
 add_library(image SHARED ${HEADERS} ${SOURCE_FILES})
