@@ -48,6 +48,10 @@ public:
         //
         int min_octave;
 
+        int max_octave;
+
+        float
+
     };
 
     struct Keypoint
