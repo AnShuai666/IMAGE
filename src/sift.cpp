@@ -3,3 +3,13 @@
 //
 
 #include "include/sift.h"
+
+IMAGE_NAMESPACE_BEGIN
+
+image::Sift::Sift(image::Sift::Options const &options):
+options(options)
+{
+
+}
+
+IMAGE_NAMESPACE_END
