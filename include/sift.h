@@ -75,7 +75,7 @@ public:
         //关键点的阶索引，第octave阶
         int octave;
 
-        //有效高斯差分索引，{0,S-1} 搞死差分{-1,S}
+        //有效高斯差分索引，{0,S-1} 高斯差分{-1,S}
         float sample;
 
         //关键点x坐标
@@ -118,6 +118,15 @@ public:
     */
     explicit Sift(image::Sift::Options const &options);
 
+    /*
+    *  @property
+    *  @func
+    *  @param_in
+    *  @explict
+    */
+    void set_image(image::ByteImage::ConstPtr img);
+
+
 protected:
 
 
@@ -127,6 +136,8 @@ private:
     Keypoints keypoints;
     Descriptors descriptors;
 };
+
+
 
 inline
 Sift::Options::Options(void):
