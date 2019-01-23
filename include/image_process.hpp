@@ -48,7 +48,6 @@ T desaturate_maximum(T const* v);
 *  @param_in   image            待转换图像
 *  @param_in   type             亮度类型
 *  @typename   防止歧义，显示声明Image<T>::Ptr是类型而非变量
-*
 *  @return     Image<T>::Ptr
 */
 template <typename T>
@@ -80,6 +79,9 @@ typename Image<T>::Ptr desaturate(typename Image<T>::ConstPtr image, DesaturateT
 
     typename Image<T>::Ptr out_image(Image<T>::create());
     out_image->allocate(image->width(),image->height(),1 + has_alpha);
+
+    typedef T (*DesaturateFunc)(T const*);
+    DesaturateFunc func;
 
 
 }
