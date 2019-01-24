@@ -6,6 +6,7 @@
 */
 
 #include "include/sift.h"
+#include "include/image_process.hpp"
 
 IMAGE_NAMESPACE_BEGIN
 
@@ -20,6 +21,22 @@ options(options)
     if (this->options.debug_output)
     {
         this->options.verbose_output = true;
+    }
+}
+
+void
+image::Sift::set_image(image::ByteImage::ConstPtr img)
+{
+    if (img->channels() != 1 && img->channels() != 3)
+    {
+        throw std::invalid_argument("需要灰度图或者彩色图");
+    }
+
+    this->srcImg = image::byte_to_float_image(img);
+
+    if (img->channels() == 3)
+    {
+        this->srcImg = image::desaturate<float>(this->srcImg,image::DESATURATE_AVERAGE);
     }
 }
 
