@@ -22,7 +22,7 @@ enum DesaturateType
     DESATURATE_MAXIMUM,     //Maximum = max(R,G,B)
     DESATURATE_LIGHTNESS,   //Lightness = 1/2 * (max(R,G,B) + min(R,G,B))
     DESATURATE_LUMINOSITY,  //Luminosity = 0.21 * R + 0.72 * G + 0.07 * B
-    SESATURATE_LUMINANCE,   //Luminince = 0.30 * R + 0.59 * G + 0.11 * B
+    DESATURATE_LUMINANCE,   //Luminince = 0.30 * R + 0.59 * G + 0.11 * B
     DESATURATE_AVERAGE      //Average Brightness = 1/3 * (R + G +B)
 };
 
@@ -39,8 +39,50 @@ enum DesaturateType
 FloatImage::Ptr
 byte_to_float_image(ByteImage::ConstPtr image);
 
+/*
+*  @property   图像转换
+*  @func       RGB->HSL          L = max(R,G,B)
+*  @param_in   image            待转换图像
+*  @return     T
+*/
 template <typename T>
 T desaturate_maximum(T const* v);
+
+/*
+*  @property   图像转换
+*  @func       RGB->HSL          L = 1/2 * (max(R,G,B)+mai(R,G,B))
+*  @param_in   image            待转换图像
+*  @return     T
+*/
+template <typename T>
+T desaturate_lightness(T const* v);
+
+/*
+*  @property   图像转换
+*  @func       RGB->HSL          L = 0.21 * R + 0.72 * G + 0.07 * B
+*  @param_in   image            待转换图像
+*  @return     T
+*/
+template <typename T>
+T desaturate_luminosity(T const* v);
+
+/*
+*  @property   图像转换
+*  @func       RGB->HSL          L = 0.30 * R + 0.59 * G + 0.11 * B
+*  @param_in   image            待转换图像
+*  @return     T
+*/
+template <typename T>
+T desaturate_luminance(T const* v);
+
+/*
+*  @property   图像转换
+*  @func       RGB->HSL          L = 1/3 * (R + G +B)
+*  @param_in   image            待转换图像
+*  @return     T
+*/
+template <typename T>
+T desaturate_average(T const* v);
 
 /*
 *  @property   图像饱和度降低
@@ -63,6 +105,45 @@ IMAGE_NAMESPACE_END
 IMAGE_NAMESPACE_BEGIN
 
 template <typename T>
+inline T
+desaturate_maximum(T const* v)
+{
+    return *std::max_element(v, v + 3);
+}
+
+template <typename T>
+inline T
+desaturate_lightness(T const* v)
+{
+    T const max = *std::max_element(v, v + 3);
+    T const min = *std::min_element(v, v + 3);
+    return 0.5f * (max + min);
+}
+
+template <typename T>
+inline T
+desaturate_luminosity(T const* v)
+{
+    return 0.21f * v[0] + 0.72f * v[1] + 0.07f * v[2];
+}
+
+
+template <typename T>
+inline T
+desaturate_luminance(T const* v)
+{
+    return 0.30 * v[0] + 0.59f * v[1] + 0.11f * v[2];
+}
+
+
+template <typename T>
+inline T desaturate_average(T const* v)
+{
+    return ((float)(v[0] + v[1] + v[2])) / 3.0f;
+}
+
+
+template <typename T>
 typename Image<T>::Ptr desaturate(typename Image<T>::ConstPtr image, DesaturateType type)
 {
     if (image == NULL)
@@ -83,7 +164,44 @@ typename Image<T>::Ptr desaturate(typename Image<T>::ConstPtr image, DesaturateT
     typedef T (*DesaturateFunc)(T const*);
     DesaturateFunc func;
 
+    switch (type)
+    {
+        case DESATURATE_MAXIMUM:
+            func = desaturate_maximum<T>;
+            break;
+        case DESATURATE_LIGHTNESS:
+            func = desaturate_lightness<T>;
+            break;
+        case DESATURATE_LUMINOSITY:
+            func = desaturate_luminosity;
+            break;
+        case DESATURATE_LUMINANCE:
+            func = desaturate_luminance;
+            break;
+        case DESATURATE_AVERAGE:
+            func = desaturate_average;
+            break;
+        default:
+            throw std::invalid_argument("非法desaturate类型");
+    }
 
+    int out_pos = 0;
+    int in_pos = 0;
+    for (int i = 0; i < image->get_pixel_amount(); ++i)
+    {
+        T const* v = &image->at(0);
+        out_image->at(out_pos) = func(v);
+
+        if (has_alpha)
+        {
+            out_image->at(out_pos + 1) = image->at(in_pos + 3);
+        }
+
+        out_pos += 1 + has_alpha;
+        in_pos += 3 + has_alpha;
+    }
+
+    return out_image;
 }
 
 IMAGE_NAMESPACE_END
