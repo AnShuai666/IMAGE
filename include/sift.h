@@ -119,13 +119,20 @@ public:
     explicit Sift(image::Sift::Options const &options);
 
     /*
-    *  @property
-    *  @func
-    *  @param_in
-    *  @explict
+    *  @property    图像转换为float图
+    *  @func        设置输入图像　灰度图不变　RGB->HSL
+    *  @param_in    img       输入图
+    *  @explict     void
     */
     void set_image(image::ByteImage::ConstPtr img);
 
+    /*
+    *  @property    图像转换
+    *  @func        设置输入图像　灰度图不变　RGB->HSL
+    *  @param_in    img       输入图
+    *  @explict     void
+    */
+    void set_float_image(image::FloatImage::ConstPtr img);
 
 protected:
 

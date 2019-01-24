@@ -40,4 +40,24 @@ image::Sift::set_image(image::ByteImage::ConstPtr img)
     }
 }
 
+void
+image::Sift::set_float_image(image::FloatImage::ConstPtr img)
+{
+    if (img->channels() != 1 && img->channels() != 3)
+    {
+        throw std::invalid_argument("需要灰度图或者彩色图");
+    }
+
+    if(img->channels() == 3)
+    {
+        this->srcImg = image::desaturate<float>(img,image::DESATURATE_AVERAGE);
+    }
+    else
+    {
+        this->srcImg = img->duplicate();
+    }
+
+}
+
+
 IMAGE_NAMESPACE_END
