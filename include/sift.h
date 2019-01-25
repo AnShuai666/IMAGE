@@ -108,6 +108,7 @@ public:
 public:
     typedef std::vector<image::Sift::Keypoint> Keypoints;
     typedef std::vector<image::Sift::Descriptor> Descriptors;
+    typedef std::vector<image::FloatImage::Ptr> ImageVector;
 
 public:
     /*
@@ -133,9 +134,15 @@ public:
     *  @explict     void
     */
     void set_float_image(image::FloatImage::ConstPtr img);
-
+/********************************************************************
+*~~~~~~~~~~~~~~~~~~~~~~~~~常用结构体声明及定义~~~~~~~~~~~~~~~~~~~~~~~~~~
+********************************************************************/
 protected:
+    struct Octave
+    {
 
+
+    };
 
 private:
     Options options;
