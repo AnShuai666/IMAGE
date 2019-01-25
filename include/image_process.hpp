@@ -16,7 +16,15 @@ IMAGE_NAMESPACE_BEGIN
 *~~~~~~~~~~~~~~~~~~~~~图像饱和度类型枚举声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 *******************************************************************/
 //http://changingminds.org/explanations/perception/visual/lightness_variants.htm
+//https://ninghao.net/video/2116
 //三者都是亮度，HSL空间中的L,不同软件的L不一样分别为LIGHTNESS，LUMINOSITY与LUMINANCE
+//HSL色彩模式是工业界的一种颜色标准
+//H： Hue 色相             代表的是人眼所能感知的颜色范围，这些颜色分布在一个平面的色相环上
+//                        基本参照：360°/0°红、60°黄、120°绿、180°青、240°蓝、300°洋红
+//S：Saturation 饱和度     用0%至100%的值描述了相同色相、明度下色彩纯度的变化。数值越大，
+//                        颜色中的灰色越少，颜色越鲜艳
+//L ：Lightness 明度       作用是控制色彩的明暗变化。它同样使用了0%至100%的取值范围。
+//                        数值越小，色彩越暗，越接近于黑色；数值越大，色彩越亮，越接近于白色。
 enum DesaturateType
 {
     DESATURATE_MAXIMUM,     //Maximum = max(R,G,B)
@@ -189,7 +197,7 @@ typename Image<T>::Ptr desaturate(typename Image<T>::ConstPtr image, DesaturateT
     int in_pos = 0;
     for (int i = 0; i < image->get_pixel_amount(); ++i)
     {
-        T const* v = &image->at(0);
+        T const* v = &image->at(in_pos);
         out_image->at(out_pos) = func(v);
 
         if (has_alpha)

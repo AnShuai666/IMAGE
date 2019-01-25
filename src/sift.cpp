@@ -57,6 +57,7 @@ image::Sift::set_float_image(image::FloatImage::ConstPtr img)
         this->srcImg = img->duplicate();
     }
 
+
 }
 
 
