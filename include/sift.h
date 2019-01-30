@@ -140,7 +140,10 @@ public:
 protected:
     struct Octave
     {
-
+        ImageVector img_src;
+        ImageVector img_dog;
+        ImageVector img_grad;
+        ImageVector img_ort;
 
     };
 
