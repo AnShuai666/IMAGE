@@ -56,7 +56,12 @@ image::Sift::set_float_image(image::FloatImage::ConstPtr img)
     {
         this->srcImg = img->duplicate();
     }
+}
 
+void
+image::Sift::create_octaves()
+{
+    this->octaves.clear();
 
 }
 

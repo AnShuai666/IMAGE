@@ -123,7 +123,7 @@ public:
     *  @property    图像转换为float图
     *  @func        设置输入图像　灰度图不变　RGB->HSL
     *  @param_in    img       输入图
-    *  @explict     void
+    *  @return      void
     */
     void set_image(image::ByteImage::ConstPtr img);
 
@@ -131,7 +131,7 @@ public:
     *  @property    图像转换
     *  @func        设置输入图像　灰度图不变　RGB->HSL
     *  @param_in    img       输入图
-    *  @explict     void
+    *  @return      void
     */
     void set_float_image(image::FloatImage::ConstPtr img);
 /********************************************************************
@@ -140,16 +140,30 @@ public:
 protected:
     struct Octave
     {
-        ImageVector img_src;
-        ImageVector img_dog;
-        ImageVector img_grad;
-        ImageVector img_ort;
-
+        ImageVector img_src;    //每阶原图像数        s+3
+        ImageVector img_dog;    //每阶高斯差分图像数   s+2
+        ImageVector img_grad;   //每阶梯度图像数      s+3
+        ImageVector img_ort;    //每阶旋转图像        s+3
     };
+
+protected:
+    typedef std::vector<image::Sift::Octave> Octaves;
+
+protected:
+    /*
+    *  @property    图像转换
+    *  @func        设置输入图像　灰度图不变　RGB->HSL
+    *  @param_in    img       输入图
+    *  @return      void
+    */
+    void create_octaves(void);
+
+    void add_octave(image::FloatImage::ConstPtr image,float has_sigma, float target_sigma);
 
 private:
     Options options;
     image::FloatImage::ConstPtr srcImg;
+    Octaves octaves;
     Keypoints keypoints;
     Descriptors descriptors;
 };
