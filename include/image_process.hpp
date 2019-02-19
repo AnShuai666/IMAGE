@@ -105,10 +105,9 @@ typename Image<T>::Ptr
 desaturate(typename Image<T>::ConstPtr image,DesaturateType type);
 
 /*
-*  @property   图像饱和度降低
-*  @func       将图像转换为几种HSL图像
-*  @param_in   image            待转换图像
-*  @param_in   type             亮度类型
+*  @property   图像缩放
+*  @func       将图像放大为原图两倍　均匀插值，最后一行后最后一列与倒数第二行与倒数第二列相同
+*  @param_in   image            待放大图像
 *  @typename   防止歧义，显示声明Image<T>::Ptr是类型而非变量
 *  @return     Image<T>::Ptr
 */
@@ -224,6 +223,43 @@ typename Image<T>::Ptr desaturate(typename Image<T>::ConstPtr image, DesaturateT
     return out_image;
 }
 
+template <typename T>
+typename Image<T>::Ptr
+rescale_double_size_supersample(typename Image<T>::ConstPtr img)
+{
+    int const iw = img->width();
+    int const ih = img->height();
+    int const ic = img->channels();
+    int const ow = iw << 1;
+    int const oh = ih << 1;
+
+    typename Image<T>::Ptr out(Image<T>::create());
+    out->allocate(ow,oh,ic);
+
+    int witer = 0;
+    for (int y = 0; y < oh; ++y)
+    {
+        bool nexty = (y + 1) < oh;
+        int yoff[2] = {iw * (y >> 1), iw * ((y + nexty) >> 1)};
+        for (int x = 0; x < ow; ++x)
+        {
+            bool nextx = (x + 1) < ow;
+            int xoff[2] = {x >> 1,(x + nextx) >> 1};
+            T const* val[4] =
+            {
+                &img->at(yoff[0] + xoff[0],0),
+                &img->at(yoff[0] + xoff[1],0),
+                &img->at(yoff[1] + xoff[0],0),
+                &img->at(yoff[1] + yoff[1],0)
+            };
+
+            for (int c = 0; c < ic; ++c)
+            {
+                out->at(x,y,c) = 0.25f * (val[0][c] + val[1][c] + val[2][c] + val[3][c]);
+            }
+        }
+    }
+}
 
 
 IMAGE_NAMESPACE_END
