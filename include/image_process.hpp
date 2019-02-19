@@ -259,6 +259,7 @@ rescale_double_size_supersample(typename Image<T>::ConstPtr img)
             }
         }
     }
+    return out;
 }
 
 
