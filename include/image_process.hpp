@@ -130,6 +130,10 @@ template <typename T>
 typename Image<T>::Ptr
 rescale_half_size(typename Image<T>::ConstPtr img);
 
+template <typename T>
+typename Image<T>::Ptr
+rescale_half_size_gaussian(typename Image<T>::ConstPtr image, float sigma = 0.866025403784439f);
+
 IMAGE_NAMESPACE_END
 
 /*******************************************************************
@@ -316,6 +320,8 @@ rescale_half_size(typename Image<T>::ConstPtr img)
         }
     }
 }
+
+
 
 IMAGE_NAMESPACE_END
 
