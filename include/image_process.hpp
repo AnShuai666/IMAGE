@@ -107,13 +107,28 @@ desaturate(typename Image<T>::ConstPtr image,DesaturateType type);
 /*
 *  @property   图像缩放
 *  @func       将图像放大为原图两倍　均匀插值，最后一行后最后一列与倒数第二行与倒数第二列相同
-*  @param_in   image            待放大图像
+*  @param_in   image          　  待放大图像
 *  @typename   防止歧义，显示声明Image<T>::Ptr是类型而非变量
 *  @return     Image<T>::Ptr
 */
 template <typename T>
 typename Image<T>::Ptr
 rescale_double_size_supersample(typename Image<T>::ConstPtr img);
+
+/*
+*  @property   图像缩放
+*  @func       将图像缩小为原图两倍　均匀插值，
+*              偶数行与偶数列时：取四个像素的平均值；
+*              奇数行列时：
+*              奇数列(x)，取相邻上下像素的平均值；
+*              奇数行(y)，取相邻左右像素的平均值．
+*  @param_in   image            　待缩小图像
+*  @typename   防止歧义，显示声明Image<T>::Ptr是类型而非变量
+*  @return     Image<T>::Ptr
+*/
+template <typename T>
+typename Image<T>::Ptr
+rescale_half_size(typename Image<T>::ConstPtr img);
 
 IMAGE_NAMESPACE_END
 
@@ -262,6 +277,45 @@ rescale_double_size_supersample(typename Image<T>::ConstPtr img)
     return out;
 }
 
+template <typename T>
+typename Image<T>::Ptr
+rescale_half_size(typename Image<T>::ConstPtr img)
+{
+    int const iw = img->width();
+    int const ih = img->height();
+    int const ic = img->channels();
+    int ow = (iw + 1) >> 1;//缩小原来两倍，小数向上取整
+    int oh = (ih + 1) >> 1;
+
+    if(iw < 2 || ih < 2)
+    {
+        throw std::invalid_argument("输入图像太小，不可进行降采样！\n");
+    }
+
+    typename Image<T>::Ptr out(Image<T>::create());
+    out->allocate(ow,oh,ic);
+
+    int out_pos = 0;
+    int rowstride = iw * ic;
+    for (int y = 0; y < oh; ++y)
+    {
+        int irow1 = y * 2 * rowstride;
+        int irow2 = irow1 + rowstride * (y * 2 + 1 < ih);
+
+        for (int x = 0; x < ow; ++x)
+        {
+            int ipix1 = irow1 + x * 2 * ic;
+            int ipix2 = irow2 + x * 2 * ic;
+            int has_next = (x * 2 + 1 < ow);
+
+            for (int c = 0; c < ic; ++c)
+            {
+                out->at(out_pos++) = 0.25f * (img->at(ipix1 + c),img->at(ipix1 + has_next * ic + c),
+                                              img->at(ipix2 + c),img->at(ipix2 + has_next * ic + c));
+            }
+        }
+    }
+}
 
 IMAGE_NAMESPACE_END
 
