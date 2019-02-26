@@ -63,6 +63,18 @@ image::Sift::create_octaves()
 {
     this->octaves.clear();
 
+    //创建－１八阶，原图假设模糊尺度为0.5,则上采样后的图像模糊尺度为2*0.5即可达到原图模糊效果．
+    if (this->options.min_octave < 0)
+    {
+        image::FloatImage::Ptr img = image::rescale_double_size_supersample<float >(this->srcImg);
+
+    }
+}
+
+void
+image::Sift::add_octave(image::FloatImage::ConstPtr image,float has_sigma, float target_sigma)
+{
+
 }
 
 
