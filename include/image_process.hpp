@@ -130,9 +130,22 @@ template <typename T>
 typename Image<T>::Ptr
 rescale_half_size(typename Image<T>::ConstPtr img);
 
+/*
+*  @property   图像缩放
+*  @func       将图像缩小为原图两倍　高斯权值插值，　核尺寸为４x4像素
+*              边缘需要进行像素拓展．
+*              该高斯核为高斯函数f(x)=1/[sqrt(2pi)*sigma] * e^-(x^2/2sigma2)
+*              其中，x为中心像素点到核的各像素的像素距离，有三个值：sqrt(2)/2,sqrt(10)/2,3sqrt(2)/2
+*              第一个数接近sigma=sqrt(3)/2
+*  @param_in   image            　待缩小图像
+*  @param_in   sigma2             高斯尺度平方值　　也就是方差　默认3/4
+*  @typename   防止歧义，显示声明Image<T>::Ptr是类型而非变量
+*  @return     Image<T>::Ptr
+*/
+//TODO: 这里的sigma2=1/2完全满足３倍sigma，抖动没那么明显，可以用这个尺度
 template <typename T>
 typename Image<T>::Ptr
-rescale_half_size_gaussian(typename Image<T>::ConstPtr image, float sigma = 0.866025403784439f);
+rescale_half_size_gaussian(typename Image<T>::ConstPtr image, float sigma2 = 0.75f);
 
 IMAGE_NAMESPACE_END
 
@@ -321,6 +334,77 @@ rescale_half_size(typename Image<T>::ConstPtr img)
     }
 }
 
+template <typename T>
+typename Image<T>::Ptr
+rescale_half_size_gaussian(typename Image<T>::ConstPtr image, float sigma2)
+{
+    int const iw = image->width();
+    int const ih = image->height();
+    int const ic = image->channels();
+    int const ow = (iw + 1) >> 1;
+    int const oh = (ih + 1) >> 1;
+
+    if (iw < 2 || ih < 2)
+    {
+        throw std::invalid_argument("图像尺寸过小，不可进行降采样!\n");
+    }
+
+    typename Image<T>::Ptr out(Image<T>::create());
+    out->allocate(ow,oh,ic);
+
+    float const w1 = std::exp(-0.5 / (2.0f * sigma2));
+    float const w2 = std::exp(-2.5f / (2.0 * sigma2));
+    float const w3 = std::exp(-4.5f / (2.0f * sigma2));
+
+    int out_pos = 0;
+    int const rowstride = iw * ic;
+    for (int y = 0; y < oh; ++y)
+    {
+        int y2 = (int)y << 1;
+        T const *row[4];
+        row[0] = &image->at(std::max(0,(y2 - 1) * rowstride));
+        row[1] = &image->at(y2 * rowstride);
+        row[2] = &image->at(std::min((int)ih - 1 ,y2 + 1) * rowstride);
+        row[3] = &image->at(std::min((int)ih - 2 ,y2 + 2) * rowstride);
+
+        for (int x = 0; x < ow; ++x)
+        {
+            int x2 = (int)x << 1;
+            int xi[4];
+            xi[0] =  std::max(0,x2 - 1) * ic;
+            xi[1] = x2 * ic;
+            xi[2] = std::min((int)iw - 1 ,x2 + 1) * ic;
+            xi[3] = std::min((int)iw - 1 ,x2 + 2) * ic;
+
+            for (int c = 0; c < ic; ++c)
+            {
+                T sum = 0.0f;
+                sum += row[0][xi[0] + c] * w3;
+                sum += row[0][xi[1] + c] * w2;
+                sum += row[0][xi[2] + c] * w2;
+                sum += row[0][xi[3] + c] * w3;
+
+                sum += row[1][xi[0] + c] * w2;
+                sum += row[1][xi[1] + c] * w1;
+                sum += row[1][xi[2] + c] * w1;
+                sum += row[1][xi[3] + c] * w2;
+
+                sum += row[2][xi[0] + c] * w2;
+                sum += row[2][xi[1] + c] * w1;
+                sum += row[2][xi[2] + c] * w1;
+                sum += row[2][xi[3] + c] * w2;
+
+                sum += row[3][xi[0] + c] * w3;
+                sum += row[3][xi[1] + c] * w2;
+                sum += row[3][xi[2] + c] * w2;
+                sum += row[3][xi[3] + c] * w3;
+
+                out->at(out_pos++) = sum / (float)(4 * w3 + 8 * w2 + 4 * w1);
+            }
+        }
+    }
+    return out;
+}
 
 
 IMAGE_NAMESPACE_END
