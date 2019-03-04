@@ -160,7 +160,10 @@ protected:
 
     void add_octave(image::FloatImage::ConstPtr image,float has_sigma, float target_sigma);
 
-private:
+    void add_octave2(image::FloatImage::ConstPtr image,float has_sigma, float target_sigma2);
+
+
+    private:
     Options options;
     image::FloatImage::ConstPtr srcImg;
     Octaves octaves;

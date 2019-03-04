@@ -10,6 +10,7 @@
 
 #include "define.h"
 #include "image.hpp"
+#include "function/function.hpp"
 
 IMAGE_NAMESPACE_BEGIN
 /*******************************************************************
@@ -146,6 +147,15 @@ rescale_half_size(typename Image<T>::ConstPtr img);
 template <typename T>
 typename Image<T>::Ptr
 rescale_half_size_gaussian(typename Image<T>::ConstPtr image, float sigma2 = 0.75f);
+
+template <typename T>
+typename Image<T>::Ptr
+blur_gaussian(typename Image<T>::ConstPtr in, float sigma);
+
+template <typename T>
+typename Image<T>::Ptr
+blur_gaussian2(typename Image<T>::ConstPtr in, float sigma2);
+
 
 IMAGE_NAMESPACE_END
 
@@ -406,6 +416,80 @@ rescale_half_size_gaussian(typename Image<T>::ConstPtr image, float sigma2)
     return out;
 }
 
+template <typename T>
+typename Image<T>::Ptr
+blur_gaussian(typename Image<T>::ConstPtr in, float sigma)
+{
+    if (in == nullptr)
+    {
+        throw std::invalid_argument("没有输入图像!\n");
+    }
+
+    if(MATH_EPSILON_EQ(sigma,0.0f,0.1f));
+    {
+        return in->duplicate();
+    }
+
+    int const w = in->width();
+    int const h = in->height();
+    int const c = in->channels();
+    int const ks = std::ceil(sigma * 2.884f);
+    std::vector<float> kernel(ks + 1);
+    T weight = 0;
+
+    for (int i = 0; i < ks + 1; ++i)
+    {
+        kernel[i] = function::gaussian((float)i, sigma);
+        weight += kernel[i];
+    }
+
+    //可分离高斯核实现
+    //x方向对对象进行卷积
+    typename Image<T>::Ptr sep(Image<T>::create(w,h,c));
+    int px = 0;
+    for (int y = 0; y < h; ++y)
+    {
+        for (int x = 0; x < w; ++x,++px)
+        {
+            for (int cc = 0; cc < c; ++cc)
+            {
+                T accum(T(0));
+                for (int i = -ks; i <=ks; ++i)
+                {
+                    int idx = function::clamp(x + i,0,w - 1);
+                    accum += in->at(y * w + idx, cc) * kernel[i];
+                }
+                sep->at(px,cc) = accum / weight;
+            }
+        }
+    }
+    //y方向对图像进行卷积
+    typename Image<T>::Ptr out(Image<T>::create(w,h,c));
+    for (int y = 0; y < h; ++y)
+    {
+        for (int x = 0; x < w; ++x,++px)
+        {
+            for (int cc = 0; cc < c; ++cc)
+            {
+                T accum(T(0));
+                for (int i = -ks; i <= ks; ++i)
+                {
+                    int idx = function::clamp(y+i,0,(int)h - 1);
+                    accum += sep->at(idx * w + x, cc);
+                }
+                out->at(px,cc) = (T)accum / weight;
+            }
+        }
+    }
+    return out;
+}
+
+template <typename T>
+typename Image<T>::Ptr
+blur_gaussian2(typename Image<T>::ConstPtr in, float sigma2)
+{
+
+}
 
 IMAGE_NAMESPACE_END
 

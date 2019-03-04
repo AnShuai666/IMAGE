@@ -77,5 +77,11 @@ image::Sift::add_octave(image::FloatImage::ConstPtr image,float has_sigma, float
 
 }
 
+void
+image::Sift::add_octave2(image::FloatImage::ConstPtr image,float has_sigma, float target_sigma2)
+{
+
+}
+
 
 IMAGE_NAMESPACE_END
