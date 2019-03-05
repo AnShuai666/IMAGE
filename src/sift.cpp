@@ -74,7 +74,42 @@ image::Sift::create_octaves()
 void
 image::Sift::add_octave(image::FloatImage::ConstPtr image,float has_sigma, float target_sigma)
 {
+    //图像固有尺度为has_sigma,要模糊到尺度为target_sigma,连续模糊有如下性质:
+    //L * G(sigma1) * G(sigma2) = L * G (sart(sigma1^2 + sigma^2))
+    //即 L * G(has_sigma) * G(sigma) = L * G(target_sigma),
+    //则has_sigma^2 + sigma^2 = target_sigma^2
+    //得sigma = sart(target_sigma^2 - has_sigma^2)
+    //现有图像为 L1 = L * G(has_sigma)
+    float sigma = std::sqrt(MATH_POW2(target_sigma) - MATH_POW2(has_sigma));
+    image::FloatImage::Ptr base = (target_sigma > has_sigma
+            ? image::blur_gaussian<float>(image,sigma)
+            : image->duplicate());
+    this->octaves.push_back(Octave());
+    Octave& octave = this->octaves.back();
+    octave.img_src.push_back(base); //高斯空间的图像,第一个图像的模糊尺度为1.6
 
+    //k是同一个八阶内,相邻阶的尺度比例,分别,sigama,k*sigma,k*k*sigma,...k^(s+2)*sigma
+    //s 有效差分数默认 s = 3, k = 2 ^ (1/3) = 1.25992105 k*sigma,....k^5*sigma
+    // sigma = 1.6,
+    // k * sigma = 2.016,
+    // k * k * sigma = 2.539841683,
+    // k * k * k * sigma = 3.20000000,
+    // k * k * k * k * sigma = 4.031747361,
+    // k * k * k * k * k * sigma = 5.079683368
+    float const k = std::pow(2.0f,1.0f / this->options.num_samples_per_octave);
+    sigma = target_sigma;
+
+    for (int i = 1; i < this->options.num_samples_per_octave + 3; ++i)
+    {
+        float sigmak = k * sigma;
+        float blur_sigma = std::sqrt(MATH_POW2(sigmak) - MATH_POW2(sigma));
+
+        image::FloatImage::Ptr img = image::blur_gaussian<float>(base,blur_sigma);
+        octave.img_src.push_back(img);
+
+        // 创建高斯差分图像(DOG Difference of Gaussian)
+        image::FloatImage::Ptr dog = image::s
+    }
 }
 
 void

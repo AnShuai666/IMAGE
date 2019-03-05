@@ -148,15 +148,58 @@ template <typename T>
 typename Image<T>::Ptr
 rescale_half_size_gaussian(typename Image<T>::ConstPtr image, float sigma2 = 0.75f);
 
+
+/*
+*  @property   图像模糊
+*  @func       将对图像进行高斯模糊,运用高斯卷积核,进行可分离卷积,先对x方向进行卷积,再在y方向进行卷积,
+*              等同于对图像进行二维卷积
+*              该高斯核为高斯函数f(x,y)=1/[(2pi)*sigma^2] * e^-((x^2 + y^2)/2sigma2)
+*
+*
+*  @param_in   in            　  待模糊图像
+*  @param_in   sigma             目标高斯尺度值　　也就是标准差　
+*  @typename   防止歧义，显示声明Image<T>::Ptr是类型而非变量
+*  @return     Image<T>::Ptr
+*/
 template <typename T>
 typename Image<T>::Ptr
 blur_gaussian(typename Image<T>::ConstPtr in, float sigma);
 
+/*
+*  @property   图像模糊
+*  @func       将对图像进行高斯模糊,运用高斯卷积核,进行可分离卷积,先对x方向进行卷积,再在y方向进行卷积,
+*              等同于对图像进行二维卷积
+*              该高斯核为高斯函数f(x,y)=1/[(2pi)*sigma^2] * e^-((x^2 + y^2)/2sigma2)
+*
+*
+*  @param_in   in            　    待模糊图像
+*  @param_in   sigma2             目标高斯尺度平方值　　也就是方差　
+*  @typename   防止歧义，显示声明Image<T>::Ptr是类型而非变量
+*  @return     Image<T>::Ptr
+*/
 template <typename T>
 typename Image<T>::Ptr
 blur_gaussian2(typename Image<T>::ConstPtr in, float sigma2);
 
+/*
+*  @property   求图像差
+*  @func       求差异图像的有符号图像,image_1 - image<T>
+*  @param_in   image_1  image_2  相减的两幅图像
+*  @return     Image<T>::Ptr
+*/
+template <typename T>
+typename Image<T>::Ptr
+subtract(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2);
 
+/*
+*  @property   求图像差
+*  @func       求差异图像的无符号图像,image_1 - image<T>
+*  @param_in   image_1  image_2  相减的两幅图像
+*  @return     Image<T>::Ptr
+*/
+template <typename T>
+typename Image<T>::Ptr
+difference(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2);
 IMAGE_NAMESPACE_END
 
 /*******************************************************************
@@ -488,7 +531,132 @@ template <typename T>
 typename Image<T>::Ptr
 blur_gaussian2(typename Image<T>::ConstPtr in, float sigma2)
 {
+    if (in == nullptr)
+    {
+        throw std::invalid_argument("没有输入图像!\n");
+    }
 
+    if(sigma2 < 0.01f);
+    {
+        return in->duplicate();
+    }
+
+    int const w = in->width();
+    int const h = in->height();
+    int const c = in->channels();
+    int const ks = std::ceil(std::sqrt(sigma2) * 2.884f);
+    std::vector<float> kernel(ks + 1);
+    T weight = 0;
+
+    for (int i = 0; i < ks + 1; ++i)
+    {
+        kernel[i] = function::gaussian2((float)i, sigma2);
+        weight += kernel[i];
+    }
+
+    //可分离高斯核实现
+    //x方向对对象进行卷积
+    typename Image<T>::Ptr sep(Image<T>::create(w,h,c));
+    int px = 0;
+    for (int y = 0; y < h; ++y)
+    {
+        for (int x = 0; x < w; ++x,++px)
+        {
+            for (int cc = 0; cc < c; ++cc)
+            {
+                T accum(T(0));
+                for (int i = -ks; i <=ks; ++i)
+                {
+                    int idx = function::clamp(x + i,0,w - 1);
+                    accum += in->at(y * w + idx, cc) * kernel[i];
+                }
+                sep->at(px,cc) = accum / weight;
+            }
+        }
+    }
+    //y方向对图像进行卷积
+    typename Image<T>::Ptr out(Image<T>::create(w,h,c));
+    for (int y = 0; y < h; ++y)
+    {
+        for (int x = 0; x < w; ++x,++px)
+        {
+            for (int cc = 0; cc < c; ++cc)
+            {
+                T accum(T(0));
+                for (int i = -ks; i <= ks; ++i)
+                {
+                    int idx = function::clamp(y+i,0,(int)h - 1);
+                    accum += sep->at(idx * w + x, cc);
+                }
+                out->at(px,cc) = (T)accum / weight;
+            }
+        }
+    }
+    return out;
+}
+
+template <typename T>
+typename Image<T>::Ptr
+subtract(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2)
+{
+    int const w1 = image_1->width();
+    int const h1 = image_1->height();
+    int const c1 = image_1->channels();
+
+    if (image_1 == nullptr || image_1 == nullptr)
+    {
+        throw std::invalid_argument("至少有一幅图像为空!不满足要求!\n");
+    }
+
+    if(w1 != image_2->width() || h1 != image_2->height() || c1 != image_2->channels())
+    {
+        throw std::invalid_argument("两图像尺寸不匹配!\n");
+    }
+
+    typename Image<T>::Ptr out(Image<T>::create());
+    out->allocate(w1,h1,c1);
+
+    for (int i = 0; i < image_1->get_value_amount(); ++i)
+    {
+        out->at(i) = image_1->at(i) - image_2->at(i);
+    }
+
+    return out;
+}
+
+template <typename T>
+typename Image<T>::Ptr
+difference(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2)
+{
+    int const w1 = image_1->width();
+    int const h1 = image_1->height();
+    int const c1 = image_1->channels();
+
+    if (image_1 == nullptr || image_1 == nullptr)
+    {
+        throw std::invalid_argument("至少有一幅图像为空!不满足要求!\n");
+    }
+
+    if(w1 != image_2->width() || h1 != image_2->height() || c1 != image_2->channels())
+    {
+        throw std::invalid_argument("两图像尺寸不匹配!\n");
+    }
+
+    typename Image<T>::Ptr out(Image<T>::create());
+    out->allocate(w1,h1,c1);
+
+    for (int i = 0; i < image_1->get_value_amount(); ++i)
+    {
+        if (image_1->at(i) > image_2->at(i) )
+        {
+            out->at(i) = image_1->at(i) - image_2->at(i);
+        } else
+        {
+            out->at(i) = image_2->at(i) - image_1->at(i);
+        }
+    }
+
+    return out;
 }
 
 IMAGE_NAMESPACE_END
