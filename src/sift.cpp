@@ -108,7 +108,11 @@ image::Sift::add_octave(image::FloatImage::ConstPtr image,float has_sigma, float
         octave.img_src.push_back(img);
 
         // 创建高斯差分图像(DOG Difference of Gaussian)
-        image::FloatImage::Ptr dog = image::s
+        image::FloatImage::Ptr dog = image::subtract<float>(img,base);
+        octave.img_dog.push_back(dog);
+
+        base = img;
+        sigma = sigmak;
     }
 }
 
