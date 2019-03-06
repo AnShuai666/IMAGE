@@ -67,8 +67,10 @@ image::Sift::create_octaves()
     if (this->options.min_octave < 0)
     {
         image::FloatImage::Ptr img = image::rescale_double_size_supersample<float >(this->srcImg);
-
+        this->add_octave(img,this->options.inherent_blur_sigma * 2.0f,this->options.base_blur_sigma);
     }
+
+
 }
 
 void

@@ -59,6 +59,9 @@ public:
         //消除边界响应，trace(H)^2/Det(H) < [(r+1)^2]/r 默认为10
         float edge_ratio_threshold;
 
+        //图像固有尺度，假设图像拍摄就有默认尺度为0.5的模糊。即实际原图为I,拍摄图像为L = I * G(inherent_blur_sigma)
+        float inherent_blur_sigma;
+
         //基本图像的尺度，默认1.6
         float base_blur_sigma;
 
@@ -158,9 +161,27 @@ protected:
     */
     void create_octaves(void);
 
+    /*
+    *  @property    图像增添八阶
+    *  @func        图像建立八阶，即高斯空间，高斯差分空间，
+    *               图像固有尺度为has_sigma,默认为0.5,八阶中高斯空间第一个高斯空间图像的尺度为 target_sigma,
+    *  @param_in    image           输入图
+    *  @param_in    has_sigma       固有尺度
+    *  @param_in    target_sigma    目标尺度
+    *  @return      void
+    */
     void add_octave(image::FloatImage::ConstPtr image,float has_sigma, float target_sigma);
 
-    void add_octave2(image::FloatImage::ConstPtr image,float has_sigma, float target_sigma2);
+    /*
+    *  @property    图像增添八阶
+    *  @func        图像建立八阶，即高斯空间，高斯差分空间，直接用平方进行计算，不用进行开方计算
+    *               图像固有尺度为has_sigma,默认为0.5,八阶中高斯空间第一个高斯空间图像的尺度为 target_sigma,
+    *  @param_in    image            输入图
+    *  @param_in    has_sigma2       固有尺度平方
+    *  @param_in    target_sigma2    目标尺度平方
+    *  @return      void
+    */
+    void add_octave2(image::FloatImage::ConstPtr image,float has_sigma2, float target_sigma2);
 
 
     private:
@@ -179,6 +200,7 @@ num_samples_per_octave(3),
 min_octave(0),
 max_octave(4),
 edge_ratio_threshold(10.0f),
+inherent_blur_sigma(0.5f),
 base_blur_sigma(1.6f),
 verbose_output(false),
 debug_output(false)
