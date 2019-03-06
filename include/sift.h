@@ -111,7 +111,7 @@ public:
 public:
     typedef std::vector<image::Sift::Keypoint> Keypoints;
     typedef std::vector<image::Sift::Descriptor> Descriptors;
-    typedef std::vector<image::FloatImage::Ptr> ImageVector;
+    //typedef std::vector<image::FloatImage::Ptr> ImageVector;
 
 public:
     /*
@@ -143,6 +143,8 @@ public:
 protected:
     struct Octave
     {
+        typedef std::vector<image::FloatImage::Ptr> ImageVector;
+
         ImageVector img_src;    //每阶原图像数        s+3
         ImageVector img_dog;    //每阶高斯差分图像数   s+2
         ImageVector img_grad;   //每阶梯度图像数      s+3

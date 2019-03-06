@@ -63,12 +63,29 @@ image::Sift::create_octaves()
 {
     this->octaves.clear();
 
-    //创建－１八阶，原图假设模糊尺度为0.5,则上采样后的图像模糊尺度为2*0.5即可达到原图模糊效果．
+    // 若min_octave < 0, 则创建－１八阶，
+    // 原图假设模糊尺度为0.5,则上采样后的图像模糊尺度为2*0.5即可达到原图模糊效果． 模糊半径为像素单位
     if (this->options.min_octave < 0)
     {
         image::FloatImage::Ptr img = image::rescale_double_size_supersample<float >(this->srcImg);
         this->add_octave(img,this->options.inherent_blur_sigma * 2.0f,this->options.base_blur_sigma);
     }
+
+    // 若min_octave > 0, 则创建正八阶，
+    image::FloatImage::ConstPtr img = this->srcImg;
+    for (int i = 0; i < this->options.min_octave; ++i)
+    {
+        img = image::rescale_half_size_gaussian<float>(img);
+    }
+
+    float img_sigma = this->options.inherent_blur_sigma;
+    for (int i = std::max(0,this->options.min_octave); i <= this->options.max_octave; ++i)
+    {
+        this->add_octave(img,img_sigma,this->options.base_blur_sigma);
+        image::FloatImage::ConstPtr pre_base = this->octaves[this->octaves.size()-1].src_img[0];
+
+    }
+
 
 
 }
