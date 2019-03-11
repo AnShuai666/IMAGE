@@ -5,7 +5,7 @@
  * @e-mail   1028792866@qq.com
 */
 
-#include "include/sift.h"
+#include "include/sift.hpp"
 #include "include/image_process.hpp"
 
 IMAGE_NAMESPACE_BEGIN
@@ -59,7 +59,7 @@ image::Sift::set_float_image(image::FloatImage::ConstPtr img)
 }
 
 void
-image::Sift::create_octaves()
+image::Sift::create_octaves(void)
 {
     this->octaves.clear();
 
@@ -81,13 +81,12 @@ image::Sift::create_octaves()
     float img_sigma = this->options.inherent_blur_sigma;
     for (int i = std::max(0,this->options.min_octave); i <= this->options.max_octave; ++i)
     {
-        this->add_octave(img,img_sigma,this->options.base_blur_sigma);
-        image::FloatImage::ConstPtr pre_base = this->octaves[this->octaves.size()-1].src_img[0];
+        this->add_octave(img,img_sigma,std::pow(2,i) * this->options.base_blur_sigma);
+        image::FloatImage::ConstPtr pre_base = octaves[octaves.size()-1].img_src[0];
+        img = image::rescale_half_size_gaussian<float >(pre_base,std::pow(2.0f,i + 1) * MATH_POW2(this->options.base_blur_sigma));
 
+        img_sigma = std::pow(2.0f,i+1) * this->options.base_blur_sigma;
     }
-
-
-
 }
 
 void
