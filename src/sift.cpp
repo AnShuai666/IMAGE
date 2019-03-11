@@ -81,6 +81,8 @@ image::Sift::create_octaves(void)
     float img_sigma = this->options.inherent_blur_sigma;
     for (int i = std::max(0,this->options.min_octave); i <= this->options.max_octave; ++i)
     {
+        //鄙人认为在进行高斯模糊降采样的时候就已经进行了尺度变换，不需要再进行尺度变换了，且高斯模糊尺度是根据两个八阶
+        //第一幅图像的尺度来进行计算的。若不明白，联系我即可。
         this->add_octave(img,img_sigma,std::pow(2,i) * this->options.base_blur_sigma);
         image::FloatImage::ConstPtr pre_base = octaves[octaves.size()-1].img_src[0];
         img = image::rescale_half_size_gaussian<float >(pre_base,std::pow(2.0f,i + 1) * MATH_POW2(this->options.base_blur_sigma));
