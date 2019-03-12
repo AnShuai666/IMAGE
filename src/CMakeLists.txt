@@ -14,7 +14,7 @@ set(HEADERS
         ${PROJECT_SOURCE_DIR}/include/define.h
         ${PROJECT_SOURCE_DIR}/include/image.hpp
         ../include/image_io.h
-        ../include/exception.h ../include/string.h sift.cpp ../include/sift.hpp image_process.cpp ../include/image_process.hpp)
+        ../include/exception.h ../include/string.h sift.cpp ../include/sift.hpp image_process.cpp ../include/image_process.hpp ../include/timer.h)
 
 set(SOURCE_FILES
         image_io.cpp
