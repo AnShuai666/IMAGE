@@ -134,6 +134,14 @@ IMAGE_NAMESPACE_BEGIN
         *  @return      void
         */
         void set_float_image(image::FloatImage::ConstPtr img);
+
+        void process(void);
+
+        Keypoints const& get_keypoints(void) const;
+
+        Descriptors const& get_descriptors(void) const;
+
+        static void load_lowe_descriptors(std::string const& filename, Descriptors* result);
 /********************************************************************
 *~~~~~~~~~~~~~~~~~~~~~~~~~常用结构体声明及定义~~~~~~~~~~~~~~~~~~~~~~~~~~
 ********************************************************************/
@@ -180,6 +188,25 @@ IMAGE_NAMESPACE_BEGIN
         *  @return      void
         */
         void add_octave2(image::FloatImage::ConstPtr image, float has_sigma2, float target_sigma2);
+
+        void extrema_detection(void);
+
+        std::size_t extrama_detection(image::FloatImage::ConstPtr s[3],int oi, int si);
+
+        void keypoint_localization(void);
+
+        void descriptor_generation(void);
+
+        void generate_grad_ori_images(Octave* octave);
+
+        void orientation_assignment(Keypoint const& kp, Octave const* octave, std::vector<float>& orientations);
+
+
+        bool descriptor_assignment(Keypoint const& kp, Descriptor& desc,Octave const* octave);
+
+        float keypoint_relative_scale(Keypoint const& kp);
+
+        float keypoint_absolute_scale(Keypoint const& kp);
 
 
     private:

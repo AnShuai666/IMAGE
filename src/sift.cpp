@@ -5,8 +5,10 @@
  * @e-mail   1028792866@qq.com
 */
 
+#include <include/timer.h>
 #include "include/sift.hpp"
 #include "include/image_process.hpp"
+#include "include/time.h"
 
 IMAGE_NAMESPACE_BEGIN
 
@@ -40,6 +42,39 @@ image::Sift::set_image(image::ByteImage::ConstPtr img)
     }
 }
 
+    void
+    image::Sift::process()
+    {
+        image::TimerLess timer, total_timer;
+
+        if (this->options.verbose_output)
+        {
+            std::cout << " SIFT: 创建"
+                      << (this->options.max_octave - this->options.min_octave)
+                      << "个八阶 (从"
+                      << this->options.min_octave
+                      << " 到 "
+                      << this->options.max_octave
+                      << ")..."
+                      <<std::endl;
+        }
+
+        timer.reset();
+        this->create_octaves();
+
+        if (this->options.debug_output)
+        {
+            std::cout<< "SIFT: 创建八阶用时 "
+                     << timer.get_elapsed()
+                     << "毫秒。"
+                     <<std::endl;
+        }
+
+
+
+    }
+
+
 void
 image::Sift::set_float_image(image::FloatImage::ConstPtr img)
 {
@@ -57,6 +92,8 @@ image::Sift::set_float_image(image::FloatImage::ConstPtr img)
         this->srcImg = img->duplicate();
     }
 }
+
+
 
 void
 image::Sift::create_octaves(void)
