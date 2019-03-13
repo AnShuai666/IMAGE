@@ -8,6 +8,8 @@
 #define IMAGE_TIMER_H
 
 #include <chrono>
+#include "define.h"
+IMAGE_NAMESPACE_BEGIN
 /********************************************************************
  *~~~~~~~~~~~~~~~~~~~~~~~TimerHigh类的声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *******************************************************************/
@@ -171,5 +173,5 @@ TimerLess::get_elapsed_sec() const
     return (1.0f / 1000.0f) * (float)this->get_elapsed();
 }
 
-
+IMAGE_NAMESPACE_END
 #endif //IMAGE_TIMER_H
