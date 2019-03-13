@@ -295,36 +295,75 @@ image::Sift::extrema_detection()
     this->keypoints.clear();
     
     // 在每个八阶检测图像的关键点
-    for (auto& octave : this->octaves)
+    for (std::size_t i = 0; i < this->octaves.size(); ++i)
     {
-
-
-
+        image::Sift::Octave const& octave(this->octaves[i]);
+        for (int s = 0; s < (int) octave.img_dog.size() - 2; ++s)
+        {
+            image::FloatImage::ConstPtr samples[3] = {octave.img_dog[s + 0],octave.img_dog[s + 1],octave.img_dog[s + 2]};
+            this->extrema_detection(samples,(int)i + this->options.min_octave,s);
+        }
     }
+
 }
 
-std::size_t image::Sift::extrama_detection(image::Image<float>::ConstPtr *s, int oi, int si)
+void image::Sift::extrema_detection(image::Image<float>::ConstPtr *s, int octave_index, int sample_index)
 {
     int const w = s[1]->width();
     int const h = s[1]->height();
 
-    int noff[9] = {};
+    int noff[9] = {-1 - w, 0 - w, 1 - w,
+                   -1,0,1,
+                   -1 + w, w, 1 + w
+                   };
 
-    int detected = 0;
     int off = w;
-    for (int y = 0; y < h - 1; ++y)
+    //从第二行第二列开始到倒数第二行倒数第二列进行遍历
+    for (int y = 1; y < h - 1; ++y)
     {
-        for (int x = 0; x < w - 1; ++x)
+        for (int x = 1; x < w - 1; ++x)
         {
             int idx = off + x;
 
+            //假设比较的第一个元素为极值
             bool largest = true;
             bool smallest = true;
             float center_value = s[1]->at(idx);
 
+            for (int l = 0; (largest || smallest) && l < 3; ++l)
+            {
+                for (int i = 0; (largest || smallest) && i < 9; ++i)
+                {
+                    if (l == 1 && i == 4)
+                    {
+                        continue;
+                    }
+
+                    if (s[l]->at(idx + noff[i]) >= center_value)
+                    {
+                        largest = false;
+                    }
+
+                    if (s[l]->at(idx + noff[i]) <= center_value)
+                    {
+                        smallest = false;
+                    }
+                }
+
+                //如果该像素既不是最大，也不是最小，直接跳出循环，进行下一个像素的检测
+                if (!smallest && !largest)
+                {
+                    continue;
+                }
+
+                Keypoint kp;
+                kp.octave = octave_index;
+                kp.x = static_cast<float>(x);
+                kp.y = static_cast<float>(y);
+                kp.sample = static_cast<float>(sample_index);
+                this->keypoints.push_back(kp);
+            }
         }
     }
-
-    int
 }
 IMAGE_NAMESPACE_END

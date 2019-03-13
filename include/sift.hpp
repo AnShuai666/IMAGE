@@ -197,7 +197,7 @@ IMAGE_NAMESPACE_BEGIN
 
         void extrema_detection(void);
 
-        std::size_t extrama_detection(image::FloatImage::ConstPtr s[3],int oi, int si);
+        void extrema_detection(image::FloatImage::ConstPtr s[3],int octave_index, int sample_index);
 
         void keypoint_localization(void);
 
