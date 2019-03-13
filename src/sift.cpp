@@ -300,6 +300,7 @@ image::Sift::extrema_detection()
         image::Sift::Octave const& octave(this->octaves[i]);
         for (int s = 0; s < (int) octave.img_dog.size() - 2; ++s)
         {
+            //图像dog的sample id是从sample到sample+2
             image::FloatImage::ConstPtr samples[3] = {octave.img_dog[s + 0],octave.img_dog[s + 1],octave.img_dog[s + 2]};
             this->extrema_detection(samples,(int)i + this->options.min_octave,s);
         }
@@ -366,4 +367,24 @@ void image::Sift::extrema_detection(image::Image<float>::ConstPtr *s, int octave
         }
     }
 }
+
+void
+image::Sift::keypoint_localization()
+{
+    int num_sigular = 0;
+    int num_keypoints = 0;
+
+    for (int i = 0; i < this->keypoints.size(); ++i)
+    {
+        Keypoint kp(this->keypoints[i]);
+
+        image::Sift::Octave const& octave(this->octaves[kp.octave - this->options.min_octave]);
+        int sample = static_cast<int>(kp.sample);
+        image::FloatImage::ConstPtr dogs[3] = {octave.img_dog[sample + 0],octave.img_dog[sample + 1],octave.img_dog[sample + 2]};
+
+
+    }
+
+}
+
 IMAGE_NAMESPACE_END
