@@ -8,7 +8,7 @@
 #include <include/timer.h>
 #include "include/sift.hpp"
 #include "include/image_process.hpp"
-#include "include/time.h"
+#include "include/timer.h"
 
 IMAGE_NAMESPACE_BEGIN
 
@@ -42,37 +42,106 @@ image::Sift::set_image(image::ByteImage::ConstPtr img)
     }
 }
 
-    void
-    image::Sift::process()
+void
+image::Sift::process()
+{
+    image::TimerLess timer, total_timer;
+
+    if (this->options.verbose_output)
     {
-        image::TimerLess timer, total_timer;
-
-        if (this->options.verbose_output)
-        {
-            std::cout << " SIFT: 创建"
-                      << (this->options.max_octave - this->options.min_octave)
-                      << "个八阶 (从"
-                      << this->options.min_octave
-                      << " 到 "
-                      << this->options.max_octave
-                      << ")..."
-                      <<std::endl;
-        }
-
-        timer.reset();
-        this->create_octaves();
-
-        if (this->options.debug_output)
-        {
-            std::cout<< "SIFT: 创建八阶用时 "
-                     << timer.get_elapsed()
-                     << "毫秒。"
-                     <<std::endl;
-        }
-
-
-
+        std::cout << " SIFT: 创建"
+                  << (this->options.max_octave - this->options.min_octave)
+                  << "个八阶 (从"
+                  << this->options.min_octave
+                  << " 到 "
+                  << this->options.max_octave
+                  << ")..."
+                  <<std::endl;
     }
+
+    timer.reset();
+    this->create_octaves();
+
+    if (this->options.debug_output)
+    {
+        std::cout << "SIFT: 创建八阶用时 "
+                  << timer.get_elapsed()
+                  << "毫秒。"
+                  <<std::endl;
+    }
+
+    timer.reset();
+    this->extrema_detection();
+
+    if (this->options.debug_output)
+    {
+        std::cout << "SIFT: 检测到 "
+                  << this->keypoints.size()
+                  << " 个关键点, 用时 "
+                  << timer.get_elapsed()
+                  << "毫秒。"
+                  << std::endl;
+    }
+
+
+    if (this->options.debug_output)
+    {
+        std::cout << "SIFT: 正在定位与过滤关键点中......"<<std::endl;
+    }
+
+    timer.reset();
+    this->keypoint_localization();
+
+    if (this->options.debug_output)
+    {
+        std::cout << "SIFT: 保留了 "
+                  << this->keypoints.size()
+                  << " 个稳定关键点， 滤波用时 "
+                  << timer.get_elapsed()
+                  << "毫秒。"
+                  << std::endl;
+    }
+
+    //清楚高斯查分图像
+    for (auto& octave : this->octaves)
+    {
+        octave.img_dog.clear();
+    }
+
+
+    if (this->options.verbose_output)
+    {
+        std::cout << "SIFT: 正在生成描述子列表......"<<std::endl;
+    }
+
+    timer.reset();
+    this->descriptor_generation();
+
+    if (this->options.debug_output)
+    {
+        std::cout << "SIFT: 生成了 "
+                  << this->descriptors.size()
+                  << " 个描述子, 用时 "
+                  << timer.get_elapsed()
+                  << " 毫秒。"
+                  << std::endl;
+    }
+
+    if (this->options.verbose_output)
+    {
+        std::cout << "SIFT: 从 "
+                  << this->keypoints.size()
+                  << " 个关键点, 共生成了 "
+                  << this->descriptors.size()
+                  << " 个描述子。 用时 "
+                  << total_timer.get_elapsed()
+                  << " 毫秒。"
+                  << std::endl;
+    }
+
+    //清空八阶以清除内存
+    this->octaves.clear();
+}
 
 
 void
@@ -220,5 +289,42 @@ image::Sift::add_octave2(image::FloatImage::ConstPtr image,float has_sigma2, flo
     }
 }
 
+void
+image::Sift::extrema_detection()
+{
+    this->keypoints.clear();
+    
+    // 在每个八阶检测图像的关键点
+    for (auto& octave : this->octaves)
+    {
 
+
+
+    }
+}
+
+std::size_t image::Sift::extrama_detection(image::Image<float>::ConstPtr *s, int oi, int si)
+{
+    int const w = s[1]->width();
+    int const h = s[1]->height();
+
+    int noff[9] = {};
+
+    int detected = 0;
+    int off = w;
+    for (int y = 0; y < h - 1; ++y)
+    {
+        for (int x = 0; x < w - 1; ++x)
+        {
+            int idx = off + x;
+
+            bool largest = true;
+            bool smallest = true;
+            float center_value = s[1]->at(idx);
+
+        }
+    }
+
+    int
+}
 IMAGE_NAMESPACE_END

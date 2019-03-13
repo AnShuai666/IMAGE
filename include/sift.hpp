@@ -135,6 +135,12 @@ IMAGE_NAMESPACE_BEGIN
         */
         void set_float_image(image::FloatImage::ConstPtr img);
 
+        /*
+        *  @property    图像处理
+        *  @func        检测图像的SIFT关键点与描述子，并对其进行滤波处理
+        *               最后清除中间过程生成的八阶。
+        *  @return      void
+        */
         void process(void);
 
         Keypoints const& get_keypoints(void) const;
