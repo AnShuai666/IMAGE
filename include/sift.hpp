@@ -143,10 +143,27 @@ IMAGE_NAMESPACE_BEGIN
         */
         void process(void);
 
+        /*
+        *  @property    关键点获取
+        *  @func        获取图像的SIFT关键点
+        *  @return      Keypoints
+        */
         Keypoints const& get_keypoints(void) const;
 
+        /*
+        *  @property    描述子获取
+        *  @func        获取图像的SIFT关键点的描述子
+        *  @return      Descriptors
+        */
         Descriptors const& get_descriptors(void) const;
 
+        /*
+        *  @property    描述子获取
+        *  @func        获取图像的SIFT关键点的描述子
+        *  @param_in    filename    描述子文件名
+        *  @param_In    result      描述子容器   一幅图像的描述子结果存在此中
+        *  @return      void
+        */
         static void load_lowe_descriptors(std::string const& filename, Descriptors* result);
 /********************************************************************
 *~~~~~~~~~~~~~~~~~~~~~~~~~常用结构体声明及定义~~~~~~~~~~~~~~~~~~~~~~~~~~

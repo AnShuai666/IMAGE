@@ -5,7 +5,7 @@
  * @e-mail   1028792866@qq.com
 */
 
-#include <include/timer.h>
+#include <fstream>
 #include "include/sift.hpp"
 #include "include/image_process.hpp"
 #include "include/timer.h"
@@ -141,6 +141,62 @@ image::Sift::process()
 
     //清空八阶以清除内存
     this->octaves.clear();
+}
+
+inline Sift::Keypoints const&
+image::Sift::get_keypoints() const
+{
+    return this->keypoints;
+}
+
+inline Sift::Descriptors const&
+image::Sift::get_descriptors() const
+{
+    return this->descriptors;
+}
+
+void
+image::Sift::load_lowe_descriptors(std::string const &filename, image::Sift::Descriptors *result)
+{
+    std::ifstream in(filename.c_str());
+    //文件流异常跑出异常
+    if(!in.good())
+    {
+        throw std::runtime_error("不能打开描述子文件!\n");
+    }
+
+    int num_descriptors;
+    int num_dimensions;
+    in >> num_descriptors >> num_dimensions;
+    if (num_descriptors > 100000 || num_dimensions != 128)
+    {
+        in.close();
+        throw std::runtime_error("非法的描述子数量及描述子维度\n");
+    }
+
+    result->clear();
+    result->reserve(num_descriptors);
+    for (int i = 0; i < num_descriptors; ++i)
+    {
+        Sift::Descriptor descriptor;
+        in >> descriptor.y >> descriptor.x >> descriptor.scale >> descriptor.orientation;
+        for (int j = 0; j < 128; ++j)
+        {
+            in >> descriptor.data[j];
+            descriptor.data.normalize();
+            result->push_back(descriptor);
+        }
+    }
+    //文件流异常跑出异常
+    if (!in.good())
+    {
+        result->clear();
+        in.close();
+        throw std::runtime_error("描述子文件读取过程错误!\n");
+    }
+
+    in.close();
+
 }
 
 
@@ -387,4 +443,96 @@ image::Sift::keypoint_localization()
 
 }
 
+void
+image::Sift::descriptor_generation()
+{
+    if (this->octaves.empty())
+    {
+        throw std::runtime_error("没有可以利用的图像金字塔(八阶)!\n");
+    }
+
+    if (this->keypoints.empty())
+    {
+
+        return;
+    }
+
+    this->descriptors.clear();
+    this->descriptors.reserve(this->keypoints.size() * 3 / 2);
+
+    int octave_index = this->keypoints[0].octave;
+    Octave* octave = &this->octaves[octave_index - this->options.min_octave];
+
+    //产生八阶的梯度图与方向图,
+    //img_grad:  梯度响应值图像
+    //img_ort:  方向图
+    this->generate_grad_ori_images(octave);
+
+    for (int i = 0; i < this->keypoints.size(); ++i)
+    {
+        Keypoint const& kp(this->keypoints[i]);
+
+
+    }
+}
+
+void
+image::Sift::generate_grad_ori_images(image::Sift::Octave *octave)
+{
+    octave->img_grad.clear();
+    octave->img_grad.reserve(octave->img_src.size());
+    octave->img_ort.clear();
+    octave->img_ort.reserve(octave->img_src.size());
+
+    int const width = octave->img_src[0]->width();
+    int const height = octave->img_src[0]->height();
+
+    std::cout<<"正在产生八阶梯度图与方向图"<<std::endl;
+    for (int i = 0; i < octave->img_src.size(); ++i)
+    {
+        image::FloatImage::ConstPtr img_src = octave->img_src[i];
+        image::FloatImage::Ptr img_grad = image::FloatImage::create(width,height,1);
+        image::FloatImage::Ptr img_ort = image::FloatImage::create(width,height,1);
+
+        int image_iter = width + 1;
+        for (int y = 0; y < height - 1; ++y,image_iter += 2)
+        {
+            for (int x = 0; x < width - 1; ++x, ++image_iter)
+            {
+                float m1x = img_src->at(image_iter - 1);
+                float p1x = img_src->at(image_iter + 1);
+                float m1y = img_src->at(image_iter - width);
+                float p1y = img_src->at(image_iter + width);
+                float dx = 0.5f * (p1x - m1x);
+                float dy = 0.5f * (p1y - m1y);
+
+                float atan2f = std::atan2(dy,dx);
+                //梯度的模
+                img_grad->at(image_iter) = std::sqrt(dx * dx + dy * dy);
+                img_ort->at(image_iter) = atan2f < 0.0f ? atan2f + MATH_PI * 2.0f : atan2f;
+            }
+        }
+
+        octave->img_grad.push_back(img_grad);
+        octave->img_ort.push_back(img_ort);
+    }
+}
+
+void
+image::Sift::orientation_assignment(const image::Sift::Keypoint &kp, const image::Sift::Octave *octave,std::vector<float> &orientations)
+{
+
+}
+
+float
+image::Sift::keypoint_relative_scale(const image::Sift::Keypoint &kp)
+{
+
+}
+
+float
+image::Sift::keypoint_absolute_scale(const image::Sift::Keypoint &kp)
+{
+
+}
 IMAGE_NAMESPACE_END
