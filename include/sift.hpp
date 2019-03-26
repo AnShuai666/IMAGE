@@ -11,7 +11,7 @@
 
 #include <string>
 #include <vector>
-#include "define.h"
+//#include "define.h"
 #include "Matrix/vector.hpp"
 #include "image.hpp"
 
@@ -227,6 +227,14 @@ IMAGE_NAMESPACE_BEGIN
 
         bool descriptor_assignment(Keypoint const& kp, Descriptor& desc,Octave const* octave);
 
+        /*
+        *  @property    图像关键点相对尺度
+        *  @func        获取图像关键点相对尺度,第0阶,第sample个dog图像的尺度,其中 S为sample总数,
+        *               s为关键点的sample位置下一层,sample[3]分别为s:s+1:s+2,因此尺度为k^(s+1) * sigma
+        *               其中,k = 2^(1/S)
+        *  @param_in    kp               图像关键点引用
+        *  @return      float   关键点的绝对尺度,也就是相对于无模糊图像的尺度.
+        */
         float keypoint_relative_scale(Keypoint const& kp);
 
         /*

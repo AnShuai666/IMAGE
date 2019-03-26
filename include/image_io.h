@@ -7,7 +7,7 @@
 
 #ifndef IMAGE_IMAGE_IO_H
 #define IMAGE_IMAGE_IO_H
-#include "define.h"
+//#include "define.h"
 #include "image.hpp"
 using namespace image;
 IMAGE_NAMESPACE_BEGIN

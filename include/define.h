@@ -14,7 +14,13 @@
 
 #define checkImageioerror(val) checkimage((val),#val,__FILE__,__LINE__);
 
-#define checkFileerror(fp) checkfile((fp),__FILE__,__LINE__);
+#define checkFileerror(fp) checkfile((fp),__FILE__,__LINE__)
+
+template <typename T>
+void checkimage(T val, char const* const funcname,char const* const filename,int const linenum);
+
+void
+checkfile(FILE *fp, char const* const filename, int const linenum);
 
 template <typename T>
 void checkimage(T val, char const* const funcname,char const* const filename,int const linenum)
@@ -27,12 +33,5 @@ void checkimage(T val, char const* const funcname,char const* const filename,int
     return;
 }
 
-void checkfile(FILE *fp, char const* const filename, int const linenum)
-{
-    if(fp == NULL)
-    {
-        std::cerr<<"FILE LOAD ERROR AT: "<<filename<<": "<<linenum<<std::endl;
-    }
-    return;
-}
+
 #endif //IMAGE_DEFINE_H

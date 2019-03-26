@@ -9,6 +9,7 @@
 #include "include/sift.hpp"
 #include "include/image_process.hpp"
 #include "include/timer.h"
+#include "function/function.hpp"
 
 IMAGE_NAMESPACE_BEGIN
 
@@ -485,6 +486,7 @@ image::Sift::descriptor_generation()
 
         std::vector<float> orientations;
         orientations.reserve(8);
+        this->orientation_assignment(kp,octave,orientations);
 
         for (std::size_t j = 0; j < orientations.size(); ++j)
         {
@@ -493,7 +495,10 @@ image::Sift::descriptor_generation()
             //根据高斯加权核还原回原来关键点在原始图像中的位置.(拍摄图像,具有固有尺度)
             desc.x = scale_factor * (kp.x + 0.5f) - 0.5f;
             desc.y = scale_factor * (kp.y + 0.5f) - 0.5f;
+            //获取关键点的绝对尺度
             desc.scale = this->keypoint_absolute_scale(kp);
+
+
         }
 
     }
@@ -544,13 +549,113 @@ image::Sift::generate_grad_ori_images(image::Sift::Octave *octave)
 void
 image::Sift::orientation_assignment(const image::Sift::Keypoint &kp, const image::Sift::Octave *octave,std::vector<float> &orientations)
 {
+    //直方图柱状个数
+    int const nbins = 36;
+    float const nbinsf = static_cast<float>(nbins);
+
+    float hist[nbins];
+    std::fill(hist,hist + nbins,0.0f);
+
+    //
+    int const ix = static_cast<int>(kp.x + 0.5f);
+    int const iy = static_cast<int>(kp.y + 0.5f);
+    int const is = static_cast<int>(func::round(kp.sample));
+    float const sigma = this->keypoint_relative_scale(kp);
+
+    image::FloatImage::ConstPtr grad(octave->img_grad[is + 1]);
+    image::FloatImage::ConstPtr ort(octave->img_ort[is + 1]);
+    int const width = grad->width();
+    int const height = grad->height();
+
+    //三倍sigma定理,超过之后,权值忽略不计
+    float sigma_factor = 1.5f;
+    int win = static_cast<int>(sigma * sigma_factor * 3.0f);
+    if (ix < win || ix + win >= width || iy < win || iy + win >= height)
+    {
+        return;
+    }
+
+    int center = iy * width + ix;
+    float const dxf = kp.x - static_cast<float>(ix);
+    float const dyf = kp.y - static_cast<float>(iy);
+    //计算窗口最大距离的平方
+    float const maxdist = static_cast<float>(win * win)+ 0.5f;
+
+    //填充直方图
+    for (int dy = 0; dy <= -win; ++dy)
+    {
+        int const yoff = dy * width;
+        for (int dx = 0; dx < -win; ++dx)
+        {
+            float const dist = MATH_POW2(dx - dxf) + MATH_POW2(dy -dyf);
+            if (dist > maxdist)
+            {
+                continue;
+            }
+
+            //梯度幅值
+            float grad_magnitude = grad->at(center + yoff +dx);
+            //梯度方向
+            float grad_ort = ort->at(center + yoff +dx);
+            float weight = func::gaussian_xx(dist,sigma * sigma_factor);
+
+            //360度等分36份,grad_ort/(2PI/36) = grad_ort * 36 / 2PI
+            int bin = static_cast<int>(nbinsf * grad_ort / (2.0f * MATH_PI));
+            bin = func::clamp(bin,0,nbins - 1);
+            hist[bin] += grad_magnitude * weight;
+        }
+    }
+
+    //TODO: 多余的,可以去掉 CUDA@杨丰拓
+    //6次直方图平滑,每个像素取前中后均值,首尾像素特殊处理,首尾相接.
+    for (int i = 0; i < 6; ++i)
+    {
+        float first = hist[0];
+        float prev = hist[nbins - 1];
+        //梯度直方图等于30度范围内的均值
+        for (int j = 0; j < nbins - 1; ++j)
+        {
+            float current = hist[j];
+            hist[j] = (prev + current + hist[j + 1]) / 3.0f;
+            prev = current;
+        }
+        hist[nbins - 1] = (prev + hist[nbins - 1] + first) / 3.0f;
+    }
+
+    //找主方向
+    float maxh = *std::max_element(hist,hist + nbins);
+
+    //主方向80%的统计值,也统计为次方向
+    for (int i = 0; i < nbins; ++i)
+    {
+        float h0 = hist[(i + nbins - 1) % nbins];   //35,0... 34
+        float h1 = hist[i];                         //0,...,35
+        float h2 = hist[(i + 1) % nbins];           //1,...35,0
+
+        //保证次方向直方柱局部最大值
+        if(h1 <= 0.8f * maxh || h1 <= h0 || h1 <= h2)
+        {
+            continue;
+        }
+
+        //二次多项式插值查找极值:每次循环三点模拟二次函数,自变量分别-1,0,1,
+        // 极值处为x,-1 <= x <= 1,加上原来i,找到精确的极值点
+        //f(x) = ax^2 + bx + c, f(-1) = h0, f(0) = h1, f(1) = h2
+        //=> a = 1/2 (h0 - 2h1 + h2), b = 1/2 (h2 - h0), c = h1.
+        // x = f'(x) = 2ax + b = 0 --> x = -1/2 * (h2 - h0) / (h0 - 2h1 + h2).
+        float x = -0.5f * (h2 - h0) / (h0 - 2.0f * h1 + h2);
+        //TODO:0.5f去留的测试
+        float o =  2.0f * MATH_PI * (x + (float)i + 0.5f) / nbinsf;
+        orientations.push_back(o);
+    }
+
 
 }
 
 float
 image::Sift::keypoint_relative_scale(const image::Sift::Keypoint &kp)
 {
-
+    return this->options.base_blur_sigma * std::pow(2.0f,(kp.sample + 1.0f) / this->options.num_samples_per_octave);
 }
 
 float

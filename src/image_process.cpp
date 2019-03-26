@@ -9,7 +9,7 @@
 #include "include/image.hpp"
 IMAGE_NAMESPACE_BEGIN
 FloatImage::Ptr
-image::byte_to_float_image(image::Image<unsigned char>::ConstPtr image)
+byte_to_float_image(image::Image<unsigned char>::ConstPtr image)
 {
     if (image == NULL)
     {
