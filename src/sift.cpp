@@ -349,7 +349,8 @@ void
 image::Sift::extrema_detection()
 {
     this->keypoints.clear();
-    
+
+    //TODO: CUDA@杨丰拓
     // 在每个八阶检测图像的关键点
     for (std::size_t i = 0; i < this->octaves.size(); ++i)
     {
@@ -373,7 +374,7 @@ void image::Sift::extrema_detection(image::Image<float>::ConstPtr *s, int octave
                    -1,0,1,
                    -1 + w, w, 1 + w
                    };
-
+    //TODO: CUDA@杨丰拓
     int off = w;
     //从第二行第二列开始到倒数第二行倒数第二列进行遍历
     for (int y = 1; y < h - 1; ++y)
@@ -439,6 +440,7 @@ image::Sift::keypoint_localization()
         image::FloatImage::ConstPtr dogs[3] = {octave.img_dog[sample + 0],octave.img_dog[sample + 1],octave.img_dog[sample + 2]};
 
 
+
     }
 
 }
@@ -463,6 +465,7 @@ image::Sift::descriptor_generation()
     int octave_index = this->keypoints[0].octave;
     Octave* octave = &this->octaves[octave_index - this->options.min_octave];
 
+    //TODO: CUDA@杨丰拓
     //产生八阶的梯度图与方向图,
     //img_grad:  梯度响应值图像
     //img_ort:  方向图
@@ -472,6 +475,26 @@ image::Sift::descriptor_generation()
     {
         Keypoint const& kp(this->keypoints[i]);
 
+        if (kp.octave > octave_index)
+        {
+            if(octave)
+            {
+                octave->img_grad.clear();
+            }
+        }
+
+        std::vector<float> orientations;
+        orientations.reserve(8);
+
+        for (std::size_t j = 0; j < orientations.size(); ++j)
+        {
+            Descriptor desc;
+            float const scale_factor = std::pow(2.0f, kp.octave);
+            //根据高斯加权核还原回原来关键点在原始图像中的位置.(拍摄图像,具有固有尺度)
+            desc.x = scale_factor * (kp.x + 0.5f) - 0.5f;
+            desc.y = scale_factor * (kp.y + 0.5f) - 0.5f;
+            desc.scale = this->keypoint_absolute_scale(kp);
+        }
 
     }
 }
@@ -533,6 +556,6 @@ image::Sift::keypoint_relative_scale(const image::Sift::Keypoint &kp)
 float
 image::Sift::keypoint_absolute_scale(const image::Sift::Keypoint &kp)
 {
-
+    return this->options.base_blur_sigma * std::pow(2.0f,kp.octave + (kp.sample + 1.0f) / this->options.num_samples_per_octave);
 }
 IMAGE_NAMESPACE_END

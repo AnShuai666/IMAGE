@@ -61,7 +61,7 @@ IMAGE_NAMESPACE_BEGIN
             //图像固有尺度，假设图像拍摄就有默认尺度为0.5的模糊。即实际原图为I,拍摄图像为L = I * G(inherent_blur_sigma)
             float inherent_blur_sigma;
 
-            //基本图像的尺度，默认1.6
+            //基本图像的尺度，默认1.6 第0阶第一张图的基本尺度,可通过固有尺度模糊到该尺度
             float base_blur_sigma;
 
             //是否输出程序运行的状态信息到控制台
@@ -229,6 +229,14 @@ IMAGE_NAMESPACE_BEGIN
 
         float keypoint_relative_scale(Keypoint const& kp);
 
+        /*
+        *  @property    图像关键点绝对尺度
+        *  @func        获取图像关键点绝对尺度,第octave阶,第sample个dog图像的尺度,其中 S为sample总数,
+        *               s为关键点的sample位置下一层,sample[3]分别为s:s+1:s+2,因此尺度为2^octave * k^(s+1) * sigma
+        *               其中,k = 2^(1/S)
+        *  @param_in    kp               图像关键点引用
+        *  @return      float   关键点的绝对尺度,也就是相对于无模糊图像的尺度.
+        */
         float keypoint_absolute_scale(Keypoint const& kp);
 
 
