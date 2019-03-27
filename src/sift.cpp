@@ -654,6 +654,12 @@ image::Sift::orientation_assignment(const image::Sift::Keypoint &kp, const image
     }
 }
 
+bool image::Sift::descriptor_assignment(const image::Sift::Keypoint &kp, image::Sift::Descriptor &desc,const image::Sift::Octave *octave)
+{
+
+}
+
+
 float
 image::Sift::keypoint_relative_scale(const image::Sift::Keypoint &kp)
 {
