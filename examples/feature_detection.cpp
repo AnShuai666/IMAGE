@@ -17,7 +17,7 @@ int main(int argc, char ** argv)
 
     image::ByteImage::Ptr image;
     std::string image_filename = argv[1];
-
+    /*
     try
     {
         std::cout<<"加载 "<<image_filename<<"中..."<<std::endl;
@@ -27,7 +27,7 @@ int main(int argc, char ** argv)
     {
         std::cerr<<"错误: "<<e.what()<<std::endl;
         return 1;
-    }
+    }*/
 
     image::Sift::Keypoints sift_keypoints;
     image::Sift::Descriptors sift_descriptors;
