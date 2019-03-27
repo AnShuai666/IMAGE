@@ -1218,6 +1218,7 @@ IMAGE_NAMESPACE_BEGIN
             //TODO：：抛出异常
             return;
         }
+        //TODO::TO CUDA @YANG
         for (T* iter = this->begin(); iter != this->end() ; iter += this->c)
         {
             //std::copy(iter,iter + this->c, color);
@@ -1255,7 +1256,7 @@ IMAGE_NAMESPACE_BEGIN
         ImageData tmp(this->w * this->h * (this->c + num_channels));
         typename ImageData::iterator iter_tmp = tmp.end();
         typename ImageData::iterator iter_this = this->data.end();
-
+        //TODO::TO CUDA @YANG
         for (int i = 0; i < this->get_pixel_amount(); ++i)
         {
             for (int j = 0; j < num_channels; ++j)
@@ -1283,7 +1284,7 @@ IMAGE_NAMESPACE_BEGIN
         ImageData tmp(this->w * this->h * (this->c + num_channels));
         typename ImageData::iterator iter_tmp = tmp.end();
         typename ImageData::iterator iter_this = this->data.end();
-
+        //TODO::TO CUDA @YANG
         if(_front_back){
             for (int i = 0; i < this->get_pixel_amount(); ++i)
             {
@@ -1335,6 +1336,7 @@ IMAGE_NAMESPACE_BEGIN
             return;
         }
 
+        //TODO::TO CUDA @YANG
         if (swap_method == AT)
         {
             for (int i = 0; i < this->get_pixel_amount(); ++i)
@@ -1374,6 +1376,7 @@ IMAGE_NAMESPACE_BEGIN
 
         T const* src_iter = &this->at(0,src);
         T* dest_iter = &this->at(0,dest);
+        //TODO::TO CUDA @YANG
         for (int i = 0; i < this->get_pixel_amount(); src_iter += this->c, dest_iter += this->c,i++)
         {
             *dest_iter = *src_iter;
@@ -1391,7 +1394,7 @@ IMAGE_NAMESPACE_BEGIN
 
         T* src_iter = this->begin();
         T* dest_iter = this->begin();
-
+        //TODO::TO CUDA @YANG
         for (int i = 0; i < this->data.size(); ++i)
         {
             if(i % this->c == channel)
