@@ -4,14 +4,14 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/doing/gitHub/IMAGE/src_bin/image_main.cpp" "/home/doing/gitHub/IMAGE/cmake-build-debug/src_bin/CMakeFiles/image_main.dir/image_main.cpp.o"
+  "/home/doing/gitHub/IMAGE/examples/feature_detection.cpp" "/home/doing/gitHub/IMAGE/cmake-build-debug/examples/CMakeFiles/feature_detection.dir/feature_detection.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 
 # The include file search paths:
 set(CMAKE_CXX_TARGET_INCLUDE_PATH
-  "../src_bin/../../MATH/include"
-  "../src_bin/../include"
+  "../examples/../../MATH/include"
+  "../examples/../include"
   )
 
 # Targets to which this target links.

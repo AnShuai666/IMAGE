@@ -6,5 +6,5 @@ CXX_FLAGS = -fPIC -g   -std=gnu++11
 
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/doing/gitHub/IMAGE/src_bin/../../MATH/include -I/home/doing/gitHub/IMAGE/src_bin/../include 
+CXX_INCLUDES = -I/home/doing/gitHub/IMAGE/examples/../../MATH/include -I/home/doing/gitHub/IMAGE/examples/../include 
 

@@ -1,0 +1,1 @@
+/usr/bin/c++  -fPIC -g  -rdynamic CMakeFiles/feature_detection.dir/feature_detection.cpp.o  -o ../../examples_bin/feature_detection -Wl,-rpath,/home/doing/gitHub/IMAGE/lib ../../lib/libimage.so -lpng -lz -ljpeg 

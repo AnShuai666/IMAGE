@@ -4,13 +4,17 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/as/IMAGE/src/image_io.cpp" "/home/as/IMAGE/cmake-build-debug/src/CMakeFiles/image.dir/image_io.cpp.o"
+  "/home/doing/gitHub/IMAGE/src/define.cpp" "/home/doing/gitHub/IMAGE/cmake-build-debug/src/CMakeFiles/image.dir/define.cpp.o"
+  "/home/doing/gitHub/IMAGE/src/image_io.cpp" "/home/doing/gitHub/IMAGE/cmake-build-debug/src/CMakeFiles/image.dir/image_io.cpp.o"
+  "/home/doing/gitHub/IMAGE/src/image_process.cpp" "/home/doing/gitHub/IMAGE/cmake-build-debug/src/CMakeFiles/image.dir/image_process.cpp.o"
+  "/home/doing/gitHub/IMAGE/src/sift.cpp" "/home/doing/gitHub/IMAGE/cmake-build-debug/src/CMakeFiles/image.dir/sift.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 
 # The include file search paths:
 set(CMAKE_CXX_TARGET_INCLUDE_PATH
-  "../src/../include"
+  "../src/.."
+  "../src/../../MATH/include"
   )
 
 # Targets to which this target links.

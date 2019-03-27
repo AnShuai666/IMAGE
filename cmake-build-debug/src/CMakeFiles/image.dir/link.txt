@@ -1,1 +1,1 @@
-/usr/bin/c++ -fPIC -fPIC -g  -shared -Wl,-soname,libimage.so -o ../../lib/libimage.so CMakeFiles/image.dir/image_io.cpp.o 
+/usr/bin/c++ -fPIC -fPIC -g  -shared -Wl,-soname,libimage.so -o ../../lib/libimage.so CMakeFiles/image.dir/define.cpp.o CMakeFiles/image.dir/image_io.cpp.o CMakeFiles/image.dir/sift.cpp.o CMakeFiles/image.dir/image_process.cpp.o -lpng -lz -ljpeg 
