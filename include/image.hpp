@@ -78,6 +78,7 @@ public:
     *  @func       将图像进行初始化，w=h=c=0
     */
     ImageBase();
+    ImageBase(const ImageBase& _img);
 
     /*
     *  @property   默认构造函数
@@ -383,7 +384,7 @@ public:
     T const* end() const;
 
 protected:
-    ImageData data;
+    ImageData data; //数组遍历速度比容器快20%左右
 
 };
 
@@ -496,16 +497,20 @@ public:
     *  @param_in    T const* color      颜色数组
     *  @return     void
     */
-    void fill_color(T const* color);
+    void fill_color(const T* const _color,int _c);
+
+    void fill_color(const std::vector<T>& _color);
 
     /*
     *  @property    给图像添加通道
     *  @func        为图像添加num_channels数量的通道，值为value
     *  @param_in    num_channels    要添加的通道数
     *  @param_in    value           新通道分量的值
+    *  @param_in    front_back      添加到前或后，0：前，1：后
     *  @return      void
     */
     void add_channels(int num_channels, T const& value = T(0));
+    void add_channels(const std::vector<T> _value,int _front_back=1);
 
 
     //TODO: 对比下面两种访问时间差 直接访问at（）与迭代器方式
@@ -542,7 +547,7 @@ public:
     *  @param_in   index    图像数据线性索引值
     *  @return     T const&
     */
-    T const& at(int index) const;
+    T const& at(unsigned int index) const;
 
     /*
     *  @property   访问图像数据
@@ -551,7 +556,7 @@ public:
     *  @param_in   channel  待访问像素通道索引值
     *  @return     T const&
     */
-    T const& at(int index, int channel) const;
+    T const& at(unsigned int index, unsigned int channel) const;
 
      /*
      *  @property   访问图像数据
@@ -561,7 +566,7 @@ public:
      *  @param_in   channel
      *  @return     T const&
      */
-    T const& at(int x, int y, int channel) const;
+    T const& at(unsigned int x, unsigned int y, unsigned int channel) const;
 
     /*
     *  @property   访问图像数据
@@ -569,7 +574,7 @@ public:
     *  @param_in   index    图像数据线性索引值
     *  @return     T &
     */
-    T& at(int index);
+    T& at(unsigned int index);
 
     /*
     *  @property   访问图像数据
@@ -578,7 +583,7 @@ public:
     *  @param_in   channel  待访问像素通道索引值
     *  @return     T const&
     */
-    T& at(int index, int channel);
+    T& at(unsigned int index, unsigned int channel);
 
     /*
     *  @property   访问图像数据
@@ -588,7 +593,7 @@ public:
     *  @param_in   channel
     *  @return     T const&
     */
-    T& at(int x, int y, int channel);
+    T& at(unsigned int x, unsigned int y, unsigned int channel);
 
     /*
     *  @property    像素插值
@@ -695,7 +700,13 @@ IMAGE_NAMESPACE_BEGIN
     {
 
     }
-
+    inline
+    ImageBase:: ImageBase(const ImageBase& _img)//添加拷贝函数
+    {
+        this->w=_img.w;
+        this->h=_img.h;
+        this->c=_img.c;
+    }
     inline
     ImageBase::~ImageBase()
     {
@@ -1192,33 +1203,58 @@ IMAGE_NAMESPACE_BEGIN
 
     template <typename T>
     inline typename Image<T>::Ptr
-    Image<T>::duplicate() const
+    Image<T>::duplicate() const //拷贝函数代替复制函数
     {
         return Ptr(new Image<T>(*this));
     }
 
     template <typename T>
     inline void
-    Image<T>::fill_color(T const *color)
+    Image<T>::fill_color(const T* const _color,int _c)
     {
+        if(this->c!=_c)
+        {
+            printf("ArgumentOutOfRangeException\n");
+            //TODO：：抛出异常
+            return;
+        }
         for (T* iter = this->begin(); iter != this->end() ; iter += this->c)
         {
-            std::copy(iter,iter + this->c, color);
+            //std::copy(iter,iter + this->c, color);
+            std::copy(_color,_color + this->c, iter);
         }
     }
-
+    template <typename T>
+    inline void
+    Image<T>::fill_color(const std::vector<T>& _color)
+    {
+        if(this->c!=_color.size())
+        {
+            printf("ArgumentOutOfRangeException\n");
+            //TODO：：抛出异常
+            return;
+        }
+        T* _color_arr=new T[_color.size()];
+        for(int _it=0;_it<_color.size();_it++)
+            _color_arr[_it]=_color[_it];
+        fill_color(_color_arr,_color.size());
+        delete[] _color_arr;
+        return ;
+    }
     template <typename T>
     void
     Image<T>::add_channels(int num_channels, const T &value)
     {
-        if(!num_channels || !this->valid())
+        if(num_channels<=0)
         {
+            printf("ArgumentOutOfRangeException\n");
+            //TODO::抛出异常
             return;
         }
 
         ImageData tmp(this->w * this->h * (this->c + num_channels));
         typename ImageData::iterator iter_tmp = tmp.end();
-        typename ImageData::iterator iter_this = this->end();
+        typename ImageData::iterator iter_this = this->data.end();
 
         for (int i = 0; i < this->get_pixel_amount(); ++i)
         {
@@ -1237,7 +1273,48 @@ IMAGE_NAMESPACE_BEGIN
 
         std::swap(this->data,tmp);
     }
+    template <typename T>
+    void
+    Image<T>::add_channels(const std::vector<T> _value,int _front_back)
+    {
+        if(_value.empty())
+            return;
+        int num_channels=_value.size();
+        ImageData tmp(this->w * this->h * (this->c + num_channels));
+        typename ImageData::iterator iter_tmp = tmp.end();
+        typename ImageData::iterator iter_this = this->data.end();
 
+        if(_front_back){
+            for (int i = 0; i < this->get_pixel_amount(); ++i)
+            {
+                for (int j = num_channels-1; j >=0; j--)
+                {
+                    *(--iter_tmp) = _value[j];
+                }
+
+                for (int k = 0; k < this->c; ++k)
+                {
+                    *(--iter_tmp) = *(--iter_this);
+                }
+            }
+        }
+        else{
+            for (int i = 0; i < this->get_pixel_amount(); ++i)
+            {
+                for (int k = 0; k < this->c; ++k)
+                {
+                    *(--iter_tmp) = *(--iter_this);
+                }
+                for (int j = num_channels-1; j >=0; j--)
+                {
+                    *(--iter_tmp) = _value[j];
+                }
+            }
+        }
+        std::swap(this->data,tmp);
+        this->c +=num_channels;
+        return;
+    }
     template <typename T>
     void
     Image<T>::swap_channels(int channel1, int channel2, SWAP_METHOD swap_method)
@@ -1246,7 +1323,12 @@ IMAGE_NAMESPACE_BEGIN
         {
             return;
         }
-
+        if(channel1<0||channel1>=this->c||channel2<0||channel2>=this->c)
+        {
+            printf("ArgumentOutOfRangeException\n");
+            //TODO::抛出异常
+            return;
+        }
         if (swap_method != AT && swap_method != ITERATOR)
         {
             std::cout<<"交换方式错误!\n"<<std::endl;
@@ -1274,6 +1356,11 @@ IMAGE_NAMESPACE_BEGIN
     void
     Image<T>::copy_channel(int src, int dest)
     {
+        if(src>=this->c||dest>=this->c)
+        {
+            printf("ArgumentOutOfRangeException\n");
+            //TODO::抛出异常
+        }
         if(!this->valid() || src == dest)
         {
             return;
@@ -1287,7 +1374,7 @@ IMAGE_NAMESPACE_BEGIN
 
         T const* src_iter = &this->at(0,src);
         T* dest_iter = &this->at(0,dest);
-        for (int i = 0; i < this->get_pixel_amount(); src_iter += this->c, dest_iter += this->c)
+        for (int i = 0; i < this->get_pixel_amount(); src_iter += this->c, dest_iter += this->c,i++)
         {
             *dest_iter = *src_iter;
         }
@@ -1297,17 +1384,17 @@ IMAGE_NAMESPACE_BEGIN
     void
     Image<T>::delete_channel(int channel)
     {
-        if (channel < 0 || channel > this->channels())
+        if (channel < 0 || channel >= this->channels())
         {
             return;
         }
 
-        typename Image<T>::ImageData::iterator src_iter = this->begin();
-        typename Image<T>::ImageData::iterator dest_iter = this->begin();
+        T* src_iter = this->begin();
+        T* dest_iter = this->begin();
 
         for (int i = 0; i < this->data.size(); ++i)
         {
-            if(i % this->c == channel-1)
+            if(i % this->c == channel)
             {
                 src_iter++;
             } else
@@ -1320,47 +1407,77 @@ IMAGE_NAMESPACE_BEGIN
 
     template <typename T>
     inline T const&
-    Image<T>::at(int index) const
+    Image<T>::at(unsigned int index) const
     {
+        if(index>=this->data.size())
+        {
+            printf("ArgumentOutOfRangeException\n");
+            //TODO:此处抛出异常
+        }
         return this->data[index];
     }
 
     template <typename T>
     inline T const&
-    Image<T>::at(int index, int channel) const
+    Image<T>::at(unsigned int index, unsigned int channel) const
     {
-        int offset = index * this->c + channel - 1;
+        if(index>this->w*this->h||channel>this->c)
+        {
+            printf("ArgumentOutOfRangeException\n");
+            //TODO:此处抛出异常
+        }
+        int offset = index * this->c + channel;
         return this->data[offset];
     }
 
     template <typename T>
     inline T const&
-    Image<T>::at(int x, int y, int channel) const
+    Image<T>::at(unsigned int x, unsigned int y, unsigned int channel) const
     {
-        int offset = y * this->w * this->c + x * this->c + channel - 1;
+        if(x>=this->w||y>=this->h||channel>=this->c)
+        {
+            printf("ArgumentOutOfRangeException\n");
+            //TODO:此处抛出异常
+        }
+        int offset = y * this->w * this->c + x * this->c + channel;
         return this->data[offset];
     }
 
     template <typename T>
     inline T&
-    Image<T>::at(int index)
+    Image<T>::at(unsigned int index)
     {
+        if(index>=this->data.size())
+        {
+            printf("ArgumentOutOfRangeException\n");
+            //TODO:此处抛出异常
+        }
         return this->data[index];
     }
 
     template <typename T>
     inline T&
-    Image<T>::at(int index, int channel)
+    Image<T>::at(unsigned int index,unsigned int channel)
     {
-        int offset = index * this->c + channel - 1;
+        if(index>this->w*this->h||channel>this->c)
+        {
+            printf("ArgumentOutOfRangeException\n");
+            //TODO:此处抛出异常
+        }
+        int offset = index * this->c + channel ;
         return this->data[offset];
     }
 
     template <typename T>
     inline T&
-    Image<T>::at(int x, int y, int channel)
+    Image<T>::at(unsigned int x,unsigned int y,unsigned int channel)
     {
-        int offset = y * this->w * this->c + x * this->c +channel - 1;
+        if(x>=this->w||y>=this->h||channel>=this->c)
+        {
+            printf("ArgumentOutOfRangeException\n");
+            //TODO:此处抛出异常
+        }
+        int offset = y * this->w * this->c + x * this->c +channel;
         return this->data[offset];
     }
 
