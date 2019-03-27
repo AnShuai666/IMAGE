@@ -6,6 +6,7 @@
 */
 #include "sift.hpp"
 #include "image_io.h"
+#include "timer.h"
 #include <iostream>
 int main(int argc, char ** argv)
 {
@@ -30,7 +31,7 @@ int main(int argc, char ** argv)
     }
 
     std::cout<<"================================="<<std::endl;
-    std::cout<<"           Debug专用             "<<std::endl;
+    std::cout<<"           Debug专用              "<<std::endl;
     std::cout<<"================================="<<std::endl;
 
     image::Sift::Keypoints sift_keypoints;
@@ -39,6 +40,12 @@ int main(int argc, char ** argv)
     image::Sift::Options sift_options;
     sift_options.verbose_output = true;
     sift_options.debug_output = true;
+    image::Sift sift(sift_options);
+    sift.set_image(image);
+
+    image::TimerHigh timer;
+    sift.process();
+    std::cout<<"计算Sift特征用时 "<<timer.get_elapsed()<<" 毫秒"<<std::endl;
 
     return 0;
 }
