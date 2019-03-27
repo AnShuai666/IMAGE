@@ -144,17 +144,7 @@ image::Sift::process()
     this->octaves.clear();
 }
 
-inline Sift::Keypoints const&
-image::Sift::get_keypoints() const
-{
-    return this->keypoints;
-}
 
-inline Sift::Descriptors const&
-image::Sift::get_descriptors() const
-{
-    return this->descriptors;
-}
 
 void
 image::Sift::load_lowe_descriptors(std::string const &filename, image::Sift::Descriptors *result)
