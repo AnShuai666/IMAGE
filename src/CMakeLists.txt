@@ -4,11 +4,16 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 find_package(PNG REQUIRED)
 if (PNG_FOUND)
-    message("PNG FOUND: ${PNG_LIBRARIES}")
+    message("PNG 找到: ${PNG_LIBRARIES}")
     include_directories(${PNG_INCLUDE_DIRS})
     add_definitions(${PNG_DEFINITIONS})
 endif ()
 
+find_package(JPEG REQUIRED)
+if (JPEG_FOUND)
+    message(JPEG 找到: ${JPEG_LIBRARIES})
+    include_directories(${JPEG_INCLUDE_DIR})
+endif ()
 
 set(HEADERS
         ${PROJECT_SOURCE_DIR}/include/define.h
@@ -19,4 +24,5 @@ set(HEADERS
 set(SOURCE_FILES
         image_io.cpp
         sift.cpp ../include/sift.hpp image_process.cpp ../include/image_process.hpp)
-add_library(image SHARED ${HEADERS} ${SOURCE_FILES})
+add_library(image SHARED ${HEADERS} ${SOURCE_FILES}  )
+target_link_libraries(image ${PNG_LIBRARIES} ${JPEG_LIBRARIES})
