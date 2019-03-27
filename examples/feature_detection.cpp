@@ -29,6 +29,10 @@ int main(int argc, char ** argv)
         return 1;
     }
 
+    std::cout<<"================================="<<std::endl;
+    std::cout<<"           Debug专用             "<<std::endl;
+    std::cout<<"================================="<<std::endl;
+
     image::Sift::Keypoints sift_keypoints;
     image::Sift::Descriptors sift_descriptors;
 
