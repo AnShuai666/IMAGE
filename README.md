@@ -1,4 +1,4 @@
-This is a image library by An Shuai!
+This is a image library by An Shuai AND Du Jing!
 
 Thank you for watching!
 
@@ -9,4 +9,5 @@ An Shuai:
 email: 1028792866@qq.com
 
 wechat: AS18354287036
+
 
