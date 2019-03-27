@@ -23,7 +23,7 @@ load_image(std::string& filename)
     }
     catch(image::FileException &e)
     {
-        e.what();
+        //e.what();
     }
 
     try

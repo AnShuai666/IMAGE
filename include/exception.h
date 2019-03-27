@@ -21,8 +21,14 @@ IMAGE_NAMESPACE_BEGIN
 class Exception : public std::exception
 {
 public:
-    Exception();
-    virtual ~Exception(void);
+    Exception() noexcept
+    {
+
+    };
+    virtual ~Exception(void) noexcept
+    {
+
+    };
     virtual const char* what() const noexcept
     {
         std::cout<<"Got an Exception!"<<std::endl;
@@ -37,7 +43,10 @@ class FileException : public std::exception
 public:
     FileException(const std::string errMsg = "",const std::string errInfo = "")
         :_errMsg(errMsg),_errInfo(errInfo){}
-    virtual ~FileException(void);
+    virtual ~FileException(void) noexcept
+    {
+        
+    };
     //noexcept c11关键字代替原来的throw
     virtual const char* what() const noexcept
     {
