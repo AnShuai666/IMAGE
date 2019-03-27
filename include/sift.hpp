@@ -220,11 +220,30 @@ IMAGE_NAMESPACE_BEGIN
 
         void descriptor_generation(void);
 
+        /*
+        *  @property    产生梯度图与梯度方向图
+        *  @func        计算关键点梯度,梯度幅值为梯度值,梯度方向为方向值.
+        *  @param_in    octave          待处理的八阶图
+        *  @return      void
+        */
         void generate_grad_ori_images(Octave* octave);
 
+        /*
+        *  @property    方向赋值
+        *  @func        找出图像关键点的梯度方向,为8个方向之一
+        *  @param_in    kp              关键点
+        *  @param_in    octave          待处理的八阶图
+        *  @param_in    orientations    方向存储向量
+        *  @return      void
+        */
         void orientation_assignment(Keypoint const& kp, Octave const* octave, std::vector<float>& orientations);
 
-
+        /*
+        *  @property    描述子赋值
+        *  @func        设置输入图像　灰度图不变　RGB->HSL
+        *  @param_in    img       输入图
+        *  @return      void
+        */
         bool descriptor_assignment(Keypoint const& kp, Descriptor& desc,Octave const* octave);
 
         /*

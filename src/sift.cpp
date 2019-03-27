@@ -497,8 +497,11 @@ image::Sift::descriptor_generation()
             desc.y = scale_factor * (kp.y + 0.5f) - 0.5f;
             //获取关键点的绝对尺度
             desc.scale = this->keypoint_absolute_scale(kp);
-
-
+            desc.orientation = orientations[j];
+            if (this->descriptor_assignment(kp,desc,octave))
+            {
+                this->descriptors.push_back(desc);
+            }
         }
 
     }
@@ -625,6 +628,7 @@ image::Sift::orientation_assignment(const image::Sift::Keypoint &kp, const image
     //找主方向
     float maxh = *std::max_element(hist,hist + nbins);
 
+    //TODO: CUDA@杨丰拓
     //主方向80%的统计值,也统计为次方向
     for (int i = 0; i < nbins; ++i)
     {
@@ -648,8 +652,6 @@ image::Sift::orientation_assignment(const image::Sift::Keypoint &kp, const image
         float o =  2.0f * MATH_PI * (x + (float)i + 0.5f) / nbinsf;
         orientations.push_back(o);
     }
-
-
 }
 
 float
