@@ -50,7 +50,7 @@ image::Sift::process()
 
     if (this->options.verbose_output)
     {
-        std::cout << " SIFT: 创建"
+        std::cout << "SIFT: 创建"
                   << (this->options.max_octave - this->options.min_octave)
                   << "个八阶 (从"
                   << this->options.min_octave
