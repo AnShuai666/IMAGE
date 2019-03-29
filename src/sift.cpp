@@ -14,7 +14,7 @@
 IMAGE_NAMESPACE_BEGIN
 
 image::Sift::Sift(image::Sift::Options const &options):
-options(options)
+options(options),srcImg(nullptr),octaves(0),keypoints(0),descriptors(0)
 {
     if (this->options.min_octave < -1 || this->options.min_octave > options.max_octave)
     {
@@ -41,11 +41,22 @@ image::Sift::set_image(image::ByteImage::ConstPtr img)
     {
         this->srcImg = image::desaturate<float>(this->srcImg,image::DESATURATE_AVERAGE);
     }
+    has_processed=0; //设置新图像时复位。
+    keypoints.resize(0);
+    descriptors.resize(0);
 }
 
 void
 image::Sift::process()
 {
+    //已处理或无图像时返回
+    if(has_processed)
+        return;
+    if(srcImg== nullptr) {
+        printf("please set Image \n");
+        return;
+    }
+
     image::TimerLess timer, total_timer;
 
     if (this->options.verbose_output)
@@ -142,18 +153,30 @@ image::Sift::process()
 
     //清空八阶以清除内存
     this->octaves.clear();
+    has_processed=1;
+}
+//inline 成员函数不能写在cpp文件
+Sift::Keypoints const&
+image::Sift::get_keypoints()
+{
+    if(has_processed)
+        return this->keypoints;
+    else
+    {
+        this->process();
+        return this->keypoints;
+    }
 }
 
-inline Sift::Keypoints const&
-image::Sift::get_keypoints() const
+Sift::Descriptors const&
+image::Sift::get_descriptors()
 {
-    return this->keypoints;
-}
-
-inline Sift::Descriptors const&
-image::Sift::get_descriptors() const
-{
-    return this->descriptors;
+    if(has_processed)
+        return this->descriptors;
+    else {
+        this->process();
+        return this->descriptors;
+    }
 }
 
 void
@@ -467,11 +490,12 @@ image::Sift::descriptor_generation()
     Octave* octave = &this->octaves[octave_index - this->options.min_octave];
 
     //TODO: CUDA@杨丰拓
+    //TODO::4000*2250 图像生成16347590个特征点，段错误;512*512图像生成288390个特征点，0个descriptor
+
     //产生八阶的梯度图与方向图,
     //img_grad:  梯度响应值图像
     //img_ort:  方向图
     this->generate_grad_ori_images(octave);
-
     for (int i = 0; i < this->keypoints.size(); ++i)
     {
         Keypoint const& kp(this->keypoints[i]);
@@ -526,9 +550,9 @@ image::Sift::generate_grad_ori_images(image::Sift::Octave *octave)
         image::FloatImage::Ptr img_ort = image::FloatImage::create(width,height,1);
 
         int image_iter = width + 1;
-        for (int y = 0; y < height - 1; ++y,image_iter += 2)
+        for (int y = 1; y < height - 1; ++y,image_iter += 2)
         {
-            for (int x = 0; x < width - 1; ++x, ++image_iter)
+            for (int x = 1; x < width - 1; ++x, ++image_iter)
             {
                 float m1x = img_src->at(image_iter - 1);
                 float p1x = img_src->at(image_iter + 1);
