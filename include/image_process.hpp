@@ -54,6 +54,7 @@ byte_to_float_image(ByteImage::ConstPtr image);
 *  @param_in   image            待转换图像
 *  @return     T
 */
+//TODO:修改注释@anshuai
 template <typename T>
 T desaturate_maximum(T const* v);
 
@@ -291,6 +292,8 @@ typename Image<T>::Ptr desaturate(typename Image<T>::ConstPtr image, DesaturateT
 
     int out_pos = 0;
     int in_pos = 0;
+    //TODO:: to be CUDA @Yang
+    //opencv 4000*2250*3 图像处理时间: 14.4ms
     for (int i = 0; i < image->get_pixel_amount(); ++i)
     {
         T const* v = &image->at(in_pos);
@@ -308,6 +311,9 @@ typename Image<T>::Ptr desaturate(typename Image<T>::ConstPtr image, DesaturateT
     return out_image;
 }
 
+
+//TODO::to be CUDA@YANG
+//opencv 4000*2250*3 图像处理时间: 94.8ms
 template <typename T>
 typename Image<T>::Ptr
 rescale_double_size_supersample(typename Image<T>::ConstPtr img)
@@ -320,7 +326,6 @@ rescale_double_size_supersample(typename Image<T>::ConstPtr img)
 
     typename Image<T>::Ptr out(Image<T>::create());
     out->allocate(ow,oh,ic);
-
     int witer = 0;
     for (int y = 0; y < oh; ++y)
     {
@@ -335,7 +340,7 @@ rescale_double_size_supersample(typename Image<T>::ConstPtr img)
                 &img->at(yoff[0] + xoff[0],0),
                 &img->at(yoff[0] + xoff[1],0),
                 &img->at(yoff[1] + xoff[0],0),
-                &img->at(yoff[1] + yoff[1],0)
+                &img->at(yoff[1] + xoff[1],0)
             };
 
             for (int c = 0; c < ic; ++c)
@@ -346,7 +351,8 @@ rescale_double_size_supersample(typename Image<T>::ConstPtr img)
     }
     return out;
 }
-
+//TODO::to be CUDA@YANG
+//opencv 4000*2250*3 图像处理时间: 16.6ms
 template <typename T>
 typename Image<T>::Ptr
 rescale_half_size(typename Image<T>::ConstPtr img)
@@ -376,17 +382,18 @@ rescale_half_size(typename Image<T>::ConstPtr img)
         {
             int ipix1 = irow1 + x * 2 * ic;
             int ipix2 = irow2 + x * 2 * ic;
-            int has_next = (x * 2 + 1 < ow);
+            int has_next = (x * 2 + 1 < iw);
 
             for (int c = 0; c < ic; ++c)
             {
-                out->at(out_pos++) = 0.25f * (img->at(ipix1 + c),img->at(ipix1 + has_next * ic + c),
-                                              img->at(ipix2 + c),img->at(ipix2 + has_next * ic + c));
+                out->at(out_pos++) = 0.25f * (img->at(ipix1 + c)+img->at(ipix1 + has_next * ic + c)+
+                                              img->at(ipix2 + c)+img->at(ipix2 + has_next * ic + c));
             }
         }
     }
+    return out;
 }
-
+//TODO::to be CUDA@YANG
 template <typename T>
 typename Image<T>::Ptr
 rescale_half_size_gaussian(typename Image<T>::ConstPtr image, float sigma2)
@@ -405,9 +412,9 @@ rescale_half_size_gaussian(typename Image<T>::ConstPtr image, float sigma2)
     typename Image<T>::Ptr out(Image<T>::create());
     out->allocate(ow,oh,ic);
 
-    float const w1 = std::exp(-0.5 / (2.0f * sigma2));
-    float const w2 = std::exp(-2.5f / (2.0 * sigma2));
-    float const w3 = std::exp(-4.5f / (2.0f * sigma2));
+    float const w1 = std::exp(-0.5 / (2.0f * sigma2));//0.5*0.5*2
+    float const w2 = std::exp(-2.5f / (2.0 * sigma2));//0.5*0.5+1.5*1.5
+    float const w3 = std::exp(-4.5f / (2.0f * sigma2));//1.5*1.5*2
 
     int out_pos = 0;
     int const rowstride = iw * ic;
@@ -431,7 +438,7 @@ rescale_half_size_gaussian(typename Image<T>::ConstPtr image, float sigma2)
 
             for (int c = 0; c < ic; ++c)
             {
-                T sum = 0.0f;
+                float sum = 0.0f;//u_char溢出
                 sum += row[0][xi[0] + c] * w3;
                 sum += row[0][xi[1] + c] * w2;
                 sum += row[0][xi[2] + c] * w2;
@@ -459,6 +466,8 @@ rescale_half_size_gaussian(typename Image<T>::ConstPtr image, float sigma2)
     return out;
 }
 
+//TODO::to be CUDA@YANG
+//opencv 4000*2250*3 图像处理时间：60.9ms
 template <typename T>
 typename Image<T>::Ptr
 blur_gaussian(typename Image<T>::ConstPtr in, float sigma)
@@ -468,7 +477,7 @@ blur_gaussian(typename Image<T>::ConstPtr in, float sigma)
         throw std::invalid_argument("没有输入图像!\n");
     }
 
-    if(MATH_EPSILON_EQ(sigma,0.0f,0.1f));
+    if(MATH_EPSILON_EQ(sigma,0.0f,0.1f))
     {
         return in->duplicate();
     }
@@ -478,17 +487,17 @@ blur_gaussian(typename Image<T>::ConstPtr in, float sigma)
     int const c = in->channels();
     int const ks = std::ceil(sigma * 2.884f);
     std::vector<float> kernel(ks + 1);
-    T weight = 0;
+    float weight = 0;
 
     for (int i = 0; i < ks + 1; ++i)
     {
         kernel[i] = func::gaussian((float)i, sigma);
-        weight += kernel[i];
+        weight += kernel[i]*2;
     }
-
+    weight-=kernel[0];
     //可分离高斯核实现
     //x方向对对象进行卷积
-    typename Image<T>::Ptr sep(Image<T>::create(w,h,c));
+    Image<float>::Ptr sep(Image<float>::create(w,h,c));
     int px = 0;
     for (int y = 0; y < h; ++y)
     {
@@ -496,17 +505,19 @@ blur_gaussian(typename Image<T>::ConstPtr in, float sigma)
         {
             for (int cc = 0; cc < c; ++cc)
             {
-                T accum(T(0));
+                float accum=0;
                 for (int i = -ks; i <=ks; ++i)
                 {
                     int idx = func::clamp(x + i,0,w - 1);
-                    accum += in->at(y * w + idx, cc) * kernel[i];
+                    accum += in->at(y * w + idx, cc) * kernel[abs(i)];
+                    //printf("%f\n",kernel[abs(i)]);
                 }
                 sep->at(px,cc) = accum / weight;
             }
         }
     }
     //y方向对图像进行卷积
+    px=0;
     typename Image<T>::Ptr out(Image<T>::create(w,h,c));
     for (int y = 0; y < h; ++y)
     {
@@ -514,13 +525,14 @@ blur_gaussian(typename Image<T>::ConstPtr in, float sigma)
         {
             for (int cc = 0; cc < c; ++cc)
             {
-                T accum(T(0));
+                float accum =0;
                 for (int i = -ks; i <= ks; ++i)
                 {
                     int idx = func::clamp(y+i,0,(int)h - 1);
-                    accum += sep->at(idx * w + x, cc);
+                    accum += sep->at(idx * w + x, cc)* kernel[abs(i)];
                 }
-                out->at(px,cc) = (T)accum / weight;
+                //printf("%f\n",accum / weight);
+                out->at(px,cc) = (T)(accum / weight);
             }
         }
     }
@@ -536,81 +548,91 @@ blur_gaussian2(typename Image<T>::ConstPtr in, float sigma2)
         throw std::invalid_argument("没有输入图像!\n");
     }
 
-    if(sigma2 < 0.01f);
+    if(sigma2 < 0.01f)
     {
         return in->duplicate();
     }
-
-    int const w = in->width();
-    int const h = in->height();
-    int const c = in->channels();
-    int const ks = std::ceil(std::sqrt(sigma2) * 2.884f);
-    std::vector<float> kernel(ks + 1);
-    T weight = 0;
-
-    for (int i = 0; i < ks + 1; ++i)
-    {
-        kernel[i] = func::gaussian2((float)i, sigma2);
-        weight += kernel[i];
-    }
-
-    //可分离高斯核实现
-    //x方向对对象进行卷积
-    typename Image<T>::Ptr sep(Image<T>::create(w,h,c));
-    int px = 0;
-    for (int y = 0; y < h; ++y)
-    {
-        for (int x = 0; x < w; ++x,++px)
-        {
-            for (int cc = 0; cc < c; ++cc)
-            {
-                T accum(T(0));
-                for (int i = -ks; i <=ks; ++i)
-                {
-                    int idx = func::clamp(x + i,0,w - 1);
-                    accum += in->at(y * w + idx, cc) * kernel[i];
-                }
-                sep->at(px,cc) = accum / weight;
-            }
-        }
-    }
-    //y方向对图像进行卷积
-    typename Image<T>::Ptr out(Image<T>::create(w,h,c));
-    for (int y = 0; y < h; ++y)
-    {
-        for (int x = 0; x < w; ++x,++px)
-        {
-            for (int cc = 0; cc < c; ++cc)
-            {
-                T accum(T(0));
-                for (int i = -ks; i <= ks; ++i)
-                {
-                    int idx = func::clamp(y+i,0,(int)h - 1);
-                    accum += sep->at(idx * w + x, cc);
-                }
-                out->at(px,cc) = (T)accum / weight;
-            }
-        }
-    }
+    float sigma=sqrt(sigma2);
+    typename Image<T>::Ptr out = blur_gaussian<T>(in,sigma);
     return out;
-}
 
+//
+//    int const w = in->width();
+//    int const h = in->height();
+//    int const c = in->channels();
+//    int const ks = std::ceil(std::sqrt(sigma2) * 2.884f);
+//    std::vector<float> kernel(ks + 1);
+//    T weight = 0;
+//
+//    for (int i = 0; i < ks + 1; ++i)
+//    {
+//        kernel[i] = func::gaussian2((float)i, sigma2);
+//        weight += kernel[i];
+//    }
+//
+//    //可分离高斯核实现
+//    //x方向对对象进行卷积
+//    typename Image<T>::Ptr sep(Image<T>::create(w,h,c));
+//    int px = 0;
+//    for (int y = 0; y < h; ++y)
+//    {
+//        for (int x = 0; x < w; ++x,++px)
+//        {
+//            for (int cc = 0; cc < c; ++cc)
+//            {
+//                T accum(T(0));
+//                for (int i = -ks; i <=ks; ++i)
+//                {
+//                    int idx = func::clamp(x + i,0,w - 1);
+//                    accum += in->at(y * w + idx, cc) * kernel[i];
+//                }
+//                sep->at(px,cc) = accum / weight;
+//            }
+//        }
+//    }
+//    //y方向对图像进行卷积
+//    typename Image<T>::Ptr out(Image<T>::create(w,h,c));
+//    for (int y = 0; y < h; ++y)
+//    {
+//        for (int x = 0; x < w; ++x,++px)
+//        {
+//            for (int cc = 0; cc < c; ++cc)
+//            {
+//                T accum(T(0));
+//                for (int i = -ks; i <= ks; ++i)
+//                {
+//                    int idx = func::clamp(y+i,0,(int)h - 1);
+//                    accum += sep->at(idx * w + x, cc);
+//                }
+//                out->at(px,cc) = (T)accum / weight;
+//            }
+//        }
+//    }
+//    return out;
+}
+//TODO::to be CUDA@YANG
+//opencv 4000*2250*3 图像处理时间：4.76ms
 template <typename T>
 typename Image<T>::Ptr
 subtract(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2)
 {
+    if (image_1 == nullptr || image_2 == nullptr)
+    {
+        throw std::invalid_argument("至少有一幅图像为空!不满足要求!\n");
+    }
     int const w1 = image_1->width();
     int const h1 = image_1->height();
     int const c1 = image_1->channels();
 
-    if (image_1 == nullptr || image_1 == nullptr)
-    {
-        throw std::invalid_argument("至少有一幅图像为空!不满足要求!\n");
-    }
-
     if(w1 != image_2->width() || h1 != image_2->height() || c1 != image_2->channels())
     {
         throw std::invalid_argument("两图像尺寸不匹配!\n");
+    }
+    if(typeid(T)== typeid(uint8_t)
+    || typeid(T)== typeid(uint16_t)
+    || typeid(T)== typeid(uint32_t)
+    || typeid(T)== typeid(uint64_t)){
+        throw std::invalid_argument("无符号图像不满足要求!\n");
     }
 
     typename Image<T>::Ptr out(Image<T>::create());
@@ -623,19 +645,20 @@ subtract(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_
 
     return out;
 }
-
+//TODO::to be CUDA@YANG
+//opencv 4000*2250*3 图像处理时间：3.34ms
 template <typename T>
 typename Image<T>::Ptr
 difference(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2)
 {
-    int const w1 = image_1->width();
-    int const h1 = image_1->height();
-    int const c1 = image_1->channels();
 
-    if (image_1 == nullptr || image_1 == nullptr)
+    if (image_1 == nullptr || image_2 == nullptr)
     {
         throw std::invalid_argument("至少有一幅图像为空!不满足要求!\n");
     }
+    int const w1 = image_1->width();
+    int const h1 = image_1->height();
+    int const c1 = image_1->channels();
 
     if(w1 != image_2->width() || h1 != image_2->height() || c1 != image_2->channels())
     {
