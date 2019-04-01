@@ -5,7 +5,4 @@
  * @email   1028792866@qq.com
 */
 
-#ifndef IMAGE_VISUALLIZER_H
-#define IMAGE_VISUALLIZER_H
-
-#endif //IMAGE_VISUALLIZER_H
+#include "visualizer.h"
