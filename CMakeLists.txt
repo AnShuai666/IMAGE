@@ -9,3 +9,8 @@ add_subdirectory(examples)
 add_subdirectory(src)
 add_subdirectory(src_bin)
 
+if()
+    find_package(CUDA QUIET)
+    set(CUDA_ENABLED true)
+endif ()
+
