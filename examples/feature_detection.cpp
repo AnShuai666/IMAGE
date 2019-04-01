@@ -8,6 +8,7 @@
 #include "image_io.h"
 #include "timer.h"
 #include <iostream>
+#include <visualizer.h>
 
 //自定义排序函数 描述子尺度从大到小排序
 bool scale_compare(image::Sift::Descriptor const& d1, image::Sift::Descriptor const& d2)
@@ -65,6 +66,16 @@ int main(int argc, char ** argv)
     std::cout<<"           Debug专用              "<<std::endl;
     std::cout<<"================================="<<std::endl;
 
+    image::Visualizer<uint8_t> sift_vis;
+    Visualizer<uint8_t>::Keypoints keypoints;
+    keypoints = sift_vis.save_keypoints(image);
+    image::ByteImage::Ptr image_out;
+    image_out = sift_vis.draw_keypoints(image,keypoints,image::Visualizer<uint8_t>::RADIUS_CIRCLE_ORIENTATION);
+
+    //保存图像 还需要重载
+    //std::string image_out_name = "../result" + "sift.jpg";
+    std::cout<<"保存图像: "<<std::endl;
+    //image::save_image(image_out,image_out_name);
     return 0;
 }
 

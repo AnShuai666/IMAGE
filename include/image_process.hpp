@@ -201,6 +201,18 @@ subtract(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_
 template <typename T>
 typename Image<T>::Ptr
 difference(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2);
+
+/*
+*  @property   扩展图像通道
+*  @func       将灰度图拓展为RGB图或者RGBA图
+*  @param_in   image         待拓展图像
+*  @return     Image<T>::Ptr
+*/
+template <typename T>
+typename Image<T>::Ptr
+expand_grayscale(typename Image<T>::ConstPtr image);
+
+
 IMAGE_NAMESPACE_END
 
 /*******************************************************************
@@ -680,6 +692,13 @@ difference(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr imag
     }
 
     return out;
+}
+
+template <typename T>
+typename Image<T>::Ptr
+expand_grayscale(typename Image<T>::ConstPtr image)
+{
+
 }
 
 IMAGE_NAMESPACE_END
