@@ -12,6 +12,7 @@
 #include <vector>
 
 IMAGE_NAMESPACE_BEGIN
+template <T>
 class Visualizer
 {
 public:
@@ -32,6 +33,9 @@ public:
     };
 
 public:
+
+
+
     /*
     *  @property   画特征点
     *  @func       在灰度图像上画指定形状的特征点
@@ -55,8 +59,9 @@ public:
     */
     static image::ByteImage::Ptr draw_keypoints(image::ByteImage::ConstPtr image, std::vector<Keypoint> const& keypoints, KeypointStytle style);
 
-    static image::ByteImage::Ptr draw_keypoints(image::ByteImage::ConstPtr image1,image::ByteImage::ConstPtr image2);
+    static image::ByteImage::Ptr draw_matches(image::ByteImage::ConstPtr image1,image::ByteImage::ConstPtr image2);
 
+    void draw_line(Ima)
 };
 
 IMAGE_NAMESPACE_END
