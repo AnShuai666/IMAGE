@@ -292,7 +292,18 @@ IMAGE_NAMESPACE_BEGIN
 
     }
 
+    //这两个函数只能放在这儿 否则出现未定义
+    inline Sift::Keypoints const&
+    image::Sift::get_keypoints() const
+    {
+        return this->keypoints;
+    }
 
+    inline Sift::Descriptors const&
+    image::Sift::get_descriptors() const
+    {
+        return this->descriptors;
+    }
 IMAGE_NAMESPACE_END
 
 

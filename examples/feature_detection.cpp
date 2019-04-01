@@ -8,6 +8,14 @@
 #include "image_io.h"
 #include "timer.h"
 #include <iostream>
+
+//自定义排序函数 描述子尺度从大到小排序
+bool scale_compare(image::Sift::Descriptor const& d1, image::Sift::Descriptor const& d2)
+{
+    return d1.scale > d2.scale;
+}
+
+
 int main(int argc, char ** argv)
 {
     if (argc < 2)
@@ -46,6 +54,16 @@ int main(int argc, char ** argv)
     image::TimerHigh timer;
     sift.process();
     std::cout<<"计算Sift特征用时 "<<timer.get_elapsed()<<" 毫秒"<<std::endl;
+
+    sift_keypoints = sift.get_keypoints();
+    sift_descriptors = sift.get_descriptors();
+
+    //TODO:sort函数 CUDA@杨丰拓
+    std::sort(sift_descriptors.begin(),sift_descriptors.end(),scale_compare);
+
+    std::cout<<"================================="<<std::endl;
+    std::cout<<"           Debug专用              "<<std::endl;
+    std::cout<<"================================="<<std::endl;
 
     return 0;
 }

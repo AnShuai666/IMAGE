@@ -155,6 +155,7 @@ image::Sift::process()
     this->octaves.clear();
     has_processed=1;
 }
+
 //inline 成员函数不能写在cpp文件
 Sift::Keypoints const&
 image::Sift::get_keypoints()
@@ -178,6 +179,7 @@ image::Sift::get_descriptors()
         return this->descriptors;
     }
 }
+
 
 void
 image::Sift::load_lowe_descriptors(std::string const &filename, image::Sift::Descriptors *result)
