@@ -35,3 +35,7 @@ set(SOURCE_FILES
         )
 add_library(image SHARED ${HEADERS} ${SOURCE_FILES}  )
 target_link_libraries(image ${PNG_LIBRARIES} ${JPEG_LIBRARIES})
+
+if (CUDA_FOUND)
+    add_subdirectory(cuda_src)
+endif ()
