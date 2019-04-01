@@ -8,43 +8,94 @@
 		<Option virtualFolders="CMake Files\;CMake Files\examples\;CMake Files\src\;CMake Files\src_bin\;"/>
 		<Build>
 			<Target title="all">
-				<Option working_dir="/home/as/IMAGE/cmake-build-debug"/>
+				<Option working_dir="/home/doing/gitHub/IMAGE/cmake-build-debug"/>
 				<Option type="4"/>
 				<MakeCommands>
-					<Build command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
-					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="rebuild_cache">
-				<Option working_dir="/home/as/IMAGE/cmake-build-debug"/>
+				<Option working_dir="/home/doing/gitHub/IMAGE/cmake-build-debug"/>
 				<Option type="4"/>
 				<MakeCommands>
-					<Build command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
-					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="edit_cache">
-				<Option working_dir="/home/as/IMAGE/cmake-build-debug"/>
+				<Option working_dir="/home/doing/gitHub/IMAGE/cmake-build-debug"/>
 				<Option type="4"/>
 				<MakeCommands>
-					<Build command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
-					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="feature_detection">
+				<Option output="/home/doing/gitHub/IMAGE/examples_bin/feature_detection" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/doing/gitHub/IMAGE/examples_bin"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/doing/gitHub/IMAGE/examples/../../MATH/include"/>
+					<Add directory="/home/doing/gitHub/IMAGE/examples/../include"/>
+					<Add directory="/usr/include/c++/5"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/5"/>
+					<Add directory="/usr/include/c++/5/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 feature_detection"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="feature_detection/fast">
+				<Option output="/home/doing/gitHub/IMAGE/examples_bin/feature_detection" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/doing/gitHub/IMAGE/examples_bin"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/doing/gitHub/IMAGE/examples/../../MATH/include"/>
+					<Add directory="/home/doing/gitHub/IMAGE/examples/../include"/>
+					<Add directory="/usr/include/c++/5"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/5"/>
+					<Add directory="/usr/include/c++/5/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 feature_detection/fast"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/examples/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="image">
-				<Option output="/home/as/IMAGE/lib/libimage.so" prefix_auto="0" extension_auto="0"/>
-				<Option working_dir="/home/as/IMAGE/cmake-build-debug/src"/>
+				<Option output="/home/doing/gitHub/IMAGE/lib/libimage.so" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/doing/gitHub/IMAGE/cmake-build-debug/src"/>
 				<Option object_output="./"/>
 				<Option type="3"/>
 				<Option compiler="gcc"/>
 				<Compiler>
-					<Add directory="/home/as/IMAGE/src/../include"/>
+					<Add directory="/home/doing/gitHub/IMAGE/src/.."/>
+					<Add directory="/home/doing/gitHub/IMAGE/src/../../MATH/include"/>
 					<Add directory="/usr/include/c++/5"/>
 					<Add directory="/usr/include/x86_64-linux-gnu/c++/5"/>
 					<Add directory="/usr/include/c++/5/backward"/>
@@ -55,20 +106,21 @@
 					<Add directory="/usr/include"/>
 				</Compiler>
 				<MakeCommands>
-					<Build command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 image"/>
-					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 image"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="image/fast">
-				<Option output="/home/as/IMAGE/lib/libimage.so" prefix_auto="0" extension_auto="0"/>
-				<Option working_dir="/home/as/IMAGE/cmake-build-debug/src"/>
+				<Option output="/home/doing/gitHub/IMAGE/lib/libimage.so" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/doing/gitHub/IMAGE/cmake-build-debug/src"/>
 				<Option object_output="./"/>
 				<Option type="3"/>
 				<Option compiler="gcc"/>
 				<Compiler>
-					<Add directory="/home/as/IMAGE/src/../include"/>
+					<Add directory="/home/doing/gitHub/IMAGE/src/.."/>
+					<Add directory="/home/doing/gitHub/IMAGE/src/../../MATH/include"/>
 					<Add directory="/usr/include/c++/5"/>
 					<Add directory="/usr/include/x86_64-linux-gnu/c++/5"/>
 					<Add directory="/usr/include/c++/5/backward"/>
@@ -79,21 +131,21 @@
 					<Add directory="/usr/include"/>
 				</Compiler>
 				<MakeCommands>
-					<Build command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 image/fast"/>
-					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 image/fast"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/src/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="image_main">
-				<Option output="/home/as/IMAGE/examples_bin/image_main" prefix_auto="0" extension_auto="0"/>
-				<Option working_dir="/home/as/IMAGE/examples_bin"/>
+				<Option output="/home/doing/gitHub/IMAGE/examples_bin/image_main" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/doing/gitHub/IMAGE/examples_bin"/>
 				<Option object_output="./"/>
 				<Option type="1"/>
 				<Option compiler="gcc"/>
 				<Compiler>
-					<Add directory="/home/as/IMAGE/src_bin/../../MATH/include"/>
-					<Add directory="/home/as/IMAGE/src_bin/../include"/>
+					<Add directory="/home/doing/gitHub/IMAGE/src_bin/../../MATH/include"/>
+					<Add directory="/home/doing/gitHub/IMAGE/src_bin/../include"/>
 					<Add directory="/usr/include/c++/5"/>
 					<Add directory="/usr/include/x86_64-linux-gnu/c++/5"/>
 					<Add directory="/usr/include/c++/5/backward"/>
@@ -104,21 +156,21 @@
 					<Add directory="/usr/include"/>
 				</Compiler>
 				<MakeCommands>
-					<Build command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 image_main"/>
-					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 image_main"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="image_main/fast">
-				<Option output="/home/as/IMAGE/examples_bin/image_main" prefix_auto="0" extension_auto="0"/>
-				<Option working_dir="/home/as/IMAGE/examples_bin"/>
+				<Option output="/home/doing/gitHub/IMAGE/examples_bin/image_main" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/doing/gitHub/IMAGE/examples_bin"/>
 				<Option object_output="./"/>
 				<Option type="1"/>
 				<Option compiler="gcc"/>
 				<Compiler>
-					<Add directory="/home/as/IMAGE/src_bin/../../MATH/include"/>
-					<Add directory="/home/as/IMAGE/src_bin/../include"/>
+					<Add directory="/home/doing/gitHub/IMAGE/src_bin/../../MATH/include"/>
+					<Add directory="/home/doing/gitHub/IMAGE/src_bin/../include"/>
 					<Add directory="/usr/include/c++/5"/>
 					<Add directory="/usr/include/x86_64-linux-gnu/c++/5"/>
 					<Add directory="/usr/include/c++/5/backward"/>
@@ -129,41 +181,65 @@
 					<Add directory="/usr/include"/>
 				</Compiler>
 				<MakeCommands>
-					<Build command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 image_main/fast"/>
-					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j4 -f &quot;/home/as/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 image_main/fast"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/doing/gitHub/IMAGE/cmake-build-debug/src_bin/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 		</Build>
-		<Unit filename="/home/as/IMAGE/include/define.h">
+		<Unit filename="/home/doing/gitHub/IMAGE/examples/feature_detection.cpp">
+			<Option target="feature_detection"/>
+		</Unit>
+		<Unit filename="/home/doing/gitHub/IMAGE/include/define.h">
 			<Option target="image"/>
 		</Unit>
-		<Unit filename="/home/as/IMAGE/include/exception.h">
+		<Unit filename="/home/doing/gitHub/IMAGE/include/exception.h">
 			<Option target="image"/>
 		</Unit>
-		<Unit filename="/home/as/IMAGE/include/image.hpp">
+		<Unit filename="/home/doing/gitHub/IMAGE/include/image.hpp">
 			<Option target="image"/>
 		</Unit>
-		<Unit filename="/home/as/IMAGE/include/image_io.h">
+		<Unit filename="/home/doing/gitHub/IMAGE/include/image_io.h">
 			<Option target="image"/>
 		</Unit>
-		<Unit filename="/home/as/IMAGE/src/image_io.cpp">
+		<Unit filename="/home/doing/gitHub/IMAGE/include/image_process.hpp">
 			<Option target="image"/>
 		</Unit>
-		<Unit filename="/home/as/IMAGE/src_bin/image_main.cpp">
+		<Unit filename="/home/doing/gitHub/IMAGE/include/sift.hpp">
+			<Option target="image"/>
+		</Unit>
+		<Unit filename="/home/doing/gitHub/IMAGE/include/string.h">
+			<Option target="image"/>
+		</Unit>
+		<Unit filename="/home/doing/gitHub/IMAGE/include/timer.h">
+			<Option target="image"/>
+		</Unit>
+		<Unit filename="/home/doing/gitHub/IMAGE/src/define.cpp">
+			<Option target="image"/>
+		</Unit>
+		<Unit filename="/home/doing/gitHub/IMAGE/src/image_io.cpp">
+			<Option target="image"/>
+		</Unit>
+		<Unit filename="/home/doing/gitHub/IMAGE/src/image_process.cpp">
+			<Option target="image"/>
+		</Unit>
+		<Unit filename="/home/doing/gitHub/IMAGE/src/sift.cpp">
+			<Option target="image"/>
+		</Unit>
+		<Unit filename="/home/doing/gitHub/IMAGE/src_bin/image_main.cpp">
 			<Option target="image_main"/>
 		</Unit>
-		<Unit filename="/home/as/IMAGE/CMakeLists.txt">
+		<Unit filename="/home/doing/gitHub/IMAGE/CMakeLists.txt">
 			<Option virtualFolder="CMake Files\"/>
 		</Unit>
-		<Unit filename="/home/as/IMAGE/examples/CMakeLists.txt">
+		<Unit filename="/home/doing/gitHub/IMAGE/examples/CMakeLists.txt">
 			<Option virtualFolder="CMake Files\examples\"/>
 		</Unit>
-		<Unit filename="/home/as/IMAGE/src/CMakeLists.txt">
+		<Unit filename="/home/doing/gitHub/IMAGE/src/CMakeLists.txt">
 			<Option virtualFolder="CMake Files\src\"/>
 		</Unit>
-		<Unit filename="/home/as/IMAGE/src_bin/CMakeLists.txt">
+		<Unit filename="/home/doing/gitHub/IMAGE/src_bin/CMakeLists.txt">
 			<Option virtualFolder="CMake Files\src_bin\"/>
 		</Unit>
 	</Project>

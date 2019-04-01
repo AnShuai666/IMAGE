@@ -18,6 +18,8 @@ byte_to_float_image(image::Image<unsigned char>::ConstPtr image)
 
     FloatImage::Ptr img = FloatImage::create();
     img->allocate(image->width(),image->height(),image->channels());
+    //TODO::to be CUDA @YANG;
+    //opencv 4000*2250*3 图像处理时间: 29.4ms
     for (int i = 0; i < image->get_value_amount(); ++i)
     {
         float value = image->at(i) / 255.0f;

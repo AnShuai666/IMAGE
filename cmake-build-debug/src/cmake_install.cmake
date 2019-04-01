@@ -1,4 +1,4 @@
-# Install script for directory: /home/as/IMAGE/src
+# Install script for directory: /home/doing/gitHub/IMAGE/src
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

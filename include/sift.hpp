@@ -31,6 +31,7 @@ IMAGE_NAMESPACE_BEGIN
 /********************************************************************
 *~~~~~~~~~~~~~~~~~~~~~~~~~常用结构体声明及定义~~~~~~~~~~~~~~~~~~~~~~~~~~
 ********************************************************************/
+    //TODO::应该避免嵌套类的使用@anshuai
     public:
         /*
         * @property    图像Sift类
@@ -148,14 +149,14 @@ IMAGE_NAMESPACE_BEGIN
         *  @func        获取图像的SIFT关键点
         *  @return      Keypoints
         */
-        Keypoints const& get_keypoints(void) const;
+        Keypoints const& get_keypoints(void);
 
         /*
         *  @property    描述子获取
         *  @func        获取图像的SIFT关键点的描述子
         *  @return      Descriptors
         */
-        Descriptors const& get_descriptors(void) const;
+        Descriptors const& get_descriptors(void);
 
         /*
         *  @property    描述子获取
@@ -268,6 +269,7 @@ IMAGE_NAMESPACE_BEGIN
 
 
     private:
+        bool has_processed;//指示是否处理过。
         Options options;
         image::FloatImage::ConstPtr srcImg;
         Octaves octaves;

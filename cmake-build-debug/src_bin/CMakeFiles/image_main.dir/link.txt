@@ -1,1 +1,1 @@
-/usr/bin/c++  -fPIC -g  -rdynamic CMakeFiles/image_main.dir/image_main.cpp.o  -o ../../examples_bin/image_main -Wl,-rpath,/home/as/IMAGE/lib ../../lib/libimage.so 
+/usr/bin/c++  -fPIC -g  -rdynamic CMakeFiles/image_main.dir/image_main.cpp.o  -o ../../examples_bin/image_main -Wl,-rpath,/home/doing/gitHub/IMAGE/lib ../../lib/libimage.so -lpng -lz -ljpeg 

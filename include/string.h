@@ -65,7 +65,8 @@ left(std::string const &str, std::size_t size)
 std::string
 right(std::string const &str, std::size_t size)
 {
-    return str.substr(str.size() - size);
+    unsigned long sub_size=str.size() > size?(str.size() - size):0;
+    return str.substr(sub_size);
 }
 
 std::string

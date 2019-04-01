@@ -6,17 +6,27 @@
 
 #IncludeRegexTransform: 
 
+../src/../../MATH/include/Matrix/vector.hpp
+iostream
+-
+iomanip
+-
+define.h
+../src/../../MATH/include/Matrix/define.h
+algorithm
+-
+iterator
+-
+
+../src/../../MATH/include/function/function.hpp
+cmath
+-
+define.h
+../src/../../MATH/include/function/define.h
+
 ../src/../include/define.h
 iostream
 -
-
-../src/../include/exception.h
-exception
--
-string
--
-define.h
-../src/../include/define.h
 
 ../src/../include/image.hpp
 define.h
@@ -30,19 +40,35 @@ algorithm
 iostream
 -
 
-../src/../include/image_io.h
-define.h
-../src/../include/define.h
+../src/../include/image_process.hpp
+image.hpp
+../src/../include/image.hpp
+function/function.hpp
+../src/../include/function/function.hpp
+
+../src/../include/sift.hpp
+string
+-
+vector
+-
+Matrix/vector.hpp
+../src/../include/Matrix/vector.hpp
 image.hpp
 ../src/../include/image.hpp
 
-/home/as/IMAGE/src/image_io.cpp
-image_io.h
-/home/as/IMAGE/src/image_io.h
+../src/../include/timer.h
+chrono
+-
+define.h
+../src/../include/define.h
+
+/home/doing/gitHub/IMAGE/src/sift.cpp
 fstream
 -
-png.h
--
-exception.h
--
+include/sift.hpp
+/home/doing/gitHub/IMAGE/src/include/sift.hpp
+include/image_process.hpp
+/home/doing/gitHub/IMAGE/src/include/image_process.hpp
+include/timer.h
+/home/doing/gitHub/IMAGE/src/include/timer.h
 

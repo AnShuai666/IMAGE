@@ -547,7 +547,7 @@ public:
     *  @param_in   index    图像数据线性索引值
     *  @return     T const&
     */
-    T const& at(unsigned int index) const;
+    T const& at(int index) const;
 
     /*
     *  @property   访问图像数据
@@ -556,7 +556,7 @@ public:
     *  @param_in   channel  待访问像素通道索引值
     *  @return     T const&
     */
-    T const& at(unsigned int index, unsigned int channel) const;
+    T const& at(int index, int channel) const;
 
      /*
      *  @property   访问图像数据
@@ -566,7 +566,7 @@ public:
      *  @param_in   channel
      *  @return     T const&
      */
-    T const& at(unsigned int x, unsigned int y, unsigned int channel) const;
+    T const& at(int x, int y, int channel) const;
 
     /*
     *  @property   访问图像数据
@@ -574,7 +574,7 @@ public:
     *  @param_in   index    图像数据线性索引值
     *  @return     T &
     */
-    T& at(unsigned int index);
+    T& at(int index);
 
     /*
     *  @property   访问图像数据
@@ -583,7 +583,7 @@ public:
     *  @param_in   channel  待访问像素通道索引值
     *  @return     T const&
     */
-    T& at(unsigned int index, unsigned int channel);
+    T& at(int index, int channel);
 
     /*
     *  @property   访问图像数据
@@ -593,7 +593,7 @@ public:
     *  @param_in   channel
     *  @return     T const&
     */
-    T& at(unsigned int x, unsigned int y, unsigned int channel);
+    T& at(int x, int y, int channel);
 
     /*
     *  @property    像素插值
@@ -1218,6 +1218,7 @@ IMAGE_NAMESPACE_BEGIN
             //TODO：：抛出异常
             return;
         }
+        //TODO::TO CUDA @YANG
         for (T* iter = this->begin(); iter != this->end() ; iter += this->c)
         {
             //std::copy(iter,iter + this->c, color);
@@ -1255,7 +1256,7 @@ IMAGE_NAMESPACE_BEGIN
         ImageData tmp(this->w * this->h * (this->c + num_channels));
         typename ImageData::iterator iter_tmp = tmp.end();
         typename ImageData::iterator iter_this = this->data.end();
-
+        //TODO::TO CUDA @YANG
         for (int i = 0; i < this->get_pixel_amount(); ++i)
         {
             for (int j = 0; j < num_channels; ++j)
@@ -1283,7 +1284,7 @@ IMAGE_NAMESPACE_BEGIN
         ImageData tmp(this->w * this->h * (this->c + num_channels));
         typename ImageData::iterator iter_tmp = tmp.end();
         typename ImageData::iterator iter_this = this->data.end();
-
+        //TODO::TO CUDA @YANG
         if(_front_back){
             for (int i = 0; i < this->get_pixel_amount(); ++i)
             {
@@ -1335,6 +1336,7 @@ IMAGE_NAMESPACE_BEGIN
             return;
         }
 
+        //TODO::TO CUDA @YANG
         if (swap_method == AT)
         {
             for (int i = 0; i < this->get_pixel_amount(); ++i)
@@ -1374,6 +1376,7 @@ IMAGE_NAMESPACE_BEGIN
 
         T const* src_iter = &this->at(0,src);
         T* dest_iter = &this->at(0,dest);
+        //TODO::TO CUDA @YANG
         for (int i = 0; i < this->get_pixel_amount(); src_iter += this->c, dest_iter += this->c,i++)
         {
             *dest_iter = *src_iter;
@@ -1391,7 +1394,7 @@ IMAGE_NAMESPACE_BEGIN
 
         T* src_iter = this->begin();
         T* dest_iter = this->begin();
-
+        //TODO::TO CUDA @YANG
         for (int i = 0; i < this->data.size(); ++i)
         {
             if(i % this->c == channel)
@@ -1407,9 +1410,9 @@ IMAGE_NAMESPACE_BEGIN
 
     template <typename T>
     inline T const&
-    Image<T>::at(unsigned int index) const
+    Image<T>::at(int index) const
     {
-        if(index>=this->data.size())
+        if(index<0||index>=this->data.size())
         {
             printf("ArgumentOutOfRangeException\n");
             //TODO:此处抛出异常
@@ -1419,9 +1422,9 @@ IMAGE_NAMESPACE_BEGIN
 
     template <typename T>
     inline T const&
-    Image<T>::at(unsigned int index, unsigned int channel) const
+    Image<T>::at(int index,  int channel) const
     {
-        if(index>this->w*this->h||channel>this->c)
+        if(index<0||channel<0||index>this->w*this->h||channel>this->c)
         {
             printf("ArgumentOutOfRangeException\n");
             //TODO:此处抛出异常
@@ -1432,9 +1435,10 @@ IMAGE_NAMESPACE_BEGIN
 
     template <typename T>
     inline T const&
-    Image<T>::at(unsigned int x, unsigned int y, unsigned int channel) const
+    Image<T>::at(int x, int y, int channel) const
     {
-        if(x>=this->w||y>=this->h||channel>=this->c)
+        if(x<0||y<0||channel<0
+        ||x>=this->w||y>=this->h||channel>=this->c)
         {
             printf("ArgumentOutOfRangeException\n");
             //TODO:此处抛出异常
@@ -1445,9 +1449,9 @@ IMAGE_NAMESPACE_BEGIN
 
     template <typename T>
     inline T&
-    Image<T>::at(unsigned int index)
+    Image<T>::at(int index)
     {
-        if(index>=this->data.size())
+        if(index<0||index>=this->data.size())
         {
             printf("ArgumentOutOfRangeException\n");
             //TODO:此处抛出异常
@@ -1457,9 +1461,10 @@ IMAGE_NAMESPACE_BEGIN
 
     template <typename T>
     inline T&
-    Image<T>::at(unsigned int index,unsigned int channel)
+    Image<T>::at(int index,int channel)
     {
-        if(index>this->w*this->h||channel>this->c)
+        if(index<0||channel<0
+        ||index>this->w*this->h||channel>this->c)
         {
             printf("ArgumentOutOfRangeException\n");
             //TODO:此处抛出异常
@@ -1470,9 +1475,10 @@ IMAGE_NAMESPACE_BEGIN
 
     template <typename T>
     inline T&
-    Image<T>::at(unsigned int x,unsigned int y,unsigned int channel)
+    Image<T>::at(int x,int y,int channel)
     {
-        if(x>=this->w||y>=this->h||channel>=this->c)
+        if(x<0||y<0||channel<0
+        ||x>=this->w||y>=this->h||channel>=this->c)
         {
             printf("ArgumentOutOfRangeException\n");
             //TODO:此处抛出异常

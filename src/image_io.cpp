@@ -103,6 +103,7 @@ void save_image(FloatImage::Ptr image, std::string const& filename)
 
 }
 
+//TODO::libpng error: PNG unsigned integer out of range.@anshuai
 ByteImage::Ptr
 load_png_image(std::string const& filename)
 {
@@ -168,8 +169,10 @@ load_png_image(std::string const& filename)
     png_init_io(png_ptr,fp);
     //由于文件头8个字节是png标识符，需要跳过
     png_set_sig_bytes(png_ptr,PNG_FILE_NAME_NUM);
+
     //查询图像信息 读取png图像信息头
     png_read_info(png_ptr,png_info);
+
 
     imageHeaders.width = png_get_image_width(png_ptr,png_info);
     imageHeaders.height = png_get_image_height(png_ptr,png_info);
@@ -304,6 +307,7 @@ load_png_image_headers(std::string const& filename)
     return imageHeaders;
 }
 
+//TODO::像保存后体积变大@anshuai
 void
 save_png_image(ByteImage::ConstPtr image, std::string const &filename, int compression_level)
 {
@@ -495,7 +499,7 @@ load_jpg_image_headers(std::string const &filename)
 {
 
 }
-
+//TODO::段错误@anshuai
 void
 save_jpg_image(ByteImage::ConstPtr image, std::string const &filename, int quality)
 {
@@ -517,7 +521,7 @@ save_jpg_image(ByteImage::ConstPtr image, std::string const &filename, int quali
     }
 
     j_compress_ptr cinfo_ptr;
-    struct jpeg_error_mgr jerr;
+    jpeg_error_mgr jerr;
 
     cinfo_ptr->err = jpeg_std_error(&jerr);
     jpeg_create_compress(cinfo_ptr);
