@@ -53,8 +53,8 @@ namespace
 
 /* ---------------------------------------------------------------- */
 
-void Visualizer::draw_keypoint(image::ByteImage &image, const Visualizer::Keypoint &keypoint,
-                               Visualizer::KeypointStyle style, uint8_t const *color) {
+void Visualizer<uint8_t >::draw_keypoint<>(image::ByteImage &image, const Visualizer::Keypoint &keypoint,
+                               Visualizer<uint8_t>::KeypointStyle style, uint8_t const *color) {
     int const x = static_cast<int>(keypoint.x + 0.5);
     int const y = static_cast<int>(keypoint.y + 0.5);
     int const width = image.width();
@@ -130,8 +130,8 @@ void Visualizer::draw_keypoint(image::ByteImage &image, const Visualizer::Keypoi
 /* ---------------------------------------------------------------- */
 
 ByteImage::Ptr
-Visualizer::draw_keypoints(ByteImage::ConstPtr image,
-                           std::vector<Visualizer::Keypoint> const& matches,
+Visualizer<>::draw_keypoints(ByteImage::ConstPtr image,
+                           std::vector<Visualizer<T>::Keypoint> const& matches,
                            Visualizer::KeypointStyle style)
 {
     ByteImage::Ptr ret;
@@ -153,4 +153,6 @@ Visualizer::draw_keypoints(ByteImage::ConstPtr image,
 
     return ret;
 }
+
+
 IMAGE_NAMESPACE_END
