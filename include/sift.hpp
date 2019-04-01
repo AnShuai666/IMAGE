@@ -149,14 +149,14 @@ IMAGE_NAMESPACE_BEGIN
         *  @func        获取图像的SIFT关键点
         *  @return      Keypoints
         */
-        Keypoints const& get_keypoints(void);
+        Keypoints const& get_keypoints(void) const ;
 
         /*
         *  @property    描述子获取
         *  @func        获取图像的SIFT关键点的描述子
         *  @return      Descriptors
         */
-        Descriptors const& get_descriptors(void);
+        Descriptors const& get_descriptors(void) const ;
 
         /*
         *  @property    描述子获取
