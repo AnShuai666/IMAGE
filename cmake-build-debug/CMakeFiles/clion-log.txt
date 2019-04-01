@@ -1,7 +1,0 @@
-/home/doing/下载/clion-2018.3.4/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/doing/gitHub/IMAGE
-PNG 找到: /usr/lib/x86_64-linux-gnu/libpng.so;/usr/lib/x86_64-linux-gnu/libz.so
--- Found JPEG: /usr/lib/x86_64-linux-gnu/libjpeg.so (found version "80") 
-JPEG找到:/usr/lib/x86_64-linux-gnu/libjpeg.so
--- Configuring done
--- Generating done
--- Build files have been written to: /home/doing/gitHub/IMAGE/cmake-build-debug
