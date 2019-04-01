@@ -1,4 +1,4 @@
-This is a image library by An Shuai AND Du Jing!
+This is a image library by An Shuai,Du Jing AND Yang Fengtuo!
 
 Thank you for watching!
 
