@@ -10,7 +10,7 @@
 
 #include "define.h"
 #include <vector>
-
+#include "image.hpp"
 IMAGE_NAMESPACE_BEGIN
 class Visualizer
 {
@@ -23,7 +23,7 @@ public:
         float orientation;
     };
 
-    enum KeypointStytle
+    enum KeypointStyle
     {
         RADIUS_BOX_ORIENTATION,
         RADIUS_CIRCLE_ORIENTATION,
@@ -42,7 +42,7 @@ public:
     *  @static     静态成员函数  属于类不属于对象的类成员函数
     *  @return     void
     */
-    static void draw_keypoint(image::ByteImage& image, Keypoint const& keypoint,KeypointStytle style,uint8_t const* color);
+    static void draw_keypoint(image::ByteImage& image, Keypoint const& keypoint,KeypointStyle style,uint8_t const* color);
 
     /*
     *  @property   画特征点
@@ -53,7 +53,7 @@ public:
     *  @static     静态成员函数  属于类不属于对象的类成员函数
     *  @return     void
     */
-    static image::ByteImage::Ptr draw_keypoints(image::ByteImage::ConstPtr image, std::vector<Keypoint> const& keypoints, KeypointStytle style);
+    static image::ByteImage::Ptr draw_keypoints(image::ByteImage::ConstPtr image, std::vector<Keypoint> const& keypoints, KeypointStyle style);
 
     static image::ByteImage::Ptr draw_keypoints(image::ByteImage::ConstPtr image1,image::ByteImage::ConstPtr image2);
 
