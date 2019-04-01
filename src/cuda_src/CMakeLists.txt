@@ -1,4 +1,5 @@
 include_directories(..)
+include_directories(../../include)
 include_directories(../../MATH/include)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
@@ -6,6 +7,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 set(HEADERS
         ${PROJECT_SOURCE_DIR}/include/define.h
+        ${PROJECT_SOURCE_DIR}/include/cuda_include/process_cuda.h
 
         )
 
