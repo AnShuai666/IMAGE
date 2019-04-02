@@ -24,9 +24,8 @@ set(HEADERS
         ${PROJECT_SOURCE_DIR}/include/sift.hpp
         ${PROJECT_SOURCE_DIR}/include/image_process.hpp
         ${PROJECT_SOURCE_DIR}/include/timer.h
-        ${PROJECT_SOURCE_DIR}/include/visualizer.h
+        ${PROJECT_SOURCE_DIR}/include/visualizer.hpp
         ${PROJECT_SOURCE_DIR}/include/nearest_neighbor.hpp
-        ${PROJECT_SOURCE_DIR}/include/matching.h
         )
 
 set(SOURCE_FILES
@@ -34,8 +33,6 @@ set(SOURCE_FILES
         image_io.cpp
         sift.cpp
         image_process.cpp
-        visualizer.cpp
-        matching.cpp
         )
 add_library(image SHARED ${HEADERS} ${SOURCE_FILES}  )
 target_link_libraries(image ${PNG_LIBRARIES} ${JPEG_LIBRARIES})

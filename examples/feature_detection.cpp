@@ -8,7 +8,7 @@
 #include "image_io.h"
 #include "timer.h"
 #include <iostream>
-#include <visualizer.h>
+#include <visualizer.hpp>
 
 //自定义排序函数 描述子尺度从大到小排序
 bool scale_compare(image::Sift::Descriptor const& d1, image::Sift::Descriptor const& d2)
