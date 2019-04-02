@@ -12,6 +12,9 @@
 #define IMAGE_NAMESPACE_BEGIN namespace image {
 #define IMAGE_NAMESPACE_END }
 
+#define ENABLE_SSE2_NN_SEARCH 1
+#define ENABLE_SSE3_NN_SEARCH 1
+
 #define checkImageioerror(val) checkimage((val),#val,__FILE__,__LINE__);
 
 #define checkFileerror(fp) checkfile((fp),__FILE__,__LINE__)
