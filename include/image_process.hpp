@@ -698,7 +698,8 @@ template <typename T>
 typename Image<T>::Ptr
 expand_grayscale(typename Image<T>::ConstPtr image)
 {
-
+    //typename Image<T>::Ptr image_ptr = Image<T>::create(*image);
+    return image;
 }
 
 IMAGE_NAMESPACE_END
