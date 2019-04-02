@@ -6,7 +6,22 @@
 */
 
 #include "include/matching.h"
+#include "include/nearest_neighbor.hpp"
 IMAGE_NAMESPACE_BEGIN
+void Matching::remove_inconsistent_matches(image::Matching::Result *matches)
+{
 
+}
+
+int Matching::count_consistent_matches(const image::Matching::Result &matches)
+{
+
+}
+
+void Matching::combine_results(const image::Matching::Result &sift_result, const image::Matching::Result &surf_result,
+                               image::Matching::Result *result)
+{
+
+}
 
 IMAGE_NAMESPACE_END

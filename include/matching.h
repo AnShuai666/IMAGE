@@ -32,7 +32,35 @@ public:
 
 public:
 
+    template <typename T>
+    static void
+    oneway_match(Options const& options,T const* set_1,int set_1_size,T const* set_2,int set_2_size,std::vector<int>* result);
+
+    template <typename T>
+    static void
+    twoway_match(Options const& options,T const* set_1,int set_1_size,T const* set_2,int set_2_size,Result* matches);
+
+    static void
+    remove_inconsistent_matches(Result* matches);
+
+    static int
+    count_consistent_matches(Result const& matches);
+
+    static void
+    combine_results(Result const& sift_result, Result const& surf_result,Matching::Result* result);
 };
 
+template <typename T>
+void
+Matching::oneway_match(const image::Matching::Options &options, T const *set_1, int set_1_size, T const *set_2,
+                            int set_2_size, std::vector<int> *result)
+{
+
+}
+
+template <typename T>
+void Matching::twoway_match(const image::Matching::Options &options, T const *set_1, int set_1_size, T const *set_2,
+                            int set_2_size, image::Matching::Result *matches)
+{}
 IMAGE_NAMESPACE_END
 #endif //IMAGE_MATCH_H
