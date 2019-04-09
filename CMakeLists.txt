@@ -29,7 +29,26 @@ configure_file(
         "${PROJECT_SOURCE_DIR}/config/IMAGEConfig.h.in"
         "${PROJECT_SOURCE_DIR}/include/IMAGEConfig.h"
 )
+
+configure_file(
+        "${PROJECT_SOURCE_DIR}/config/IMAGEConfig.cmake.in"
+        "${PROJECT_SOURCE_DIR}/cmakemodule/IMAGEConfig.cmake" @ONLY
+)
+set_property(TARGET ${IMAGEConfig.cmake} PROPERTY FOLDER cmakemodule)
+
+configure_file(
+        "${PROJECT_SOURCE_DIR}/config/IMAGEConfigVersion.cmake.in"
+        "${PROJECT_SOURCE_DIR}/cmakemodule/IMAGEConfigVeision.cmake" @ONLY
+)
+
+install(FILES IMAGEConfig.cmake
+        DESTINATION share/IMAGE)
+install(FILES IMAGEConfigVersion.cmake
+        DESTINATION share/IMAGE)
+
 add_subdirectory(examples)
 add_subdirectory(src)
 add_subdirectory(src_bin)
 
+install(FILES IMAGEConfig.h
+        DESTINATION include/IMAGE)
