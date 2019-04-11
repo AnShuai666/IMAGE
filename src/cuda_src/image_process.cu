@@ -306,10 +306,10 @@ __global__ void kernel_doublesizebyshare(float *out,float *in,int const ow,int c
 /******************************************************************************************/
 ///功能：图片缩小两倍
 /*  函数名                         线程块大小       耗费时间
- *  kernel_halfsizebyshare1       [32,4,1]      582.797us
- *  kernel_halfsize               [32,8,1]      640.097us
- *  kernel_halfsize1              [32,4,1]      638.37us
- *  kernel_halfsizebyshare        [32,4,1]      607.5us
+ *  kernel_halfsize1              [32,4,1]      639.142us
+ *  kernel_halfsizebyshare1       [32,4,1]      654.107us
+ *  kernel_halfsize               [32,8,1]      639.56us
+ *  kernel_halfsizebyshare        [32,4,1]      687.768us
  */
 /******************************************************************************************/
 __global__ void kernel_halfsizebyshare1(float *out,float *in,int const ow,int const oh,int const iw,int const ih,int const ic)
