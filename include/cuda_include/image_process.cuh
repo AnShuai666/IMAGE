@@ -6,132 +6,54 @@
 */
 #ifndef IMAGE_PROCESS_CUH
 #define IMAGE_PROCESS_CUH
-
-#include <cuda_runtime.h>
-#include "image.hpp"
-#include "function/function.hpp"
-enum DesaturateType
-{
-    DESATURATE_MAXIMUM,     //Maximum = max(R,G,B)
-    DESATURATE_LIGHTNESS,   //Lightness = 1/2 * (max(R,G,B) + min(R,G,B))
-    DESATURATE_LUMINOSITY,  //Luminosity = 0.21 * R + 0.72 * G + 0.07 * B
-    DESATURATE_LUMINANCE,   //Luminince = 0.30 * R + 0.59 * G + 0.11 * B
-    DESATURATE_AVERAGE      //Average Brightness = 1/3 * (R + G +B)
-};
-
-template <typename T>
-__device__ T desaturate_maximum_cu(T const * v)
-{
-    return max(v,max(v+1,v+2));
-}
-
-template <typename T>
-__device__ T desaturate_lightness_cu(T const * v)
-{
-    T const max = max(v,max(v+1,v+2));
-    T const min = min(v,min(v+1,v+2));
-    return 0.5f*(max+min);
-}
-
-template <typename T>
-__device__ T desaturate_luminosity_cu(T const* v)
-{
-    return 0.21f * v[0] + 0.72f * v[1] + 0.07f * v[2];
-}
-
-template <typename T>
-__device__ T desaturate_luminance_cu(T const* v)
-{
-    return 0.30 * v[0] + 0.59f * v[1] + 0.11f * v[2];
-}
+#include <cstdio>
+#include <iostream>
 
 
-template <typename T>
-__device__ T desaturate_average_cu(T const*v)
-{
-    return ((float)(v[0] + v[1] + v[2])) / 3.0f;
-}
 
-template <typename T>
-__global__ void desature_cu(T *out,T *in,const int pixel_amount,const bool has_alpha)
-{
-    for (int i = 0; i < image->get_pixel_amount(); ++i)
-    {
-        T const* v = &image->at(in_pos);
-        out_image->at(out_pos) = func(v);
-        //std::cout<<out_image->at(out_pos)<<std::endl;
-        if (has_alpha)
-        {
-            out_image->at(out_pos + 1) = image->at(in_pos + 3);
-        }
+//opencv 4000*2250*3 图像处理时间: 14.4ms
+//调用desaturate_by_cuda函数处理时间：36ms,其中H2D 27ms, D2H 8ms,kernel 0.7ms
+//串行实现时间：约200ms
+/*
+ * @property    图像饱和度降低
+ * @func        将图像转换为几种HSL图像
+ * @param_out   out_image          转换后的图像
+ * @param_in    in_image           待转换图像
+ * @param_in    pixel_amount       像素点个数
+ * @param_in    type               亮度类型
+ * @param_in    alpha              是否有alpha通道
+ */
+//void desaturate_by_cuda(float * const out_image,float const  *in_image,const int pixel_amount, const int type,const bool alpha);
+void warm(void);
 
-        out_pos += 1 + has_alpha;
-        in_pos += 3 + has_alpha;
-    }
-}
+/**
+ * @property    图像缩放
+ * @func        将图像放大为原图两倍  均匀插值，最后一行后最后一列与倒数第二行与倒数第二列相同
+ *                                 偶数行列时：取(y/2,x/2)d的像素点
+ *                                 奇数行列时：
+ *                                      奇数行：(,x/2)与(,x/2+1)的平均值
+ *                                      偶数行：(y/2,)与(y/2+1,)的平均值
+ * @param_out   out_image          放大后的图像首地址
+ * @param_in    in_image           待放大图像首地址
+ * @param_in    weight             输入图像的宽度
+ * @param_in    height             输入图像的高度
+ * @param_in    channels           输入图像的颜色通道数
+ * 调用示例：
+ * double_size_by_cuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels());
+ */
+void double_size_by_cuda(float * const out_image,float const  * const in_image, int const weight,int const height,int const channels);
 
-template <typename T>
-typename Image<T>::Ptr desaturate_cuda(typename Image<T>::ConstPtr image, DesaturateType type)
-{
-    if (image == NULL)
-    {
-        throw std::invalid_argument("无图像传入！");
-    }
-
-    if (image->channels() != 3 && image->channels() != 4)
-    {
-        throw std::invalid_argument("图像必须是RGB或者RGBA!");
-    }
-
-    bool has_alpha = (image->channels() == 4);
-
-    typename Image<T>::Ptr out_image(Image<T>::create());
-    out_image->allocate(image->width(),image->height(),1 + has_alpha);
-
-    typedef T (*DesaturateFunc)(T const*);
-    DesaturateFunc func;
-
-    switch (type)
-    {
-        case DESATURATE_MAXIMUM:
-            func = desaturate_maximum<T>;
-            break;
-        case DESATURATE_LIGHTNESS:
-            func = desaturate_lightness<T>;
-            break;
-        case DESATURATE_LUMINOSITY:
-            func = desaturate_luminosity;
-            break;
-        case DESATURATE_LUMINANCE:
-            func = desaturate_luminance;
-            break;
-        case DESATURATE_AVERAGE:
-            func = desaturate_average;
-            break;
-        default:
-            throw std::invalid_argument("非法desaturate类型");
-    }
-
-    int out_pos = 0;
-    int in_pos = 0;
-    //TODO:: to be CUDA @Yang
-    //opencv 4000*2250*3 图像处理时间: 14.4ms
-    /*std::cout<<"*****************开始操作*****************"<<std::endl;
-    for (int i = 0; i < image->get_pixel_amount(); ++i)
-    {
-        T const* v = &image->at(in_pos);
-        out_image->at(out_pos) = func(v);
-        //std::cout<<out_image->at(out_pos)<<std::endl;
-        if (has_alpha)
-        {
-            out_image->at(out_pos + 1) = image->at(in_pos + 3);
-        }
-
-        out_pos += 1 + has_alpha;
-        in_pos += 3 + has_alpha;
-    }
-    std::cout<<"*****************结束操作*****************"<<std::endl;*/
-
-    return out_image;
-}
+/**
+ * @property    图像缩放
+ * @func        将图像缩小为原图两倍　 像素点为(2*y,2*x)(2*y,2*x+1)(2*y+1,2*x)(2*y+1,2*x+1)的平均值
+ *                                 若最后一行或最后一列为奇数列．则越界部分再取最后一行或最后一列
+ * @param_out   out_image          放大后的图像首地址
+ * @param_in    in_image           待放大图像首地址
+ * @param_in    weight             输入图像的宽度
+ * @param_in    height             输入图像的高度
+ * @param_in    channels           输入图像的颜色通道数
+ * 调用示例：
+ * halfsize_by_cuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels());
+ */
+void halfsize_by_cuda(float * const out_image,float const  * const in_image, int const weight,int const height,int const channels);
 #endif //IMAGE_PROCESS_CUH
