@@ -148,9 +148,12 @@ void desaturate_by_cuda(float  * const out_image,float const *in_image,const int
 /******************************************************************************************/
 ///功能：图片放大两倍
 /*  函数名                         线程块大小       耗费时间
- *  kernel_doublesize             [32,16,1]      3.719ms(最快)
- *  kernel_doublesize_dim3        [32,8,3]       5.76ms
- *  kernel_doublesizebyshare      [32,32,1]      4.498ms
+ *  kernel_doublesize               3.678ms	    [32,4,1]
+ *  kernel_doublesize1              3.67ms	    [32,4,1]
+ *  kernel_doublesize2              3.532ms	    [32,4,1]**
+ *  kernel_doublesizebyshare        5.265ms	    [32,8,1]
+ *  kernel_doublesizebyshare1       4.737ms	    [64,8,1]
+ *  kernel_doublesizebyshare2       3.98ms	    [32,8,1]
  */
 /******************************************************************************************/
 __global__ void kernel_doublesize(float *out,float *in,int const image_x,int const image_y,int const iw,int const ic)
@@ -398,7 +401,7 @@ __global__ void kernel_doublesizebyshare2(float *out,float *in,int const ow,int 
 ///功能：图片缩小两倍
 /*  函数名                            线程块大小       耗费时间
  *kernel_halfsize		            636.275us	    [32,8,1]
- *kernel_halfsize1                  634.383us	    [32,8,1]
+ *kernel_halfsize1                  634.383us	    [32,8,1]**
  *kernel_halfsize2                  641.6us	        [32,8,1]
  *kernel_halfsizebyshare	    	643.698us	    [32,4,1]
  *kernel_halfsizebyshare1	  		671.245us	    [32,4,1]
