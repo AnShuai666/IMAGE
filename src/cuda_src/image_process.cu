@@ -1,7 +1,7 @@
 /**
  * @desc    图像处理函数加速
  * @author  杨丰拓
- * @date    2019-04-4
+ * @date    2019-04-16
  * @email   yangfengtuo@163.com
 */
 #include <cuda_runtime.h>
@@ -396,11 +396,12 @@ __global__ void kernel_doublesizebyshare2(float *out,float *in,int const ow,int 
 
 /******************************************************************************************/
 ///功能：图片缩小两倍
-/*  函数名                         线程块大小       耗费时间
- *  kernel_halfsize1              [32,4,1]      639.142us
- *  kernel_halfsizebyshare1       [32,4,1]      654.107us
- *  kernel_halfsize               [32,8,1]      639.56us
- *  kernel_halfsizebyshare        [32,8,1]      643.984us
+/*  函数名                            线程块大小       耗费时间
+ *kernel_halfsize		            636.275us	    [32,8,1]
+ *kernel_halfsize1                  634.383us	    [32,8,1]
+ *kernel_halfsize2                  641.6us	        [32,8,1]
+ *kernel_halfsizebyshare	    	643.698us	    [32,4,1]
+ *kernel_halfsizebyshare1	  		671.245us	    [32,4,1]
  */
 /******************************************************************************************/
 
@@ -430,6 +431,30 @@ __global__ void kernel_halfsize(float *out,float *in,int const ow,int const oh,i
 __global__ void kernel_halfsize1(float *out,float *in,int const ow,int const oh,int const iw,int const ih,int const ic)
 {
     //若需要展开ic*3重循环只需修改out_x=threadIdx.x+blockIdx.x*blockDim.x*ic*3;以及for(int c=0;c<ic*3;c++)即可，同时应修改网格大小
+    int out_x=threadIdx.x+blockIdx.x*blockDim.x*ic*2;
+    int out_y=threadIdx.y+blockIdx.y*blockDim.y;
+    int stride=iw*ic;
+
+    for(int c=0;c<ic*2;c++)
+    {
+        int fact_x=out_x+blockDim.x*c;
+        if(out_y<oh&&fact_x<ow*ic) {
+            int irow1 = out_y * 2 * stride;
+            int irow2 = irow1 + stride * (out_y * 2 + 1 < ih);
+            int icol1 = (fact_x / ic) * 2 * ic + fact_x % ic;
+            int icol2 = min((icol1 + ic), (iw * ic - ic + fact_x % ic));
+            int index[4] = {irow1 + icol1,
+                            irow1 + icol2,
+                            irow2 + icol1,
+                            irow2 + icol2};
+            int out_idx = out_y * ow*ic + fact_x;
+            out[out_idx] = 0.25f * (in[index[0]] + in[index[1]] + in[index[2]] + in[index[3]]);
+        }
+    }
+}
+__global__ void kernel_halfsize2(float *out,float *in,int const ow,int const oh,int const iw,int const ih,int const ic)
+{
+    //若需要展开ic*3重循环只需修改out_x=threadIdx.x+blockIdx.x*blockDim.x*ic*3;以及for(int c=0;c<ic*3;c++)即可，同时应修改网格大小
     int out_x=threadIdx.x+blockIdx.x*blockDim.x*ic*3;
     int out_y=threadIdx.y+blockIdx.y*blockDim.y;
     int stride=iw*ic;
@@ -449,7 +474,6 @@ __global__ void kernel_halfsize1(float *out,float *in,int const ow,int const oh,
             int out_idx = out_y * ow*ic + fact_x;
             out[out_idx] = 0.25f * (in[index[0]] + in[index[1]] + in[index[2]] + in[index[3]]);
         }
-
     }
 }
 __global__ void kernel_halfsizebyshare(float *out,float *in,int const ow,int const oh,int const iw,int const ih,int const ic)
@@ -600,7 +624,7 @@ void compare(float  * const out_image,float const * const out,int const ow, int 
     if(success)std::cout<<"gpu加速后的计算结果与cpu计算的结果一致!"<<std::endl;
 }
 
-void double_size_by_cuda(float * const out_image,float const  * const in_image, int const weight,int const height,int const channels,float const * const out)
+void double_size_by_cuda(float * const out_image,float const  * const in_image,int const weight,int const height,int const channels,float const * const out)
 {
     int const ow=weight<<1;
     int const oh=height<<1;
@@ -989,7 +1013,7 @@ void double_size_by_cuda(float * const out_image,float const  * const in_image, 
     cudaFree(d_out);
 }
 
-void halfsize_by_cuda(float * const out_image,float const  * const in_image, int const weight,int const height,int const channels,float const  * const out)
+void halfsize_by_cuda(float * const out_image,float const  * const in_image,int const weight,int const height,int const channels,float const  * const out)
 {
     int ow=(weight+1)>>1;
     int oh=(height+1)>>1;
@@ -1004,6 +1028,14 @@ void halfsize_by_cuda(float * const out_image,float const  * const in_image, int
     cudaMalloc((void**)&d_in,bytes_in);
     cudaMemcpy(d_in,in_image,bytes_in,cudaMemcpyHostToDevice);
 
+    int const x=32;
+    int const y=8;
+    dim3 block (x,y,1);
+    dim3 grid ((ow-1+x*2)/(x*2),(oh-1+y)/y,1);
+    kernel_halfsize1<<<grid,block>>>(d_out,d_in,ow,oh,weight,height,channels);
+    cudaMemcpy(out_image,d_out,bytes_out,cudaMemcpyDeviceToHost);
+    //compare(out_image,out,ow,oh,channels);//对比运行结果
+/*
     int x=32;
     int y=16;
     dim3 block (x,y,1);
@@ -1055,27 +1087,238 @@ void halfsize_by_cuda(float * const out_image,float const  * const in_image, int
     kernel_halfsize<<<grid4,block4>>>(d_out4,d_in,ow,oh,weight,height,channels);
     cudaMemcpy(out_image4,d_out4,bytes_out,cudaMemcpyDeviceToHost);
     compare(out_image4,out,ow,oh,channels);
-
-
-    /*int const   share_x=x*2;
-    int const   share_y=y*2;
-    dim3 block (x,y,1);
-    dim3 grid ((ow-1+x)/x,(oh-1+y)/y,1);
-    kernel_halfsizebyshare<<<grid,block,share_x*share_y*channels* sizeof(float)>>>(d_out,d_in,ow,oh,weight,height,channels);*/
-    /*int const   share_x=x*4;
-    int const   share_y=y*2;
+*/
+/*
+    int x=32;
+    int y=16;
     dim3 block (x,y,1);
     dim3 grid ((ow-1+x*2)/(x*2),(oh-1+y)/y,1);
-    kernel_halfsizebyshare1<<<grid,block,share_x*share_y*channels* sizeof(float)>>>(d_out,d_in,ow,oh,weight,height,channels);*/
+    kernel_halfsize1<<<grid,block>>>(d_out,d_in,ow,oh,weight,height,channels);
+    cudaMemcpy(out_image,d_out,bytes_out,cudaMemcpyDeviceToHost);
+    compare(out_image,out,ow,oh,channels);
+//缩小block
+    x=32;
+    y=8;
+    float *d_out1=NULL;
+    float *out_image1= (float *) malloc(bytes_out);
+    cudaMalloc((void**)&d_out1,bytes_out);
+    dim3 block1 (x,y,1);
+    dim3 grid1 ((ow-1+x*2)/(x*2),(oh-1+y)/y,1);
+    kernel_halfsize1<<<grid1,block1>>>(d_out1,d_in,ow,oh,weight,height,channels);
+    cudaMemcpy(out_image1,d_out1,bytes_out,cudaMemcpyDeviceToHost);
+    compare(out_image1,out,ow,oh,channels);
+//缩小block
+    x=32;
+    y=4;
+    float *d_out2=NULL;
+    float *out_image2= (float *) malloc(bytes_out);
+    cudaMalloc((void**)&d_out2,bytes_out);
+    dim3 block2 (x,y,1);
+    dim3 grid2 ((ow-1+x*2)/(x*2),(oh-1+y)/y,1);
+    kernel_halfsize1<<<grid2,block2>>>(d_out2,d_in,ow,oh,weight,height,channels);
+    cudaMemcpy(out_image2,d_out2,bytes_out,cudaMemcpyDeviceToHost);
+    compare(out_image2,out,ow,oh,channels);
+//缩小block
+    x=32;
+    y=32;
+    float *d_out3=NULL;
+    float *out_image3= (float *) malloc(bytes_out);
+    cudaMalloc((void**)&d_out3,bytes_out);
+    dim3 block3 (x,y,1);
+    dim3 grid3 ((ow-1+x*2)/(x*2),(oh-1+y)/y,1);
+    kernel_halfsize1<<<grid3,block3>>>(d_out3,d_in,ow,oh,weight,height,channels);
+    cudaMemcpy(out_image3,d_out3,bytes_out,cudaMemcpyDeviceToHost);
+    compare(out_image3,out,ow,oh,channels);
+//放大block
+    x=64;
+    y=8;
+    float *d_out4=NULL;
+    float *out_image4= (float *) malloc(bytes_out);
+    cudaMalloc((void**)&d_out4,bytes_out);
+    dim3 block4 (x,y,1);
+    dim3 grid4 ((ow-1+x*2)/(x*2),(oh-1+y)/y,1);
+    kernel_halfsize1<<<grid4,block4>>>(d_out4,d_in,ow,oh,weight,height,channels);
+    cudaMemcpy(out_image4,d_out4,bytes_out,cudaMemcpyDeviceToHost);
+    compare(out_image4,out,ow,oh,channels);
+*/
+/*
+    int x=32;
+    int y=16;
+    dim3 block (x,y,1);
+    dim3 grid ((ow-1+x*3)/(x*3),(oh-1+y)/y,1);
+    kernel_halfsize2<<<grid,block>>>(d_out,d_in,ow,oh,weight,height,channels);
+    cudaMemcpy(out_image,d_out,bytes_out,cudaMemcpyDeviceToHost);
+    compare(out_image,out,ow,oh,channels);
+//缩小block
+    x=32;
+    y=8;
+    float *d_out1=NULL;
+    float *out_image1= (float *) malloc(bytes_out);
+    cudaMalloc((void**)&d_out1,bytes_out);
+    dim3 block1 (x,y,1);
+    dim3 grid1 ((ow-1+x*3)/(x*3),(oh-1+y)/y,1);
+    kernel_halfsize2<<<grid1,block1>>>(d_out1,d_in,ow,oh,weight,height,channels);
+    cudaMemcpy(out_image1,d_out1,bytes_out,cudaMemcpyDeviceToHost);
+    compare(out_image1,out,ow,oh,channels);
+//缩小block
+    x=32;
+    y=4;
+    float *d_out2=NULL;
+    float *out_image2= (float *) malloc(bytes_out);
+    cudaMalloc((void**)&d_out2,bytes_out);
+    dim3 block2 (x,y,1);
+    dim3 grid2 ((ow-1+x*3)/(x*3),(oh-1+y)/y,1);
+    kernel_halfsize2<<<grid2,block2>>>(d_out2,d_in,ow,oh,weight,height,channels);
+    cudaMemcpy(out_image2,d_out2,bytes_out,cudaMemcpyDeviceToHost);
+    compare(out_image2,out,ow,oh,channels);
+//缩小block
+    x=32;
+    y=32;
+    float *d_out3=NULL;
+    float *out_image3= (float *) malloc(bytes_out);
+    cudaMalloc((void**)&d_out3,bytes_out);
+    dim3 block3 (x,y,1);
+    dim3 grid3 ((ow-1+x*3)/(x*3),(oh-1+y)/y,1);
+    kernel_halfsize2<<<grid3,block3>>>(d_out3,d_in,ow,oh,weight,height,channels);
+    cudaMemcpy(out_image3,d_out3,bytes_out,cudaMemcpyDeviceToHost);
+    compare(out_image3,out,ow,oh,channels);
+//放大block
+    x=64;
+    y=8;
+    float *d_out4=NULL;
+    float *out_image4= (float *) malloc(bytes_out);
+    cudaMalloc((void**)&d_out4,bytes_out);
+    dim3 block4 (x,y,1);
+    dim3 grid4 ((ow-1+x*3)/(x*3),(oh-1+y)/y,1);
+    kernel_halfsize2<<<grid4,block4>>>(d_out4,d_in,ow,oh,weight,height,channels);
+    cudaMemcpy(out_image4,d_out4,bytes_out,cudaMemcpyDeviceToHost);
+    compare(out_image4,out,ow,oh,channels);
+*/
+/*
+    int x=32;
+    int y=16;
+    int share_x=x*2;
+    int  share_y=y*2;
+    dim3 block (x,y,1);
+    dim3 grid ((ow-1+x)/x,(oh-1+y)/y,1);
+    kernel_halfsizebyshare<<<grid,block,share_x*share_y*channels* sizeof(float)>>>(d_out,d_in,ow,oh,weight,height,channels);
+    cudaMemcpy(out_image,d_out,bytes_out,cudaMemcpyDeviceToHost);
+    compare(out_image,out,ow,oh,channels);
+//缩小block
+    x=32;
+    y=8;
+    share_x=x*2;
+    share_y=y*2;
+    float *d_out1=NULL;
+    float *out_image1= (float *) malloc(bytes_out);
+    cudaMalloc((void**)&d_out1,bytes_out);
+    dim3 block1 (x,y,1);
+    dim3 grid1 ((ow-1+x)/x,(oh-1+y)/y,1);
+    kernel_halfsizebyshare<<<grid1,block1,share_x*share_y*channels* sizeof(float)>>>(d_out1,d_in,ow,oh,weight,height,channels);
+    cudaMemcpy(out_image1,d_out1,bytes_out,cudaMemcpyDeviceToHost);
+    compare(out_image1,out,ow,oh,channels);
+//缩小block
+    x=32;
+    y=4;
+    share_x=x*2;
+    share_y=y*2;
+    float *d_out2=NULL;
+    float *out_image2= (float *) malloc(bytes_out);
+    cudaMalloc((void**)&d_out2,bytes_out);
+    dim3 block2 (x,y,1);
+    dim3 grid2 ((ow-1+x)/x,(oh-1+y)/y,1);
+    kernel_halfsizebyshare<<<grid2,block2,share_x*share_y*channels* sizeof(float)>>>(d_out2,d_in,ow,oh,weight,height,channels);
+    cudaMemcpy(out_image2,d_out2,bytes_out,cudaMemcpyDeviceToHost);
+    compare(out_image2,out,ow,oh,channels);
+//缩小block
+    x=32;
+    y=32;
+    share_x=x*2;
+    share_y=y*2;
+    float *d_out3=NULL;
+    float *out_image3= (float *) malloc(bytes_out);
+    cudaMalloc((void**)&d_out3,bytes_out);
+    dim3 block3 (x,y,1);
+    dim3 grid3 ((ow-1+x)/x,(oh-1+y)/y,1);
+    kernel_halfsizebyshare<<<grid3,block3,share_x*share_y*channels* sizeof(float)>>>(d_out3,d_in,ow,oh,weight,height,channels);
+    cudaMemcpy(out_image3,d_out3,bytes_out,cudaMemcpyDeviceToHost);
+    compare(out_image3,out,ow,oh,channels);
+//放大block
+    x=64;
+    y=8;
+    share_x=x*2;
+    share_y=y*2;
+    float *d_out4=NULL;
+    float *out_image4= (float *) malloc(bytes_out);
+    cudaMalloc((void**)&d_out4,bytes_out);
+    dim3 block4 (x,y,1);
+    dim3 grid4 ((ow-1+x)/x,(oh-1+y)/y,1);
+    kernel_halfsizebyshare<<<grid4,block4,share_x*share_y*channels* sizeof(float)>>>(d_out4,d_in,ow,oh,weight,height,channels);
+    cudaMemcpy(out_image4,d_out4,bytes_out,cudaMemcpyDeviceToHost);
+    compare(out_image4,out,ow,oh,channels);
+*/
+/*
+    int x=32;
+    int y=16;
+    int share_x=x*4;
+    int  share_y=y*2;
+    dim3 block (x,y,1);
+    dim3 grid ((ow-1+x*2)/(x*2),(oh-1+y)/y,1);
+    kernel_halfsizebyshare1<<<grid,block,share_x*share_y*channels* sizeof(float)>>>(d_out,d_in,ow,oh,weight,height,channels);
+    cudaMemcpy(out_image,d_out,bytes_out,cudaMemcpyDeviceToHost);
+    compare(out_image,out,ow,oh,channels);
+//缩小block
+    x=32;
+    y=8;
+    share_x=x*4;
+    share_y=y*2;
+    float *d_out1=NULL;
+    float *out_image1= (float *) malloc(bytes_out);
+    cudaMalloc((void**)&d_out1,bytes_out);
+    dim3 block1 (x,y,1);
+    dim3 grid1 ((ow-1+x*2)/(x*2),(oh-1+y)/y,1);
+    kernel_halfsizebyshare1<<<grid1,block1,share_x*share_y*channels* sizeof(float)>>>(d_out1,d_in,ow,oh,weight,height,channels);
+    cudaMemcpy(out_image1,d_out1,bytes_out,cudaMemcpyDeviceToHost);
+    compare(out_image1,out,ow,oh,channels);
+//缩小block
+    x=32;
+    y=4;
+    share_x=x*4;
+    share_y=y*2;
+    float *d_out2=NULL;
+    float *out_image2= (float *) malloc(bytes_out);
+    cudaMalloc((void**)&d_out2,bytes_out);
+    dim3 block2 (x,y,1);
+    dim3 grid2 ((ow-1+x*2)/(x*2),(oh-1+y)/y,1);
+    kernel_halfsizebyshare1<<<grid2,block2,share_x*share_y*channels* sizeof(float)>>>(d_out2,d_in,ow,oh,weight,height,channels);
+    cudaMemcpy(out_image2,d_out2,bytes_out,cudaMemcpyDeviceToHost);
+    compare(out_image2,out,ow,oh,channels);
+//缩小block
+    //x=32;y=32;share_x=x*4;share_y=y*2;无法正常运行
 
-    cudaFree(d_out1);
-    cudaFree(d_out2);
-    cudaFree(d_out3);
-    cudaFree(d_out4);
+//放大block
+    x=64;
+    y=8;
+    share_x=x*4;
+    share_y=y*2;
+    float *d_out4=NULL;
+    float *out_image4= (float *) malloc(bytes_out);
+    cudaMalloc((void**)&d_out4,bytes_out);
+    dim3 block4 (x,y,1);
+    dim3 grid4 ((ow-1+x*2)/(x*2),(oh-1+y)/y,1);
+    kernel_halfsizebyshare1<<<grid4,block4,share_x*share_y*channels* sizeof(float)>>>(d_out4,d_in,ow,oh,weight,height,channels);
+    cudaMemcpy(out_image4,d_out4,bytes_out,cudaMemcpyDeviceToHost);
+    compare(out_image4,out,ow,oh,channels);
+*/
+
+    /*cudaFree(d_out1);
     free(out_image1);
+    cudaFree(d_out2);
     free(out_image2);
+    cudaFree(d_out3);
     free(out_image3);
-    free(out_image4);
+    cudaFree(d_out4);
+    free(out_image4);*/
 
     cudaFree(d_in);
     cudaFree(d_out);
