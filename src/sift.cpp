@@ -426,27 +426,198 @@ void image::Sift::extrema_detection(image::Image<float>::ConstPtr *s, int octave
         }
     }
 }
-
 void
-image::Sift::keypoint_localization()
+Sift::keypoint_localization (void)
 {
-    int num_sigular = 0;
-    int num_keypoints = 0;
+    /*
+     * Iterate over all keypoints, accurately localize minima and maxima
+     * in the DoG function by fitting a quadratic Taylor polynomial
+     * around the keypoint.
+     */
 
-    for (int i = 0; i < this->keypoints.size(); ++i)
+    int num_singular = 0;
+    int num_keypoints = 0; // Write iterator
+    for (std::size_t i = 0; i < this->keypoints.size(); ++i)
     {
+        /* Copy keypoint. */
         Keypoint kp(this->keypoints[i]);
 
-        image::Sift::Octave const& octave(this->octaves[kp.octave - this->options.min_octave]);
+        /* Get corresponding octave and DoG images. */
+        Octave const& oct(this->octaves[kp.octave - this->options.min_octave]);
         int sample = static_cast<int>(kp.sample);
-        image::FloatImage::ConstPtr dogs[3] = {octave.img_dog[sample + 0],octave.img_dog[sample + 1],octave.img_dog[sample + 2]};
+        //TODO::sample表示前一层？@anshuai
+        core::FloatImage::ConstPtr dogs[3] = { oct.dog[sample + 0], oct.dog[sample + 1], oct.dog[sample + 2] };
+
+        /* Shorthand for image width and height. */
+        int const w = dogs[0]->width();
+        int const h = dogs[0]->height();
+        /* The integer and floating point location of the keypoints. */
+        int ix = static_cast<int>(kp.x);
+        int iy = static_cast<int>(kp.y);
+        int is = static_cast<int>(kp.sample);
+        float delta_x, delta_y, delta_s;
+        /* The first and second order derivatives. */
+        float Dx, Dy, Ds;
+        float Dxx, Dyy, Dss;
+        float Dxy, Dxs, Dys;
+
+        /*
+         * Locate the keypoint using second order Taylor approximation.
+         * The procedure might get iterated around a neighboring pixel if
+         * the accurate keypoint is off by >0.6 from the center pixel.
+         */
+#define AT(S,OFF) (dogs[S]->at(px + OFF))
+        for (int j = 0; j < 5; ++j)
+        {
+            std::size_t px = iy * w + ix;
+
+            /* Compute first and second derivatives. */
+            Dx = (AT(1,1) - AT(1,-1)) * 0.5f;
+            Dy = (AT(1,w) - AT(1,-w)) * 0.5f;
+            Ds = (AT(2,0) - AT(0,0))  * 0.5f;
+
+            Dxx = AT(1,1) + AT(1,-1) - 2.0f * AT(1,0);
+            Dyy = AT(1,w) + AT(1,-w) - 2.0f * AT(1,0);
+            Dss = AT(2,0) + AT(0,0)  - 2.0f * AT(1,0);
+
+            Dxy = (AT(1,1+w) + AT(1,-1-w) - AT(1,-1+w) - AT(1,1-w)) * 0.25f;
+            Dxs = (AT(2,1)   + AT(0,-1)   - AT(2,-1)   - AT(0,1))   * 0.25f;
+            Dys = (AT(2,w)   + AT(0,-w)   - AT(2,-w)   - AT(0,w))   * 0.25f;
+
+            /* Setup the Hessian matrix. */
+            math::Matrix3f H;
+            /****************************task-1-0  构造Hessian矩阵 ******************************/
+            /*
+             * 参考第32页slide的Hessian矩阵构造方式填充H矩阵，其中dx=dy=d_sigma=1, 其中A矩阵按照行顺序存储，即
+             * H=[H[0], H[1], H[2]]
+             *   [H[3], H[4], H[5]]
+             *   [H[6], H[7], H[8]]
+             */
+
+            /**********************************************************************************/
+            H[0] = Dxx; H[1] = Dxy; H[2] = Dxs;
+            H[3] = Dxy; H[4] = Dyy; H[5] = Dys;
+            H[6] = Dxs; H[7] = Dys; H[8] = Dss;
 
 
+            /* Compute determinant to detect singular matrix. */
+            float detH = math::matrix_determinant(H);
+            if (MATH_EPSILON_EQ(detH, 0.0f, 1e-15f))
+            {
+                num_singular += 1;
+                delta_x = delta_y = delta_s = 0.0f; // FIXME: Handle this case?
+                break;
+            }
+            /* Invert the matrix to get the accurate keypoint. */
+            math::Matrix3f H_inv = math::matrix_inverse(H, detH);
+            math::Vec3f b(-Dx, -Dy, -Ds);
 
+
+            //math::Vec3f delta;
+            /****************************task-1-1  求解偏移量deta ******************************/
+
+            /* 参考第30页slide delta_x的求解方式 delta_x = inv(H)*b
+            * 请在此处给出delta的表达式
+            */
+            /*                  */
+            /*    此处添加代码    */
+            /*                  */
+
+            /**********************************************************************************/
+
+
+            math::Vec3f delta = H_inv * b;
+            delta_x = delta[0];
+            delta_y = delta[1];
+            delta_s = delta[2];
+
+
+            /* Check if accurate location is far away from pixel center. */
+            // dx =0 表示|dx|>0.6f
+            //TODO::不同DOG层之间的偏移？
+            //TODO：:0.6f?偏移超过0.5即说明离其他像素更近。
+            int dx = (delta_x > 0.6f && ix < w-2) * 1 + (delta_x < -0.6f && ix > 1) * -1;
+            int dy = (delta_y > 0.6f && iy < h-2) * 1 + (delta_y < -0.6f && iy > 1) * -1;
+            /* If the accurate location is closer to another pixel,
+             * repeat localization around the other pixel. */
+            if (dx != 0 || dy != 0)
+            {
+                ix += dx;
+                iy += dy;
+                continue;
+            }
+            /* Accurate location looks good. */
+            break;
+        }
+
+
+        /* Calcualte function value D(x) at accurate keypoint x. */
+        /*****************************task1-2求解极值点处的DoG值val ***************************/
+        /*
+         * 参考第30页slides的机极值点f(x)的求解公式f(x) = f(x0) + 0.5* delta.dot(D)
+         * 其中
+         * f(x0)--表示插值点(ix, iy, is) 处的DoG值，可通过dogs[1]->at(ix, iy, 0)获取
+         * delta--为上述求得的delta=[delta_x, delta_y, delta_s]
+         * D--为一阶导数，表示为(Dx, Dy, Ds)
+         * 请给出求解val的代码
+         */
+        //float val = 0.0;
+        /*                  */
+        /*    此处添加代码    */
+        /*                  */
+        /************************************************************************************/
+        float val = dogs[1]->at(ix, iy, 0) + 0.5f * (Dx * delta_x + Dy * delta_y + Ds * delta_s);
+        /* Calcualte edge response score Tr(H)^2 / Det(H), see Section 4.1. */
+
+        /**************************去除边缘点，参考第33页slide 仔细阅读代码 ****************************/
+        float hessian_trace = Dxx + Dyy;
+        float hessian_det = Dxx * Dyy - MATH_POW2(Dxy);
+        float hessian_score = MATH_POW2(hessian_trace) / hessian_det;
+        float score_thres = MATH_POW2(this->options.edge_ratio_threshold + 1.0f)
+                            / this->options.edge_ratio_threshold;
+        /********************************************************************************/
+
+        /*
+         * Set accurate final keypoint location.
+         */
+        kp.x = (float)ix + delta_x;
+        kp.y = (float)iy + delta_y;
+        kp.sample = (float)is + delta_s;
+
+        /*
+         * Discard keypoints with:
+         * 1. low contrast (value of DoG function at keypoint),
+         * 2. negative hessian determinant (curvatures with different sign),
+         *    Note that negative score implies negative determinant.
+         * 3. large edge response (large hessian score),
+         * 4. unstable keypoint accurate locations,
+         * 5. keypoints beyond the scale space boundary.
+         */
+        if (std::abs(val) < this->options.contrast_threshold
+            || hessian_score < 0.0f || hessian_score > score_thres
+            || std::abs(delta_x) > 1.5f || std::abs(delta_y) > 1.5f || std::abs(delta_s) > 1.0f
+            || kp.sample < -1.0f
+                           || kp.sample > (float)this->options.num_samples_per_octave
+                                                 || kp.x < 0.0f || kp.x > (float)(w - 1)
+                                                 || kp.y < 0.0f || kp.y > (float)(h - 1))
+        {
+            //std::cout << " REJECTED!" << std::endl;
+            continue;
+        }
+        // Keypoint is accepted, copy to write iter and advance.
+        this->keypoints[num_keypoints] = kp;
+        num_keypoints += 1;
     }
 
-}
+    /* Limit vector size to number of accepted keypoints. */
+    this->keypoints.resize(num_keypoints);
 
+    if (this->options.debug_output && num_singular > 0)
+    {
+        std::cout << "SIFT: Warning: " << num_singular
+                  << " singular matrices detected!" << std::endl;
+    }
+}
 void
 image::Sift::descriptor_generation()
 {
