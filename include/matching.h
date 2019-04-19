@@ -61,6 +61,8 @@ Matching::oneway_match(const image::Matching::Options &options, T const *set_1, 
 template <typename T>
 void Matching::twoway_match(const image::Matching::Options &options, T const *set_1, int set_1_size, T const *set_2,
                             int set_2_size, image::Matching::Result *matches)
-{}
+{
+
+}
 IMAGE_NAMESPACE_END
 #endif //IMAGE_MATCH_H
