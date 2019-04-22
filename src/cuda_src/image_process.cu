@@ -7,7 +7,85 @@
 #include <cuda_runtime.h>
 #include <cstdio>
 #include <iostream>
+void compare(float *const out_image, float const *const out, int const ow, int const oh, int const ic) {
+    bool success = 1;
+    for (int j = 0; j < oh; ++j) {
+        for (int i = 0; i < ow; ++i) {
+            for (int k = 0; k < ic; ++k) {
+                float a = out[j * ow * ic + i * ic + k];
+                float b = out_image[j * ow * ic + i * ic + k];
+                if (std::abs(a - b) > 0.000001)
+                    //if(a!=b)
+                {
+                    printf("idx:%d\t", j * ow * ic + i * ic + k);
+                    printf("cpu:\t%1.18lf\tgpu:\t%1.18lf\n", a, b);
+                    success = 0;
+                }
+            }
+        }
+    }
+    if (success)std::cout << "gpu加速后的计算结果与cpu计算的结果一致!" << std::endl;
+}
 
+void compare_split(float const *const in_image, float *out_1, float *out_2, float *out_3, int const weight,
+                   int const height) {
+    bool success = 1;
+    for (int j = 0; j < height; ++j) {
+        for (int i = 0; i < weight; ++i) {
+            float a_0 = in_image[j * weight * 3 + i * 3];
+            float a_1 = in_image[j * weight * 3 + i * 3 + 1];
+            float a_2 = in_image[j * weight * 3 + i * 3 + 2];
+
+            float b_0 = out_1[j * weight + i];
+            float b_1 = out_2[j * weight + i];
+            float b_2 = out_3[j * weight + i];
+            if (a_0 != b_0) {
+                printf("idx:%d\t%f\t%f\n", j * weight + i, a_0, b_0);
+                success = 0;
+            }
+            if (!success) {
+                std::cout << "第一通道分离失败" << std::endl;
+                exit(1);
+            }
+            if (a_1 != b_1) {
+                printf("idx:%d\t%f\t%f\n", j * weight + i, a_1, b_1);
+                success = 0;
+            }
+            if (!success) {
+                std::cout << "第二通道分离失败" << std::endl;
+                exit(1);
+            }
+            if (a_2 != b_2) {
+                printf("idx:%d\t%f\t%f\n", j * weight + i, a_2, b_2);
+                success = 0;
+            }
+            if (!success) {
+                std::cout << "第三通道分离失败" << std::endl;
+                exit(1);
+            }
+        }
+    }
+    if (success)std::cout << "分离通道成功" << std::endl;
+}
+
+void gpuzero(float *a, float *b, float *c, size_t const bytes) {
+    cudaMemset(a, 0, bytes);
+    cudaMemset(b, 0, bytes);
+    cudaMemset(c, 0, bytes);
+}
+
+void cpuzero(float *a, float *b, float *c, size_t const bytes) {
+    memset(a, 0, bytes);
+    memset(b, 0, bytes);
+    memset(c, 0, bytes);
+}
+
+void gpu2cpu3(float *h_in1, float *d_in1, float *h_in2, float *d_in2, float *h_in3, float *d_in3,
+              size_t const bytes_channels) {
+    cudaMemcpy(h_in1, d_in1, bytes_channels, cudaMemcpyDeviceToHost);
+    cudaMemcpy(h_in2, d_in2, bytes_channels, cudaMemcpyDeviceToHost);
+    cudaMemcpy(h_in3, d_in3, bytes_channels, cudaMemcpyDeviceToHost);
+}
 __global__ void warmup(void)
 {}
 /*
@@ -598,33 +676,252 @@ __global__ void kernel_halfsizebyshare1(float *out,float *in,int const ow,int co
         }
     }
 }
+
+/******************************************************************************************/
+///功能：分离颜色通道
+/*  函数名                            线程块大小       耗费时间
+ *kernel_split		                 [32,4,1]         1.071ms
+ *kernel_split1                      [32,4,1]         1.06ms
+ *kernel_split2                      [32,4,1]         1.058ms
+ *kernel_splitbyshare	    	     [32,8,1]         1.064ms
+ *kernel_splitbyshare1	  		     [32,8,1]         1.059ms
+ *kernel_splitbyshare2               [32,4,1]         1.057ms
+ */
+/******************************************************************************************/
+/* 调用示例
+ * dim3 block1(x, y, 1);
+ * dim3 grid1((weight - 1 + x) / x, (height - 1 + y) / y, 1);
+ * kernel_splitbyshare <<< grid1, block1, x * y * 3 * sizeof(float) >>> (d_c_0, d_c_1, d_c_2, d_in, weight, height);
+ */
+__global__ void kernel_splitbyshare(float *out_channels_0,float *out_channels_1,float *out_channels_2,float * in,int const weight,int const height)
+{
+    extern __shared__ float data[];
+    int out_x=threadIdx.x+blockIdx.x*blockDim.x;
+    int out_y=threadIdx.y+blockIdx.y*blockDim.y;
+    int idx=out_y*weight+out_x;
+    int fidx=threadIdx.y*blockDim.x*3+threadIdx.x*3;
+    int share_x=blockDim.x*3;//共享块x维长度
+
+    int shidx0=threadIdx.y*share_x+blockDim.x*0+threadIdx.x;
+    int shidx1=threadIdx.y*share_x+blockDim.x*1+threadIdx.x;
+    int shidx2=threadIdx.y*share_x+blockDim.x*2+threadIdx.x;
+    int inidx0=out_y*weight*3+blockIdx.x*share_x+blockDim.x*0+threadIdx.x;
+    int inidx1=out_y*weight*3+blockIdx.x*share_x+blockDim.x*1+threadIdx.x;
+    int inidx2=out_y*weight*3+blockIdx.x*share_x+blockDim.x*2+threadIdx.x;
+
+    if(out_x<weight&&out_y<height)
+    {
+        data[shidx0]=in[inidx0];
+        data[shidx1]=in[inidx1];
+        data[shidx2]=in[inidx2];
+        __syncthreads();
+        out_channels_0[idx]=data[fidx+0];
+        out_channels_1[idx]=data[fidx+1];
+        out_channels_2[idx]=data[fidx+2];
+    }
+}
+
+/* 调用示例
+ * dim3 block3(x, y, 1);
+ * dim3 grid3((weight - 1 + x*2) / (x*2), (height - 1 + y) / y, 1);
+ * kernel_splitbyshare1<<<grid3, block3, x * y * 6 * sizeof(float) >>> (d_c_0, d_c_1, d_c_2, d_in, weight, height);
+ */
+__global__ void kernel_splitbyshare1(float *out_channels_0,float *out_channels_1,float *out_channels_2,float * in,int const weight,int const height)
+{
+    extern __shared__ float data[];
+    int out_x=threadIdx.x+blockIdx.x*blockDim.x*2;
+    int out_y=threadIdx.y+blockIdx.y*blockDim.y;
+    int idx=out_y*weight+out_x;
+
+    int share_x=blockDim.x*6;//共享块x维最大值
+    int shsp=threadIdx.y*share_x+threadIdx.x;//共享块内索引起点（start point）
+    int insp=out_y*weight*3+blockIdx.x*share_x+threadIdx.x;//输入数组内索引起点;
+    int fidx=threadIdx.y*share_x+threadIdx.x*3;
+    int inc=blockDim.x*3;//增量
+
+    int shidx0=shsp+blockDim.x*0;
+    int shidx1=shsp+blockDim.x*1;
+    int shidx2=shsp+blockDim.x*2;
+    int shidx3=shsp+blockDim.x*3;
+    int shidx4=shsp+blockDim.x*4;
+    int shidx5=shsp+blockDim.x*5;
+
+    int inidx0=insp+blockDim.x*0;
+    int inidx1=insp+blockDim.x*1;
+    int inidx2=insp+blockDim.x*2;
+    int inidx3=insp+blockDim.x*3;
+    int inidx4=insp+blockDim.x*4;
+    int inidx5=insp+blockDim.x*5;
+
+    if(out_x<weight&&out_y<height)
+    {
+        data[shidx0]=in[inidx0];
+        data[shidx1]=in[inidx1];
+        data[shidx2]=in[inidx2];
+        data[shidx3]=in[inidx3];
+        data[shidx4]=in[inidx4];
+        data[shidx5]=in[inidx5];
+        __syncthreads();
+        out_channels_0[idx]=data[fidx+0];
+        out_channels_1[idx]=data[fidx+1];
+        out_channels_2[idx]=data[fidx+2];
+        out_channels_0[idx+blockDim.x]=data[fidx+inc+0];
+        out_channels_1[idx+blockDim.x]=data[fidx+inc+1];
+        out_channels_2[idx+blockDim.x]=data[fidx+inc+2];
+    }
+}
+
+/* 调用示例
+ * dim3 block4(x, y, 1);
+ * dim3 grid4((weight - 1 + x*3) / (x*3), (height - 1 + y) / y, 1);
+ * kernel_splitbyshare2<<<grid4, block4, x * y * 9 * sizeof(float) >>> (d_c_0, d_c_1, d_c_2, d_in, weight, height);
+ */
+__global__ void kernel_splitbyshare2(float *out_channels_0,float *out_channels_1,float *out_channels_2,float * in,int const weight,int const height)
+{
+    extern __shared__ float data[];
+    int out_x=threadIdx.x+blockIdx.x*blockDim.x*3;
+    int out_y=threadIdx.y+blockIdx.y*blockDim.y;
+    int idx=out_y*weight+out_x;
+
+    int share_x=blockDim.x*9;//共享块x维最大值
+    int shsp=threadIdx.y*share_x+threadIdx.x;//共享块内索引起点（start point）
+    int insp=out_y*weight*3+blockIdx.x*share_x+threadIdx.x;//输入数组内索引起点;
+    int fidx=threadIdx.y*share_x+threadIdx.x*3;
+    int inc=blockDim.x*3;//增量
+    int inc1=blockDim.x*6;//增量
+
+    int shidx0=shsp+blockDim.x*0;
+    int shidx1=shsp+blockDim.x*1;
+    int shidx2=shsp+blockDim.x*2;
+    int shidx3=shsp+blockDim.x*3;
+    int shidx4=shsp+blockDim.x*4;
+    int shidx5=shsp+blockDim.x*5;
+    int shidx6=shsp+blockDim.x*6;
+    int shidx7=shsp+blockDim.x*7;
+    int shidx8=shsp+blockDim.x*8;
+
+    int inidx0=insp+blockDim.x*0;
+    int inidx1=insp+blockDim.x*1;
+    int inidx2=insp+blockDim.x*2;
+    int inidx3=insp+blockDim.x*3;
+    int inidx4=insp+blockDim.x*4;
+    int inidx5=insp+blockDim.x*5;
+    int inidx6=insp+blockDim.x*6;
+    int inidx7=insp+blockDim.x*7;
+    int inidx8=insp+blockDim.x*8;
+
+    if(out_x<weight&&out_y<height)
+    {
+        data[shidx0]=in[inidx0];
+        data[shidx1]=in[inidx1];
+        data[shidx2]=in[inidx2];
+        data[shidx3]=in[inidx3];
+        data[shidx4]=in[inidx4];
+        data[shidx5]=in[inidx5];
+        data[shidx6]=in[inidx6];
+        data[shidx7]=in[inidx7];
+        data[shidx8]=in[inidx8];
+        __syncthreads();
+        out_channels_0[idx]=data[fidx+0];
+        out_channels_1[idx]=data[fidx+1];
+        out_channels_2[idx]=data[fidx+2];
+        out_channels_0[idx+blockDim.x]=data[fidx+inc+0];
+        out_channels_1[idx+blockDim.x]=data[fidx+inc+1];
+        out_channels_2[idx+blockDim.x]=data[fidx+inc+2];
+        out_channels_0[idx+blockDim.x*2]=data[fidx+inc1+0];
+        out_channels_1[idx+blockDim.x*2]=data[fidx+inc1+1];
+        out_channels_2[idx+blockDim.x*2]=data[fidx+inc1+2];
+
+    }
+}
+
+/* 调用示例
+ * dim3 block2(x, y, 1);
+ * dim3 grid2((weight - 1 + x) / x, (height - 1 + y) / y, 1);
+ * kernel_split<<< grid2, block2>>> (d_c_0, d_c_1, d_c_2, d_in, weight, height);
+ */
+__global__ void kernel_split(float *out_channels_0,float *out_channels_1,float *out_channels_2,float * in,int const weight,int const height)
+{
+    int out_x=threadIdx.x+blockIdx.x*blockDim.x;
+    int out_y=threadIdx.y+blockIdx.y*blockDim.y;
+    int idx=out_y*weight+out_x;
+    int inidx=out_y * weight * 3 + out_x * 3;
+    if(out_x<weight&&out_y<height) {
+        float a=in[inidx+0];
+        float b=in[inidx+1];
+        float c=in[inidx+2];
+        out_channels_0[idx] = a;
+        out_channels_1[idx] = b;
+        out_channels_2[idx] = c;
+    }
+}
+
+/* 调用示例
+ * dim3 block5(x, y, 1);
+ * dim3 grid5((weight - 1 + x*2) / (x*2), (height - 1 + y) / y, 1);
+ * kernel_split1<<< grid5, block5>>> (d_c_0, d_c_1, d_c_2, d_in, weight, height);
+ */
+__global__ void kernel_split1(float *out_channels_0,float *out_channels_1,float *out_channels_2,float * in,int const weight,int const height)
+{
+    int out_x=threadIdx.x+blockIdx.x*blockDim.x*2;
+    int out_y=threadIdx.y+blockIdx.y*blockDim.y;
+    int idx=out_y*weight+out_x;
+    int inidx=out_y * weight * 3 + out_x * 3;
+    if(out_x<weight&&out_y<height) {
+        float a=in[inidx+0];
+        float b=in[inidx+1];
+        float c=in[inidx+2];
+        out_channels_0[idx] = a;
+        out_channels_1[idx] = b;
+        out_channels_2[idx] = c;
+        a=in[inidx +blockDim.x*3+ 0];
+        b=in[inidx +blockDim.x*3+ 1];
+        c=in[inidx +blockDim.x*3+ 2];
+        out_channels_0[idx+blockDim.x] = a;
+        out_channels_1[idx+blockDim.x] = b;
+        out_channels_2[idx+blockDim.x] = c;
+    }
+}
+
+/* 调用示例
+ * dim3 block6(x, y, 1);
+ * dim3 grid6((weight - 1 + x*3) / (x*3), (height - 1 + y) / y, 1);
+ * kernel_split2<<< grid6, block6>>> (d_c_0, d_c_1, d_c_2, d_in, weight, height);
+ */
+__global__ void kernel_split2(float *out_channels_0,float *out_channels_1,float *out_channels_2,float * in,int const weight,int const height)
+{
+    int out_x=threadIdx.x+blockIdx.x*blockDim.x*3;
+    int out_y=threadIdx.y+blockIdx.y*blockDim.y;
+    int idx=out_y*weight+out_x;
+    int inidx=out_y * weight * 3 + out_x * 3;
+    if(out_x<weight&&out_y<height) {
+        float a=in[inidx+0];
+        float b=in[inidx+1];
+        float c=in[inidx+2];
+        out_channels_0[idx] = a;
+        out_channels_1[idx] = b;
+        out_channels_2[idx] = c;
+        a=in[inidx +blockDim.x*3+ 0];
+        b=in[inidx +blockDim.x*3+ 1];
+        c=in[inidx +blockDim.x*3+ 2];
+        out_channels_0[idx+blockDim.x] = a;
+        out_channels_1[idx+blockDim.x] = b;
+        out_channels_2[idx+blockDim.x] = c;
+        a=in[inidx +blockDim.x*6+ 0];
+        b=in[inidx +blockDim.x*6+ 1];
+        c=in[inidx +blockDim.x*6+ 2];
+        out_channels_0[idx+blockDim.x*2] = a;
+        out_channels_1[idx+blockDim.x*2] = b;
+        out_channels_2[idx+blockDim.x*2] = c;
+    }
+}
 /******************************************************************************************/
 ///调用核函数实现加速功能
 /******************************************************************************************/
+
 void warm(void)
 {
     warmup<<<1,1>>>();
-}
-
-void compare(float  * const out_image,float const * const out,int const ow, int const oh,int const ic)
-{
-    bool success=1;
-    for (int j = 0; j < oh; ++j) {
-        for (int i = 0; i < ow; ++i) {
-            for (int k = 0; k < ic; ++k) {
-                float a=out[j*ow*ic+i*ic+k];
-                float b=out_image[j*ow*ic+i*ic+k];
-
-                if(a!=b)
-                {
-                    printf("idx:%d\t",j*ow*ic+i*ic+k);
-                    printf("cpu:\t%1.18lf\tgpu:\t%1.18lf\n",a,b);
-                    success=0;
-                }
-            }
-        }
-    }
-    if(success)std::cout<<"gpu加速后的计算结果与cpu计算的结果一致!"<<std::endl;
 }
 
 void double_size_by_cuda(float * const out_image,float const  * const in_image,int const weight,int const height,int const channels,float const * const out)
@@ -1327,95 +1624,81 @@ void halfsize_by_cuda(float * const out_image,float const  * const in_image,int 
     cudaFree(d_out);
 }
 
-
-
 __global__ void kernel_halfsize_guass(float *out,float *in,int const ow,int const oh,int const iw,int const ih,int const ic,float const *w)
 {
-    //printf("%1.18f\t%1.18f\t%1.18f\n",w[0],w[1],w[2]);
+
     int out_x=threadIdx.x+blockIdx.x*blockDim.x*ic;
     int out_y=threadIdx.y+blockIdx.y*blockDim.y;
     int istride=iw*ic;
 
-    for(int c=0;c<ic;c++)
+    for (int c = 0; c <ic ; ++c)
     {
         int fact_x=out_x+blockDim.x*c;
-        int channel=fact_x%ic;//索引坐标对应的颜色通道
-        int out_xf=fact_x/ic;//输出像素点的x坐标
-        //printf("%d\n",out_xf);
-        if(out_y<oh&&fact_x<ow*ic) {
-            int iy=out_y<<1;
-            int ix = out_xf<<1;
-            int row[4];
-            int col[4];
-            row[0] = max(0,(iy - 1) * istride);//输入像素点的y坐标乘x方向上的最大元素个数
+        if(out_y<oh&&fact_x<ow*ic)
+        {
+            int out_idx = out_y * ow * ic + fact_x;
+            int channels = fact_x % ic;//颜色通道
+            int out_xf = fact_x / ic;//输出像素点x坐标
+            int ix = out_xf << 1;
+            int iy = out_y << 1;
+            int row[4], col[4];
+            row[0] = max(0, iy - 1) * istride;
             row[1] = iy * istride;
-            row[2] = min((int)ih - 1 ,iy + 1) * istride;
-            row[3] = min((int)ih - 2 ,iy + 2) * istride;
+            row[2] = min(iy + 1, (int)ih - 1) * istride;
+            row[3] = min(iy + 2, (int)ih - 2) * istride;
 
-            col[0] = max(0,ix - 1) * ic+channel;
-            col[1] = ix * ic+channel;
-            col[2] = min((int)iw - 1 ,ix + 1) * ic+channel;
-            col[3] = min((int)iw - 1 ,ix + 2) * ic+channel;
+            col[0] = max(0, ix - 1) * ic + channels;
+            col[1] = ix * ic + channels;
+            col[2] = min(ix + 1, (int)iw - 1) * ic + channels;
+            col[3] = min(ix + 2, (int)iw - 1) * ic + channels;
 
-            int out_idx = out_y * ow*ic + fact_x;
+            float sum = 0.0f;
+            int t=4;
+            sum += in[row[0] + col[0]] * w[2];
+            sum += in[row[0] + col[1]] * w[1];
+            sum += in[row[0] + col[2]] * w[1];
+            sum += in[row[0] + col[3]] * w[2];
+            //if(out_idx==t)printf("gpu:%1.18f\n",sum);
 
-            float sum = 0.0f;//u_char溢出
-            sum+=in[row[0]+col[0]]*w[2];
-            sum+=in[row[0]+col[1]]*w[1];
-            sum+=in[row[0]+col[2]]*w[1];
-            sum+=in[row[0]+col[3]]*w[2];
-            if(out_idx==1)printf("%1.18f\n",sum);
+            sum += in[row[1] + col[0]] * w[1];
+            sum += in[row[1] + col[1]] * w[0];
+            sum += in[row[1] + col[2]] * w[0];
+            sum += in[row[1] + col[3]] * w[1];
+            if(out_idx==t)printf("gpu:%1.18f\n",sum);
 
-            sum+=in[row[1]+col[0]]*w[1];
-            sum+=in[row[1]+col[1]]*w[0];
-            sum+=in[row[1]+col[2]]*w[0];
-            sum+=in[row[1]+col[3]]*w[1];
-
-
-            sum+=in[row[2]+col[0]]*w[1];
-            sum+=in[row[2]+col[1]]*w[0];
-            sum+=in[row[2]+col[2]]*w[0];
-            if(out_idx==1)printf("%1.18f\t",sum);
-            if(out_idx==1)
+            /**/
+            sum += in[row[2] + col[0]] * w[1];
+            if(out_idx==t)printf("gpu:%1.18f\n",sum);
+            sum += in[row[2] + col[1]] * w[0];
+            if(out_idx==t)printf("gpu:%1.18f\n",sum);
+            if(out_idx==t)
             {
-                printf("in:%1.20f\t",in[row[2]+col[3]]);
-                printf("w:%1.20f\t",w[1]);
-                printf("sum_in:%1.20f\t",sum+in[row[2]+col[3]]);
-                printf("in*w:%1.20f\t",in[row[2]+col[3]]*w[1]);
-                printf("sum:%1.20f\n",sum+in[row[2]+col[3]]*w[1]);
+                printf("高斯核索引:%d\t",row[2] + col[2]);
+                printf("in:%1.18f\t",in[row[2] + col[2]]);
+                printf("w:%1.18f\t",w[0]);
+                printf("in*w:%1.18f\n",in[row[2] + col[2]] *w[0]);
             }
-            sum+=in[row[2]+col[3]]*w[1];
+            sum += in[row[2] + col[2]] * w[0];
+            if(out_idx==t)printf("gpu:%1.18f\n",sum);
+            sum += in[row[2] + col[3]] * w[1];
+            //if(out_idx==t)printf("gpu:%1.18f\n",sum);
 
+            sum += in[row[3] + col[0]] * w[2];
+            sum += in[row[3] + col[1]] * w[1];
+            sum += in[row[3] + col[2]] * w[1];
+            sum += in[row[3] + col[3]] * w[2];
+            //if(out_idx==t)printf("gpu:%1.18f\n",sum);
 
-            if(out_idx==1)printf("%1.18f\n",sum);
-
-            sum+=in[row[3]+col[0]]*w[2];
-            sum+=in[row[3]+col[1]]*w[1];
-            sum+=in[row[3]+col[2]]*w[1];
-            sum+=in[row[3]+col[3]]*w[2];
-            if(out_idx==1)printf("%1.18f\n",sum);
-
-/*
-            if(out_idx==0) {
-                printf("%d\n",channel);
-                printf("%d\t%d\t%d\t%d\n",row[0],row[1],row[2],row[3]);
-                printf("%d\t%d\t%d\t%d\n", col[0], col[1], col[2], col[3]);
-                for (int j = 0; j < 4; j++) {
-                    for (int i = 0; i < 4; ++i) {
-                        printf("%d:\t%1.18f\t",row[j]+col[i], in[row[j]+col[i]]);
-                    }
-                    printf("\n");
-                }
-                printf("%1.18f\n",sum);
-            }*/
             out[out_idx] = sum / (float)(4 * w[2] + 8 * w[1] + 4 * w[0]);
 
         }
+
     }
 }
 
-void halfsize_guassian_by_cuda(float * const out_image,float const  * const in_image, int const weight,int const height,int const channels,float sigma2)
-{
+
+void halfsize_guassian_by_cuda(float * const out_image,float const  * const in_image, int const weight,int const height,int const channels,float sigma2,float const  * const out) {
+/*
     int ow=(weight+1)>>1;
     int oh=(height+1)>>1;
     int const size_in=weight*height;
@@ -1427,6 +1710,10 @@ void halfsize_guassian_by_cuda(float * const out_image,float const  * const in_i
     float *d_out=NULL;
     float h_w[3];
     float *d_w=NULL;
+
+    float3 *d_in1=NULL;
+    cudaMalloc((void**)&d_in1,bytes_in);
+    cudaMemcpy(d_in1,in_image,bytes_in,cudaMemcpyHostToDevice);
 
     h_w[0] = std::exp(-0.5 / (2.0f * sigma2));
     h_w[1] = std::exp(-2.5f / (2.0 * sigma2));
@@ -1440,10 +1727,87 @@ void halfsize_guassian_by_cuda(float * const out_image,float const  * const in_i
     int const x=32;
     int const y=16;
     dim3 block (x,y,1);
-    dim3 grid ((ow-1+x)/x,(oh-1+y)/y,1);
+    dim3 grid ((ow-1+x)/(x),(oh-1+y)/y,1);
     kernel_halfsize_guass<<<grid,block>>>(d_out,d_in,ow,oh,weight,height,channels,d_w);
+    //compare(d_out,out,ow,oh,channels);
+    float *d_channels_0=NULL;
+    float *d_channels_1=NULL;
+    float *d_channels_2=NULL;
+    size_t bytes_channels=weight*height*sizeof(float);
+    cudaMalloc((void**)&d_channels_0,bytes_channels);
+    cudaMalloc((void**)&d_channels_1,bytes_channels);
+    cudaMalloc((void**)&d_channels_2,bytes_channels);
+
+    //split<<<grid,block,x*y*6*sizeof(float)>>>(d_channels_0,d_channels_1,d_channels_2,d_in,weight,height);
+    //sp<<<grid,block>>>(d_in1,d_in);
+    cudaFree(d_channels_0);
+    cudaFree(d_channels_1);
+    cudaFree(d_channels_2);
+
 
     cudaMemcpy(out_image,d_out,bytes_out,cudaMemcpyDeviceToHost);
+    compare(out_image,out,ow,oh,channels);
     cudaFree(d_in);
-    cudaFree(d_out);
+    cudaFree(d_out);*/
+    int ow = (weight + 1) >> 1;
+    int oh = (height + 1) >> 1;
+    int const size_in = weight * height;
+    int const size_out = ow * oh;
+    size_t const bytes_in = size_in * channels * sizeof(float);
+    size_t const bytes_out = size_out * channels * sizeof(float);
+    size_t const bytes_channels = size_in * sizeof(float);
+
+    float *d_in = NULL;
+
+    float *d_c_0 = NULL;
+    float *d_c_1 = NULL;
+    float *d_c_2 = NULL;
+
+    cudaMalloc((void **) &d_in, bytes_in);
+    cudaMalloc((void **) &d_c_0, bytes_channels);
+    cudaMalloc((void **) &d_c_1, bytes_channels);
+    cudaMalloc((void **) &d_c_2, bytes_channels);
+
+    float *out_1, *out_2, *out_3;
+    out_1 = (float *) malloc(bytes_channels);
+    out_2 = (float *) malloc(bytes_channels);
+    out_3 = (float *) malloc(bytes_channels);
+
+    cudaMemcpy(d_in, in_image, bytes_in, cudaMemcpyHostToDevice);
+
+    int x;
+    int y;
+    /*dim3 block0(32, 4, 1);
+    dim3 grid0((weight +95) / 96, (height +3) / 4, 1);
+    kernel_splitbyshare2<<<grid0, block0, 1152 * sizeof(float) >>> (d_c_0, d_c_1, d_c_2, d_in, weight, height);*/
+
+    float *d_out=NULL;
+    float h_w[3];
+    float *d_w=NULL;
+
+    h_w[0] = std::exp(-0.5 / (2.0f * sigma2));
+    h_w[1] = std::exp(-2.5f / (2.0 * sigma2));
+    h_w[2] = std::exp(-4.5f / (2.0f * sigma2));
+
+    cudaMalloc((void**)&d_out,bytes_out);
+    cudaMalloc((void**)&d_w,3* sizeof(float));
+    cudaMemcpy(d_w,h_w,3* sizeof(float),cudaMemcpyHostToDevice);
+    int const x1=32;
+    int const y1=16;
+    dim3 block (x1,y1,1);
+    dim3 grid ((ow-1+x1)/(x1),(oh-1+y1)/y1,1);
+    kernel_halfsize_guass<<<grid,block>>>(d_out,d_in,ow,oh,weight,height,channels,d_w);
+    cudaMemcpy(out_image,d_out,bytes_out,cudaMemcpyDeviceToHost);
+    compare(out_image,out,weight,height,channels);
+
+    free(out_1);
+    free(out_2);
+    free(out_3);
+    cudaFree(d_in);
+    cudaFree(d_c_0);
+    cudaFree(d_c_1);
+    cudaFree(d_c_2);
+
 }
+
+  //

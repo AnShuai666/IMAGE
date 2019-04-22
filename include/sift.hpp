@@ -11,6 +11,7 @@
 
 #include <string>
 #include <vector>
+#include <Matrix/vector.hpp>
 //#include "define.h"
 #include "Matrix/vector.hpp"
 #include "image.hpp"
@@ -101,7 +102,7 @@ IMAGE_NAMESPACE_BEGIN
             float orientation;
 
             //描述子的数据，[0.0,1.0]
-            matrix::Vector<float, 128> data;
+            math::matrix::Vector<float, 128> data;
         };
 /********************************************************************
 *~~~~~~~~~~~~~~~~~~~~~~~~~常用数据类型别名定义~~~~~~~~~~~~~~~~~~~~~~~~~~
