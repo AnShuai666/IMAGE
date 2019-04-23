@@ -6,6 +6,7 @@
 */
 
 #include <fstream>
+#include <Matrix/matrix.hpp>
 #include "include/sift.hpp"
 #include "include/image_process.hpp"
 #include "include/timer.h"
@@ -446,7 +447,7 @@ Sift::keypoint_localization (void)
         Octave const& oct(this->octaves[kp.octave - this->options.min_octave]);
         int sample = static_cast<int>(kp.sample);
         //TODO::sample表示前一层？@anshuai
-        core::FloatImage::ConstPtr dogs[3] = { oct.dog[sample + 0], oct.dog[sample + 1], oct.dog[sample + 2] };
+        image::FloatImage::ConstPtr dogs[3] = { oct.img_dog[sample + 0], oct.img_dog[sample + 1], oct.img_dog[sample + 2] };
 
         /* Shorthand for image width and height. */
         int const w = dogs[0]->width();
@@ -485,7 +486,7 @@ Sift::keypoint_localization (void)
             Dys = (AT(2,w)   + AT(0,-w)   - AT(2,-w)   - AT(0,w))   * 0.25f;
 
             /* Setup the Hessian matrix. */
-            math::Matrix3f H;
+            math::matrix::Matrix3f H;
             /****************************task-1-0  构造Hessian矩阵 ******************************/
             /*
              * 参考第32页slide的Hessian矩阵构造方式填充H矩阵，其中dx=dy=d_sigma=1, 其中A矩阵按照行顺序存储，即
@@ -501,7 +502,7 @@ Sift::keypoint_localization (void)
 
 
             /* Compute determinant to detect singular matrix. */
-            float detH = math::matrix_determinant(H);
+            float detH = H.determiniant();
             if (MATH_EPSILON_EQ(detH, 0.0f, 1e-15f))
             {
                 num_singular += 1;
@@ -509,8 +510,9 @@ Sift::keypoint_localization (void)
                 break;
             }
             /* Invert the matrix to get the accurate keypoint. */
-            math::Matrix3f H_inv = math::matrix_inverse(H, detH);
-            math::Vec3f b(-Dx, -Dy, -Ds);
+
+            math::matrix::Matrix3f H_inv = H.inverse();//math::matrix::matrix_inverse(H, detH);
+            math::matrix::Vector3f b(-Dx, -Dy, -Ds);
 
 
             //math::Vec3f delta;
@@ -526,7 +528,7 @@ Sift::keypoint_localization (void)
             /**********************************************************************************/
 
 
-            math::Vec3f delta = H_inv * b;
+            math::matrix::Vector3f delta = H_inv * b;
             delta_x = delta[0];
             delta_y = delta[1];
             delta_s = delta[2];
@@ -735,7 +737,7 @@ image::Sift::orientation_assignment(const image::Sift::Keypoint &kp, const image
     //
     int const ix = static_cast<int>(kp.x + 0.5f);
     int const iy = static_cast<int>(kp.y + 0.5f);
-    int const is = static_cast<int>(func::round(kp.sample));
+    int const is = static_cast<int>(math::func::round(kp.sample));
     float const sigma = this->keypoint_relative_scale(kp);
 
     image::FloatImage::ConstPtr grad(octave->img_grad[is + 1]);
@@ -773,11 +775,11 @@ image::Sift::orientation_assignment(const image::Sift::Keypoint &kp, const image
             float grad_magnitude = grad->at(center + yoff +dx);
             //梯度方向
             float grad_ort = ort->at(center + yoff +dx);
-            float weight = func::gaussian_xx(dist,sigma * sigma_factor);
+            float weight = math::func::gaussian_xx(dist,sigma * sigma_factor);
 
             //360度等分36份,grad_ort/(2PI/36) = grad_ort * 36 / 2PI
             int bin = static_cast<int>(nbinsf * grad_ort / (2.0f * MATH_PI));
-            bin = func::clamp(bin,0,nbins - 1);
+            bin = math::func::clamp(bin,0,nbins - 1);
             hist[bin] += grad_magnitude * weight;
         }
     }

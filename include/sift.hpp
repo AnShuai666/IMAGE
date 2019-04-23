@@ -44,6 +44,7 @@ IMAGE_NAMESPACE_BEGIN
             //void 避免函数进行检测参数，加速
             Options(void);
 
+
             //每阶有效差分个数默认为3
             int num_samples_per_octave;
 
@@ -58,6 +59,8 @@ IMAGE_NAMESPACE_BEGIN
 
             //消除边界响应，trace(H)^2/Det(H) < [(r+1)^2]/r 默认为10
             float edge_ratio_threshold;
+            //将|D(ˆx)|<0.03（图像灰度归一化为[0,1]）的特征点剔除。
+            float contrast_threshold;
 
             //图像固有尺度，假设图像拍摄就有默认尺度为0.5的模糊。即实际原图为I,拍摄图像为L = I * G(inherent_blur_sigma)
             float inherent_blur_sigma;
@@ -101,7 +104,7 @@ IMAGE_NAMESPACE_BEGIN
             float orientation;
 
             //描述子的数据，[0.0,1.0]
-            matrix::Vector<float, 128> data;
+            math::matrix::Vector<float, 128> data;
         };
 /********************************************************************
 *~~~~~~~~~~~~~~~~~~~~~~~~~常用数据类型别名定义~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -284,6 +287,7 @@ IMAGE_NAMESPACE_BEGIN
             num_samples_per_octave(3),
             min_octave(0),
             max_octave(4),
+            contrast_threshold(0.03f),
             edge_ratio_threshold(10.0f),
             inherent_blur_sigma(0.5f),
             base_blur_sigma(1.6f),
