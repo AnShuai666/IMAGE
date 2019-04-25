@@ -6,7 +6,7 @@
 */
 #include "sift.hpp"
 #include "image_io.h"
-#include "timer.h"
+#include "Util/timer.h"
 #include <iostream>
 #include <visualizer.hpp>
 
@@ -67,7 +67,7 @@ int main(int argc, char ** argv)
     std::cout<<"================================="<<std::endl;
 
     image::Visualizer<uint8_t> sift_vis;
-    Visualizer<uint8_t>::Keypoints keypoints;
+    image::Visualizer<uint8_t>::Keypoints keypoints;
     keypoints = sift_vis.save_keypoints(image);
     image::ByteImage::Ptr image_out;
     image_out = sift_vis.draw_keypoints(image,keypoints,image::Visualizer<uint8_t>::RADIUS_CIRCLE_ORIENTATION);

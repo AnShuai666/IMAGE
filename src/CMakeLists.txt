@@ -19,11 +19,8 @@ set(HEADERS
         ${PROJECT_SOURCE_DIR}/include/define.h
         ${PROJECT_SOURCE_DIR}/include/image.hpp
         ${PROJECT_SOURCE_DIR}/include/image_io.h
-        ${PROJECT_SOURCE_DIR}/include/exception.h
-        ${PROJECT_SOURCE_DIR}/include/string.h
         ${PROJECT_SOURCE_DIR}/include/sift.hpp
         ${PROJECT_SOURCE_DIR}/include/image_process.hpp
-        ${PROJECT_SOURCE_DIR}/include/timer.h
         ${PROJECT_SOURCE_DIR}/include/visualizer.hpp
         ${PROJECT_SOURCE_DIR}/include/nearest_neighbor.hpp
         )
@@ -35,7 +32,7 @@ set(SOURCE_FILES
         image_process.cpp
         )
 add_library(image SHARED ${HEADERS} ${SOURCE_FILES}  )
-target_link_libraries(image ${PNG_LIBRARIES} ${JPEG_LIBRARIES})
+target_link_libraries(image ${PNG_LIBRARIES} ${JPEG_LIBRARIES} )
 
 if (CUDA_FOUND)
     add_subdirectory(cuda_src)

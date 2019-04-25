@@ -5,8 +5,8 @@
  * @e-mail   1028792866@qq.com
 */
 #include "include/image_io.h"
-#include "include/string.h"
-#include "include/exception.h"
+#include "Util/string.h"
+#include "Util/exception.h"
 #include <fstream>
 #include <png.h>
 #include <jpeglib.h>
