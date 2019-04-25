@@ -10,6 +10,7 @@
 #include "function/function.hpp"
 #include "image_process.cuh"
 #include "timer.h"
+#include "image_process.hpp"
 
 IMAGE_NAMESPACE_BEGIN
 /*******************************************************************
@@ -25,14 +26,6 @@ IMAGE_NAMESPACE_BEGIN
 //                        颜色中的灰色越少，颜色越鲜艳
 //L ：Lightness 明度       作用是控制色彩的明暗变化。它同样使用了0%至100%的取值范围。
 //                        数值越小，色彩越暗，越接近于黑色；数值越大，色彩越亮，越接近于白色。
-    enum DesaturateType
-    {
-        DESATURATE_MAXIMUM,     //Maximum = max(R,G,B)
-        DESATURATE_LIGHTNESS,   //Lightness = 1/2 * (max(R,G,B) + min(R,G,B))
-        DESATURATE_LUMINOSITY,  //Luminosity = 0.21 * R + 0.72 * G + 0.07 * B
-        DESATURATE_LUMINANCE,   //Luminince = 0.30 * R + 0.59 * G + 0.11 * B
-        DESATURATE_AVERAGE      //Average Brightness = 1/3 * (R + G +B)
-    };
 
 /*******************************************************************
 *~~~~~~~~~~~~~~~~~~~~~常用图像函数处理声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -103,7 +96,7 @@ IMAGE_NAMESPACE_BEGIN
 */
     template <typename T>
     typename Image<T>::Ptr
-    desaturate(typename Image<T>::ConstPtr image,DesaturateType type);
+    desaturate_cu(typename Image<T>::ConstPtr image,DesaturateType type);
 
 /*
 *  @property   图像缩放
@@ -163,7 +156,7 @@ IMAGE_NAMESPACE_BEGIN
 */
     template <typename T>
     typename Image<T>::Ptr
-    blur_gaussian(typename Image<T>::ConstPtr in, float sigma);
+    blur_gaussian_cu(typename Image<T>::ConstPtr in, float sigma);
 
 /*
 *  @property   图像模糊
@@ -179,7 +172,7 @@ IMAGE_NAMESPACE_BEGIN
 */
     template <typename T>
     typename Image<T>::Ptr
-    blur_gaussian2(typename Image<T>::ConstPtr in, float sigma2);
+    blur_gaussian2_cu(typename Image<T>::ConstPtr in, float sigma2);
 
 /*
 *  @property   求图像差
@@ -189,7 +182,7 @@ IMAGE_NAMESPACE_BEGIN
 */
     template <typename T>
     typename Image<T>::Ptr
-    subtract(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2);
+    subtract_cu(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2);
 
 /*
 *  @property   求图像差
@@ -199,7 +192,7 @@ IMAGE_NAMESPACE_BEGIN
 */
     template <typename T>
     typename Image<T>::Ptr
-    difference(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2);
+    difference_cu(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2);
 IMAGE_NAMESPACE_END
 
 /*******************************************************************
@@ -207,7 +200,7 @@ IMAGE_NAMESPACE_END
 *******************************************************************/
 
 IMAGE_NAMESPACE_BEGIN
-
+/*
     template <typename T>
     inline T
     desaturate_maximum(T const* v)
@@ -245,10 +238,10 @@ IMAGE_NAMESPACE_BEGIN
     {
         return ((float)(v[0] + v[1] + v[2])) / 3.0f;
     }
-
+*/
 
     template <typename T>
-    typename Image<T>::Ptr desaturate(typename Image<T>::ConstPtr image, DesaturateType type)
+    typename Image<T>::Ptr desaturate_cu(typename Image<T>::ConstPtr image, DesaturateType type)
     {
         if (image == NULL)
         {
@@ -478,6 +471,7 @@ rescale_half_size_gaussian_cu(typename Image<T>::ConstPtr image, float sigma2)
 
         int out_pos = 0;
         int const rowstride = iw * ic;
+        image::TimerHigh timer1;
         for (int y = 0; y < oh; ++y)
         {
             int y2 = (int)y << 1;
@@ -494,66 +488,39 @@ rescale_half_size_gaussian_cu(typename Image<T>::ConstPtr image, float sigma2)
                 xi[0] =  std::max(0,x2 - 1) * ic;
                 xi[1] = x2 * ic;
                 xi[2] = std::min((int)iw - 1 ,x2 + 1) * ic;
-                xi[3] = std::min((int)iw - 1 ,x2 + 2) * ic;//这样合适吗？
+                xi[3] = std::min((int)iw - 1 ,x2 + 2) * ic;
 
                 for (int c = 0; c < ic; ++c)
                 {
-                    int t=4;
+                    //int t=6;
+                    //int idx=y*ow*ic+x*ic+c;
+                    //if(idx==t)printf("idx:%d\n",idx);
                     float sum = 0.0f;//u_char溢出
                     sum += row[0][xi[0] + c] * w3;
                     sum += row[0][xi[1] + c] * w2;
                     sum += row[0][xi[2] + c] * w2;
                     sum += row[0][xi[3] + c] * w3;
-                    //if((y*ow*ic+x*ic+c)==t)printf("cpu:%1.18f\n",sum);
 
                     sum += row[1][xi[0] + c] * w2;
                     sum += row[1][xi[1] + c] * w1;
                     sum += row[1][xi[2] + c] * w1;
                     sum += row[1][xi[3] + c] * w2;
-                    //if((y*ow*ic+x*ic+c)==t)printf("cpu:%1.18f\n",sum);
-
 
                     sum += row[2][xi[0] + c] * w2;
-                    //if((y*ow*ic+x*ic+c)==t)printf("cpu:%1.18f\n",sum);
                     sum += row[2][xi[1] + c] * w1;
-                    /*if((y*ow*ic+x*ic+c)==t)printf("cpu:%1.18f\n",sum);
-                    if((y*ow*ic+x*ic+c)==t)
-                    {
-                        printf("高斯核索引:%d\t",(std::min((int)ih - 1 ,y2 + 1) * rowstride)+xi[2]+c);
-                        printf("in:%1.18f\t",row[2][xi[2] + c]);
-                        printf("w:%1.18f\t",w1);
-                        printf("in*w:%1.18f\n",row[2][xi[2] + c] * w1);
-                    }*/
                     sum += row[2][xi[2] + c] * w1;
-                    //if((y*ow*ic+x*ic+c)==t)printf("cpu:%1.18f\n******************\n",sum);
                     sum += row[2][xi[3] + c] * w2;
-                    //if((y*ow*ic+x*ic+c)==t)printf("cpu:%1.18f\n",sum);
 
                     sum += row[3][xi[0] + c] * w3;
                     sum += row[3][xi[1] + c] * w2;
                     sum += row[3][xi[2] + c] * w2;
                     sum += row[3][xi[3] + c] * w3;
-                    //if((y*ow*ic+x*ic+c)==t)printf("cpu:%1.18f\n******************\n",sum);
 
                     out->at(out_pos++) = sum / (float)(4 * w3 + 8 * w2 + 4 * w1);
                 }
             }
         }
-        int const size_in = iw * ih;
-        size_t const bytes_channels = size_in * sizeof(float);
-        float *out_1, *out_2, *out_3;
-        out_1 = (float *) malloc(bytes_channels);
-        out_2 = (float *) malloc(bytes_channels);
-        out_3 = (float *) malloc(bytes_channels);
 
-        image::TimerHigh timer1;
-        for (int j = 0; j <ih ; ++j) {
-            for (int i = 0; i <iw ; ++i) {
-                out_1[j*iw+i]=image->at(j*iw+i,0);
-                out_2[j*iw+i]=image->at(j*iw+i,1);
-                out_3[j*iw+i]=image->at(j*iw+i,2);
-            }
-        }
         std::cout<<"cpu: "<<timer1.get_elapsed()<<"毫秒"<<std::endl;
 
         typename Image<T>::Ptr out1(Image<T>::create());
@@ -565,9 +532,20 @@ rescale_half_size_gaussian_cu(typename Image<T>::ConstPtr image, float sigma2)
 
 //TODO::to be CUDA@YANG
 //opencv 4000*2250*3 图像处理时间：60.9ms
+/*
+*  @property   图像模糊
+*  @func       将对图像进行高斯模糊,运用高斯卷积核,进行可分离卷积,先对x方向进行卷积,再在y方向进行卷积,
+*              等同于对图像进行二维卷积
+*              该高斯核为高斯函数f(x,y)=1/[(2pi)*sigma^2] * e^-((x^2 + y^2)/2sigma2)
+*
+*
+*  @param_in   in            　  待模糊图像
+*  @param_in   sigma             目标高斯尺度值　　也就是标准差
+*/
+//借鉴深度学习里的卷积优化
     template <typename T>
     typename Image<T>::Ptr
-    blur_gaussian(typename Image<T>::ConstPtr in, float sigma)
+    blur_gaussian_cu(typename Image<T>::ConstPtr in, float sigma)
     {
         if (in == nullptr)
         {
@@ -594,7 +572,9 @@ rescale_half_size_gaussian_cu(typename Image<T>::ConstPtr image, float sigma2)
         weight-=kernel[0];
         //可分离高斯核实现
         //x方向对对象进行卷积
+
         Image<float>::Ptr sep(Image<float>::create(w,h,c));
+
         int px = 0;
         for (int y = 0; y < h; ++y)
         {
@@ -613,9 +593,11 @@ rescale_half_size_gaussian_cu(typename Image<T>::ConstPtr image, float sigma2)
                 }
             }
         }
+
         //y方向对图像进行卷积
         px=0;
         typename Image<T>::Ptr out(Image<T>::create(w,h,c));
+        //image::TimerHigh timer1;
         for (int y = 0; y < h; ++y)
         {
             for (int x = 0; x < w; ++x,++px)
@@ -627,18 +609,26 @@ rescale_half_size_gaussian_cu(typename Image<T>::ConstPtr image, float sigma2)
                     {
                         int idx = math::func::clamp(y+i,0,(int)h - 1);
                         accum += sep->at(idx * w + x, cc)* kernel[abs(i)];
+                        //if((px*c+c)==1)printf("%d\t%1.10f\t%1.10f\n",(idx * w + x)*c+cc,sep->at(idx * w + x, cc),sep->at(idx * w + x, cc)* kernel[abs(i)]);
                     }
                     //printf("%f\n",accum / weight);
                     out->at(px,cc) = (T)(accum / weight);
                 }
             }
         }
-        return out;
+        //std::cout<<"cpu: "<<timer1.get_elapsed()<<"毫秒"<<std::endl;
+
+        //调用gpu代码
+        typename Image<T>::Ptr out1(Image<T>::create());
+        out1->allocate(w,h,c);
+        blur_gaussian_by_cuda(&out1->at(0),&in->at(0),w,h,c,sigma,&out->at(0));//,&sep->at(0));
+
+        return out1;///返回gpu的计算结果
     }
 
     template <typename T>
     typename Image<T>::Ptr
-    blur_gaussian2(typename Image<T>::ConstPtr in, float sigma2) {
+    blur_gaussian2_cu(typename Image<T>::ConstPtr in, float sigma2) {
         if (in == nullptr) {
             throw std::invalid_argument("没有输入图像!\n");
         }
@@ -648,13 +638,20 @@ rescale_half_size_gaussian_cu(typename Image<T>::ConstPtr image, float sigma2)
         }
         float sigma = sqrt(sigma2);
         typename Image<T>::Ptr out = blur_gaussian<T>(in, sigma);
-        return out;
+
+        //调用gpu代码
+        //blur_gaussian_cu函数中已经调用过blur_gaussian_by_cuda函数
+        typename Image<T>::Ptr out1(Image<T>::create());
+        out1->allocate(in->width(),in->height(),in->channels());
+        blur_gaussian2_by_cuda(&out1->at(0),&in->at(0),in->width(),in->height(),in->channels(),sigma2,&out->at(0));
+
+        return out1;///返回gpu的计算结果
     }
 //TODO::to be CUDA@YANG
 //opencv 4000*2250*3 图像处理时间：4.76ms
     template <typename T>
     typename Image<T>::Ptr
-    subtract(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2)
+    subtract_cu(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2)
     {
         if (image_1 == nullptr || image_2 == nullptr)
         {
@@ -681,7 +678,13 @@ rescale_half_size_gaussian_cu(typename Image<T>::ConstPtr image, float sigma2)
         for (int i = 0; i < image_1->get_value_amount(); ++i)
         {
             out->at(i) = image_1->at(i) - image_2->at(i);
+            //if(i<=100)std::cout<<out->at(i)<<std::endl;
         }
+
+        ///调用gpu代码
+        typename Image<T>::Ptr out1(Image<T>::create());
+        out1->allocate(w1,h1,c1);
+        subtract_by_cuda(&out1->at(0),&image_1->at(0),w1,h1,c1,&out->at(0));
 
         return out;
     }
@@ -689,7 +692,7 @@ rescale_half_size_gaussian_cu(typename Image<T>::ConstPtr image, float sigma2)
 //opencv 4000*2250*3 图像处理时间：3.34ms
     template <typename T>
     typename Image<T>::Ptr
-    difference(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2)
+    difference_cu(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2)
     {
 
         if (image_1 == nullptr || image_2 == nullptr)

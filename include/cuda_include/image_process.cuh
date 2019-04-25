@@ -80,11 +80,53 @@ void halfsize_by_cuda(float * const out_image,float const  * const in_image,int 
  * @param_in    weight             输入图像的宽度
  * @param_in    height             输入图像的高度
  * @param_in    channels           输入图像的颜色通道数
- * @param_in    sigma2             参与生成高斯权值的系数
+ * @param_in    sigma2             目标高斯尺度平方值　　也就是方差
  * @param_in    out                cpu计算结果，用于对比数据
  * 调用示例：
  * halfsize_guassian_by_cuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels(),sigma2,&out->at(0));
  */
 void halfsize_guassian_by_cuda(float * const out_image,float const  * const in_image, int const weight,int const height,int const channels,float sigma2,float const  * const out);
+/**
+ * @property    分离式高斯模糊函数
+ * @func        对图像进行高斯模糊    高斯核为高斯函数f(x,y)=1/[(2pi)*sigma^2] * e^-((x^2 + y^2)/2sigma2)
+ *                                 先沿x维方向对输入图像进行高斯模糊，再对生成的图像进行y维高斯模糊操作
+ *                                 通过输入的sigma计算出高斯核中心点的左右两侧的元素个数ks，计算高斯权值及高斯权值的和weight
+ *                                 x维：
+ *                                 x维模糊图片的每个像素点为输入图片上的(x-ks)到(x+ks)的值乘以高斯权值和再除以weight
+ *                                      边界考虑：x-ks>0,x+ks<w-1
+ *                                 y维：
+ *                                 输出图片的每个像素点为x维模糊图片上的(y-ks)到(y+ks)的值乘以高斯权值和再除以weight
+ *                                      边界考虑：y-ks>0,y+ks<w-1
+ * @param_out   out_image          放大后的图像首地址
+ * @param_in    in_image           待放大图像首地址
+ * @param_in    w                  输入图像的宽度
+ * @param_in    h                  输入图像的高度
+ * @param_in    c                  输入图像的颜色通道数
+ * @param_in    sigma              目标高斯尺度值　　也就是标准差　
+ * @param_in    out                cpu计算结果，用于对比数据
+ * @return
+ * 调用示例：
+ * blur_gaussian_by_cuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels(),sigma,&out->at(0));
+ */
+int blur_gaussian_by_cuda(float * const out_image,float const  * const in_image, int const w,int const h,int const c,float sigma,float const  * const out);
+
+/**
+ * @property    分离式高斯模糊函数
+ * @func        对图像进行高斯模糊    sigma = sqrt(sigma2);
+ *                                 将对图像进行高斯模糊,运用高斯卷积核,进行可分离卷积,先对x方向进行卷积,再在y方向进行卷积,
+ *                                 等同于对图像进行二维卷积
+ *                                 该高斯核为高斯函数f(x,y)=1/[(2pi)*sigma^2] * e^-((x^2 + y^2)/2sigma2)
+ * @param_out   out_image          放大后的图像首地址
+ * @param_in    in_image           待放大图像首地址
+ * @param_in    w                  输入图像的宽度
+ * @param_in    h                  输入图像的高度
+ * @param_in    c                  输入图像的颜色通道数
+ * @param_in    sigma2             目标高斯尺度平方值　　也就是方差
+ * @param_in    out                cpu计算结果，用于对比数据
+ * @return
+ * 调用示例：
+ * blur_gaussian2_by_cuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels(),sigma2,&out->at(0));
+ */
+int blur_gaussian2_by_cuda(float * const out_image,float const  * const in_image, int const w,int const h,int const c,float sigma2,float const  * const out);
 
 #endif //IMAGE_PROCESS_CUH
