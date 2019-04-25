@@ -2,7 +2,7 @@
 #include "image_io.h"
 #include "cuda_include/process_cuda.h"
 #include "sift.hpp"
-#include "timer.h"
+#include "Util/timer.h"
 #include "image_process.hpp"
 
 #include <iostream>
@@ -39,7 +39,7 @@ int main(int argc, char ** argv)
     srcImage3=image::blur_gaussian<float>(image::byte_to_float_image(image), 0.75f);
     srcImage4=image::blur_gaussian2<float>(image::byte_to_float_image(image), 0.75f);
 
-    image::subtract_cu<float>(srcImage1, srcImage5);
+    image::subtract_cu<float>(srcImage1, srcImage3);
     cout<<"*************调试结束*************"<<endl;
 
 

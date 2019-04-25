@@ -2217,11 +2217,11 @@ int blur_gaussian2_by_cuda(float * const out_image,float const  * const in_image
     return 0;
 }
 
-
+/*
 int subtract_by_cuda(float * const out_image,float const  * const in_image, int const w,int const h,int const c,float sigma2,float const  * const out)
 {
 
-}
+}*/
 /*
 for (int i = 0; i < image_1->get_value_amount(); ++i)
 {

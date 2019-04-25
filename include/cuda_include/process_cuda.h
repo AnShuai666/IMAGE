@@ -9,7 +9,7 @@
 #include "image.hpp"
 #include "function/function.hpp"
 #include "image_process.cuh"
-#include "timer.h"
+#include "Util/timer.h"
 #include "image_process.hpp"
 
 IMAGE_NAMESPACE_BEGIN
@@ -678,13 +678,13 @@ rescale_half_size_gaussian_cu(typename Image<T>::ConstPtr image, float sigma2)
         for (int i = 0; i < image_1->get_value_amount(); ++i)
         {
             out->at(i) = image_1->at(i) - image_2->at(i);
-            //if(i<=100)std::cout<<out->at(i)<<std::endl;
+            if(i<=100)std::cout<<out->at(i)<<std::endl;
         }
 
         ///调用gpu代码
         typename Image<T>::Ptr out1(Image<T>::create());
         out1->allocate(w1,h1,c1);
-        subtract_by_cuda(&out1->at(0),&image_1->at(0),w1,h1,c1,&out->at(0));
+        //subtract_by_cuda(&out1->at(0),&image_1->at(0),w1,h1,c1,&out->at(0));
 
         return out;
     }
