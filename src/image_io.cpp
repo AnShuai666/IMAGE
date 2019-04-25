@@ -21,7 +21,7 @@ load_image(std::string& filename)
     {
         return load_png_image(filename);
     }
-    catch(image::FileException &e)
+    catch(util::FileException &e)
     {
         //e.what();
     }
@@ -30,7 +30,7 @@ load_image(std::string& filename)
     {
         return load_jpg_image(filename);
     }
-    catch(image::FileException &e)
+    catch(util::FileException &e)
     {
         e.what();
     }
@@ -44,22 +44,22 @@ load_image_headers(std::string const filename)
     {
         return load_png_image_headers(filename);
     }
-    catch (image::FileException &e)
+    catch (util::FileException &e)
     {
         e.what();
     }
-    catch (image::Exception&)
+    catch (util::Exception&)
     {}
 
     try
     {
         return load_jpg_image_headers(filename);
     }
-    catch (image::FileException &e)
+    catch (util::FileException &e)
     {
         e.what();
     }
-    catch (image::Exception&)
+    catch (util::Exception&)
     {}
 
 
@@ -69,8 +69,8 @@ load_image_headers(std::string const filename)
 void
 save_image(ByteImage::ConstPtr image, std::string const& filename)
 {
-    std::string fext4 = image::lowercase(right(filename,4));
-    std::string fext5 = image::lowercase(right(filename,5));
+    std::string fext4 = util::lowercase(util::right(filename,4));
+    std::string fext5 = util::lowercase(util::right(filename,5));
 
     if (fext4 == ".jpg" || fext5 == ".jpeg")
     {
@@ -84,7 +84,7 @@ save_image(ByteImage::ConstPtr image, std::string const& filename)
     }
     else
     {
-        throw image::FileException(filename,"你所输入的格式目前不支持！");
+        throw util::FileException(filename,"你所输入的格式目前不支持！");
     }
 }
 
@@ -114,7 +114,7 @@ load_png_image(std::string const& filename)
         checkFileerror(fp);
         std::fclose(fp);
         fp = NULL;
-        throw image::FileException(filename,"PNG文件打开异常");
+        throw util::FileException(filename,"PNG文件打开异常");
         //TODO:写一个文件异常类，此处抛出异常
     }
 
@@ -124,7 +124,7 @@ load_png_image(std::string const& filename)
     {
         std::fclose(fp);
         fp = NULL;
-        throw image::FileException(filename,"PNG图的文件头不能读取");
+        throw util::FileException(filename,"PNG图的文件头不能读取");
     }
 
     //判断是否为png图
@@ -133,7 +133,7 @@ load_png_image(std::string const& filename)
     {
         std::fclose(fp);
         fp = NULL;
-        throw image::FileException(filename,"并不是PNG图");
+        throw util::FileException(filename,"并不是PNG图");
     }
 
     //自定义图像头，包括长宽高、图像数据
@@ -151,7 +151,7 @@ load_png_image(std::string const& filename)
     {
         std::fclose(fp);
         fp =NULL;
-        throw image::FileException(filename,"png_structp初始化失败！");
+        throw util::FileException(filename,"png_structp初始化失败！");
     }
 
     // 2.初始化png_infop变量
@@ -161,7 +161,7 @@ load_png_image(std::string const& filename)
         png_destroy_read_struct(&png_ptr, nullptr, nullptr);
         std::fclose(fp);
         fp = NULL;
-        throw image::FileException(filename,"初始化png_infop失败！");
+        throw util::FileException(filename,"初始化png_infop失败！");
     }
     //复位文件指针
     rewind(fp);
@@ -188,7 +188,7 @@ load_png_image(std::string const& filename)
         png_destroy_read_struct(&png_ptr,&png_info, nullptr);
         std::fclose(fp);
         fp = NULL;
-        throw image::FileException(filename,"PNG图像深度未知！");
+        throw util::FileException(filename,"PNG图像深度未知！");
     }
 
     //获取png图像颜色类型
@@ -232,7 +232,7 @@ load_png_image_headers(std::string const& filename)
     {
         std::fclose(fp);
         fp =NULL;
-        image::FileException(filename,strerror(errno));
+        util::FileException(filename,strerror(errno));
     }
 
     ImageHeaders imageHeaders;
@@ -244,7 +244,7 @@ load_png_image_headers(std::string const& filename)
     {
         std::fclose(fp);
         fp = NULL;
-        throw image::FileException(filename,"PNG签名不能读取！");
+        throw util::FileException(filename,"PNG签名不能读取！");
     }
 
     //判断是否为png图
@@ -253,7 +253,7 @@ load_png_image_headers(std::string const& filename)
     {
         std::fclose(fp);
         fp = NULL;
-        throw image::FileException(filename,"并不是PNG图");
+        throw util::FileException(filename,"并不是PNG图");
     }
 
     // 1.初始化png_structp类型指针,png_create_read_struct()函数返回一个png_struct_p类型的指针，如果结构体指针分配失败，返回NULL
@@ -262,7 +262,7 @@ load_png_image_headers(std::string const& filename)
     {
         std::fclose(fp);
         fp =NULL;
-        throw image::FileException(filename,"png_structp初始化失败！");
+        throw util::FileException(filename,"png_structp初始化失败！");
     }
 
     // 2.初始化png_infop变量
@@ -272,7 +272,7 @@ load_png_image_headers(std::string const& filename)
         png_destroy_read_struct(&png_ptr, nullptr, nullptr);
         std::fclose(fp);
         fp = NULL;
-        throw image::FileException(filename,"初始化png_infop失败！");
+        throw util::FileException(filename,"初始化png_infop失败！");
     }
     //复位文件指针
     rewind(fp);
@@ -297,7 +297,7 @@ load_png_image_headers(std::string const& filename)
         png_destroy_read_struct(&png_ptr,&png_info, nullptr);
         std::fclose(fp);
         fp = NULL;
-        throw image::FileException(filename,"PNG图像深度未知！");
+        throw util::FileException(filename,"PNG图像深度未知！");
     }
 
     png_destroy_read_struct(&png_ptr,&png_info, nullptr);
@@ -320,7 +320,7 @@ save_png_image(ByteImage::ConstPtr image, std::string const &filename, int compr
     if(fp == NULL)
     {
         fclose(fp);
-        throw image::FileException(filename,strerror(errno));
+        throw util::FileException(filename,strerror(errno));
     }
     png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING,NULL,NULL,NULL);
 
@@ -328,7 +328,7 @@ save_png_image(ByteImage::ConstPtr image, std::string const &filename, int compr
     {
         std::fclose(fp);
         fp = NULL;
-        throw image::FileException(filename,"内存不足，空间分配失败！");
+        throw util::FileException(filename,"内存不足，空间分配失败！");
     }
 
     png_infop info_ptr = png_create_info_struct(png_ptr);
@@ -337,7 +337,7 @@ save_png_image(ByteImage::ConstPtr image, std::string const &filename, int compr
     {
         std::fclose(fp);
         fp = NULL;
-        throw image::FileException(filename,"内存不足，空间分配失败！");
+        throw util::FileException(filename,"内存不足，空间分配失败！");
     }
 
     png_init_io(png_ptr,fp);
@@ -361,7 +361,7 @@ save_png_image(ByteImage::ConstPtr image, std::string const &filename, int compr
             png_destroy_write_struct(&png_ptr,&info_ptr);
             std::fclose(fp);
             fp = NULL;
-            throw image::FileException(filename,"非法的图像空间");
+            throw util::FileException(filename,"非法的图像空间");
     }
 
 
@@ -409,7 +409,7 @@ load_jpg_image(std::string const& filename,std::string* exif )
     {
         fclose(fp);
         fp = NULL;
-        throw image::FileException(filename,"jpg file open failed!");
+        throw util::FileException(filename,"jpg file open failed!");
     }
 
     // 分配和初始化一个decompression结构体
@@ -446,7 +446,7 @@ load_jpg_image(std::string const& filename,std::string* exif )
         int ret = jpeg_read_header(&cinfo,FALSE);
         if (ret != JPEG_HEADER_OK)
         {
-            throw image::FileException(filename,"JPEG header 识别不了！");
+            throw util::FileException(filename,"JPEG header 识别不了！");
         }
 
         //检查jpeg marker标记
@@ -457,7 +457,7 @@ load_jpg_image(std::string const& filename,std::string* exif )
 
         if(cinfo.out_color_space != JCS_GRAYSCALE && cinfo.out_color_space != JCS_RGB)
         {
-            throw image::FileException(filename,"非法JPEG图像空间！");
+            throw util::FileException(filename,"非法JPEG图像空间！");
         }
 
         //创建图像
@@ -510,14 +510,14 @@ save_jpg_image(ByteImage::ConstPtr image, std::string const &filename, int quali
 
     if(image->channels() != 1 && image->channels() != 3)
     {
-        throw image::FileException(filename,"图像通道数不是1和3！");
+        throw util::FileException(filename,"图像通道数不是1和3！");
     }
 
     FILE *fp = std::fopen(filename.c_str(),"wb");
     if(fp == NULL)
     {
         std::fclose(fp);
-        throw image::FileException(filename,strerror(errno));
+        throw util::FileException(filename,strerror(errno));
     }
 
     j_compress_ptr cinfo_ptr;
@@ -543,7 +543,7 @@ save_jpg_image(ByteImage::ConstPtr image, std::string const &filename, int quali
             jpeg_destroy_compress(cinfo_ptr);
             std::fclose(fp);
             fp = NULL;
-            throw image::FileException(filename,"非法的颜色空间！");
+            throw util::FileException(filename,"非法的颜色空间！");
     }
 
     //设置默认的压缩参数
