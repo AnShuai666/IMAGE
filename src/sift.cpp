@@ -8,7 +8,7 @@
 #include <fstream>
 #include "include/sift.hpp"
 #include "include/image_process.hpp"
-#include "include/timer.h"
+#include "Util/timer.h"
 #include "function/function.hpp"
 
 IMAGE_NAMESPACE_BEGIN
@@ -564,7 +564,7 @@ image::Sift::orientation_assignment(const image::Sift::Keypoint &kp, const image
     //
     int const ix = static_cast<int>(kp.x + 0.5f);
     int const iy = static_cast<int>(kp.y + 0.5f);
-    int const is = static_cast<int>(func::round(kp.sample));
+    int const is = static_cast<int>(math::func::round(kp.sample));
     float const sigma = this->keypoint_relative_scale(kp);
 
     image::FloatImage::ConstPtr grad(octave->img_grad[is + 1]);
@@ -602,11 +602,11 @@ image::Sift::orientation_assignment(const image::Sift::Keypoint &kp, const image
             float grad_magnitude = grad->at(center + yoff +dx);
             //梯度方向
             float grad_ort = ort->at(center + yoff +dx);
-            float weight = func::gaussian_xx(dist,sigma * sigma_factor);
+            float weight = math::func::gaussian_xx(dist,sigma * sigma_factor);
 
             //360度等分36份,grad_ort/(2PI/36) = grad_ort * 36 / 2PI
             int bin = static_cast<int>(nbinsf * grad_ort / (2.0f * MATH_PI));
-            bin = func::clamp(bin,0,nbins - 1);
+            bin = math::func::clamp(bin,0,nbins - 1);
             hist[bin] += grad_magnitude * weight;
         }
     }

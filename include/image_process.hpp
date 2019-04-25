@@ -503,7 +503,7 @@ blur_gaussian(typename Image<T>::ConstPtr in, float sigma)
 
     for (int i = 0; i < ks + 1; ++i)
     {
-        kernel[i] = func::gaussian((float)i, sigma);
+        kernel[i] = math::func::gaussian((float)i, sigma);
         weight += kernel[i]*2;
     }
     weight-=kernel[0];
@@ -520,7 +520,7 @@ blur_gaussian(typename Image<T>::ConstPtr in, float sigma)
                 float accum=0;
                 for (int i = -ks; i <=ks; ++i)
                 {
-                    int idx = func::clamp(x + i,0,w - 1);
+                    int idx = math::func::clamp(x + i,0,w - 1);
                     accum += in->at(y * w + idx, cc) * kernel[abs(i)];
                     //printf("%f\n",kernel[abs(i)]);
                 }
@@ -540,7 +540,7 @@ blur_gaussian(typename Image<T>::ConstPtr in, float sigma)
                 float accum =0;
                 for (int i = -ks; i <= ks; ++i)
                 {
-                    int idx = func::clamp(y+i,0,(int)h - 1);
+                    int idx = math::func::clamp(y+i,0,(int)h - 1);
                     accum += sep->at(idx * w + x, cc)* kernel[abs(i)];
                 }
                 //printf("%f\n",accum / weight);
