@@ -129,4 +129,17 @@ int blur_gaussian_by_cuda(float * const out_image,float const  * const in_image,
  */
 int blur_gaussian2_by_cuda(float * const out_image,float const  * const in_image, int const w,int const h,int const c,float sigma2,float const  * const out);
 
+/***
+ * @property   求图像差函数
+ * @func       求差异图像的有符号图像,in_image1-in_image2
+ * @param out_image     图像差
+ * @param in_image1     输入图像1
+ * @param in_image2     输入图像2
+ * @param w             输入图像的宽度
+ * @param h             输入图像的高度
+ * @param c             输入图像的颜色通道数
+ * @param out           cpu计算结果，用于对比数据
+ * @return
+ */
+int subtract_by_cuda(float * const out_image,float const  * const in_image1,float const  * const in_image2, int const w,int const h,int const c,float const  * const out);
 #endif //IMAGE_PROCESS_CUH

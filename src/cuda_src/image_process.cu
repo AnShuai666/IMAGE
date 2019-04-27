@@ -21,6 +21,7 @@ void compare(float *const out_image, float const *const out, int const w, int co
     int success = 1;
     float diff=0.000001;
     int key=0;
+    int skey=0;///
     for (int j = 0; j < h; ++j)
     {
         for (int i = 0; i < w; ++i)
@@ -29,7 +30,18 @@ void compare(float *const out_image, float const *const out, int const w, int co
             {
                 float a = out[j * w * c + i * c + k];
                 float b = out_image[j * w * c + i * c + k];
+                /*
+                if(a==b)
+                {
+                    if(a!=0.0f&&skey<=10)
+                    {
+                        printf("idx:%d\t", j * w * c + i * c + k);
+                        printf("cpu:\t%1.10lf\tgpu:\t%1.10lf\tdiff:%1.10lf\n", a, b,a-b);
+                        skey++;
+                    }
 
+                }
+                *///
                 if(a!=b)
                 {
                     if(key<=10)
@@ -1253,7 +1265,6 @@ __global__ void kernel_gaussBlur_x2(float *const out,float const *const in,float
         }
         out[out_idx2]=accum / weight;
     }
-
 }
 
 /******************************************************************************************/
@@ -1267,9 +1278,9 @@ __global__ void kernel_gaussBlur_x2(float *const out,float const *const in,float
 /* 调用示例
 * dim3 block(x,y,1);
 * dim3 grid((w*c-1+x)/(x),(h-1+y)/y,1);
-* kernel_gaussBlur_y<<<grid,block,(ks+1)* sizeof(float)>>>(d_tmp,d_in,d_blur,w,h,c,ks,weight);
+* kernel_gaussBlur_y<<<grid,block,(ks+1)* sizeof(float)>>>(d_tmp,d_in,d_blur,fact_w,h,ks,weight);
 */
-__global__ void kernel_gaussBlur_y(float *const out,float const *const in,float const * const blur,int const w,int const h,int const c,int const ks,float const weight)
+__global__ void kernel_gaussBlur_y(float *const out,float const *const in,float const * const blur,int const fact_w,int const h,int const ks,float const weight)
 {
     extern __shared__ float data[];
     int x=threadIdx.x+blockIdx.x*blockDim.x;
@@ -1281,14 +1292,14 @@ __global__ void kernel_gaussBlur_y(float *const out,float const *const in,float 
     }
     __syncthreads();
     //一次展开
-    int out_idx=y*w*c+x;
-    if(x<w*c&&y<h)
+    int out_idx=y*fact_w+x;
+    if(x<fact_w&&y<h)
     {
         float accum=0.0f;
         for (int i = -ks; i <=ks ; ++i)
         {
             int idx =max(0,min(y+i,h-1));//一维高斯模板在输入图像y方向上的对应坐标，以选中点为中心上下各ks个
-            accum +=in[idx*w*c+x]* data[abs(i)];
+            accum +=in[idx*fact_w+x]* data[abs(i)];
             //if(out_idx==1)printf("%d\t%1.10f\t%1.10f\t\n",idx*w*c+x,in[idx*w*c+x],in[idx*w*c+x]* data[abs(i)]);
         }
         out[out_idx]=accum / weight;
@@ -1298,9 +1309,9 @@ __global__ void kernel_gaussBlur_y(float *const out,float const *const in,float 
 /*调用示例
  * dim3 block(x,y,1);
  * dim3 grid((w*c-1+x*2)/(x*2),(h-1+y)/y,1);
- * kernel_gaussBlur_y1<<<grid,block,(ks+1)* sizeof(float)>>>(d_tmp,d_in,d_blur,w,h,c,ks,weight);
+ * kernel_gaussBlur_y1<<<grid,block,(ks+1)* sizeof(float)>>>(d_tmp,d_in,d_blur,fact_w,h,ks,weight);
  */
-__global__ void kernel_gaussBlur_y1(float *const out,float const *const in,float const * const blur,int const w,int const h,int const c,int const ks,float const weight)
+__global__ void kernel_gaussBlur_y1(float *const out,float const *const in,float const * const blur,int const fact_w,int const h,int const ks,float const weight)
 {
     extern __shared__ float data[];
     int x=threadIdx.x+blockIdx.x*blockDim.x*2;
@@ -1312,28 +1323,28 @@ __global__ void kernel_gaussBlur_y1(float *const out,float const *const in,float
     }
     __syncthreads();
     //一次展开
-    int out_idx=y*w*c+x;
-    if(x<w*c&&y<h)
+    int out_idx=y*fact_w+x;
+    if(x<fact_w&&y<h)
     {
         float accum=0.0f;
         for (int i = -ks; i <=ks ; ++i)
         {
             int idx =max(0,min(y+i,h-1));//一维高斯模板在输入图像y方向上的对应坐标，以选中点为中心上下各ks个
-            accum +=in[idx*w*c+x]* data[abs(i)];
+            accum +=in[idx*fact_w+x]* data[abs(i)];
             //if(out_idx==1)printf("%d\t%1.10f\t%1.10f\t\n",idx*w*c+x,in[idx*w*c+x],in[idx*w*c+x]* data[abs(i)]);
         }
         out[out_idx]=accum / weight;
     }
     //二次展开
     int x1=x+blockDim.x;
-    int out_idx1=y*w*c+x1;
-    if(x1<w*c&&y<h)
+    int out_idx1=y*fact_w+x1;
+    if(x1<fact_w&&y<h)
     {
         float accum=0.0f;
         for (int i = -ks; i <=ks ; ++i)
         {
             int idx =max(0,min(y+i,h-1));//一维高斯模板在输入图像y方向上的对应坐标，以选中点为中心上下各ks个
-            accum +=in[idx*w*c+x1]* data[abs(i)];
+            accum +=in[idx*fact_w+x1]* data[abs(i)];
             //if(out_idx==1)printf("%d\t%1.10f\t%1.10f\t\n",idx*w*c+x,in[idx*w*c+x],in[idx*w*c+x]* data[abs(i)]);
         }
         out[out_idx1]=accum / weight;
@@ -1343,9 +1354,9 @@ __global__ void kernel_gaussBlur_y1(float *const out,float const *const in,float
 /* 调用示例
  * dim3 block(x,y,1);
  * dim3 grid((w*c-1+x*3)/(x*3),(h-1+y)/y,1);
- * kernel_gaussBlur_y2<<<grid,block,(ks+1)* sizeof(float)>>>(d_tmp,d_in,d_blur,w,h,c,ks,weight);
+ * kernel_gaussBlur_y2<<<grid,block,(ks+1)* sizeof(float)>>>(d_tmp,d_in,d_blur,fact_w,h,ks,weight);
  */
-__global__ void kernel_gaussBlur_y2(float *const out,float const *const in,float const * const blur,int const w,int const h,int const c,int const ks,float const weight)
+__global__ void kernel_gaussBlur_y2(float *const out,float const *const in,float const * const blur,int const fact_w,int const h,int const ks,float const weight)
 {
     extern __shared__ float data[];
     int x=threadIdx.x+blockIdx.x*blockDim.x*3;
@@ -1357,48 +1368,114 @@ __global__ void kernel_gaussBlur_y2(float *const out,float const *const in,float
     }
     __syncthreads();
     //一次展开
-    int out_idx=y*w*c+x;
-    if(x<w*c&&y<h)
+    int out_idx=y*fact_w+x;
+    if(x<fact_w&&y<h)
     {
         float accum=0.0f;
         for (int i = -ks; i <=ks ; ++i)
         {
             int idx =max(0,min(y+i,h-1));//一维高斯模板在输入图像y方向上的对应坐标，以选中点为中心上下各ks个
-            accum +=in[idx*w*c+x]* data[abs(i)];
+            accum +=in[idx*fact_w+x]* data[abs(i)];
             //if(out_idx==1)printf("%d\t%1.10f\t%1.10f\t\n",idx*w*c+x,in[idx*w*c+x],in[idx*w*c+x]* data[abs(i)]);
         }
         out[out_idx]=accum / weight;
     }
     //二次展开
     int x1=x+blockDim.x;
-    int out_idx1=y*w*c+x1;
-    if(x1<w*c&&y<h)
+    int out_idx1=y*fact_w+x1;
+    if(x1<fact_w&&y<h)
     {
         float accum=0.0f;
         for (int i = -ks; i <=ks ; ++i)
         {
             int idx =max(0,min(y+i,h-1));//一维高斯模板在输入图像y方向上的对应坐标，以选中点为中心上下各ks个
-            accum +=in[idx*w*c+x1]* data[abs(i)];
+            accum +=in[idx*fact_w+x1]* data[abs(i)];
             //if(out_idx==1)printf("%d\t%1.10f\t%1.10f\t\n",idx*w*c+x,in[idx*w*c+x],in[idx*w*c+x]* data[abs(i)]);
         }
         out[out_idx1]=accum / weight;
     }
     //三次展开
     int x2=x1+blockDim.x;
-    int out_idx2=y*w*c+x2;
-    if(x2<w*c&&y<h)
+    int out_idx2=y*fact_w+x2;
+    if(x2<fact_w&&y<h)
     {
         float accum=0.0f;
         for (int i = -ks; i <=ks ; ++i)
         {
             int idx =max(0,min(y+i,h-1));//一维高斯模板在输入图像y方向上的对应坐标，以选中点为中心上下各ks个
-            accum +=in[idx*w*c+x2]* data[abs(i)];
+            accum +=in[idx*fact_w+x2]* data[abs(i)];
             //if(out_idx==1)printf("%d\t%1.10f\t%1.10f\t\n",idx*w*c+x,in[idx*w*c+x],in[idx*w*c+x]* data[abs(i)]);
         }
         out[out_idx2]=accum / weight;
     }
 }
 
+/******************************************************************************************/
+///功能：y维高斯模糊
+/*  函数名                            线程块大小       耗费时间
+ *  kernel_subtract	                  1.554ms	    [32,4,1]
+ *  kernel_subtract1	              1.541ms	    [32,8,1]
+ *  kernel_subtract2	              1.537ms	    [32,4,1]
+ */
+/******************************************************************************************/
+/* 调用示例
+* dim3 block(x,y,1);
+* dim3 grid((w*c-1+x)/(x),(h-1+y)/(y),1);
+* kernel_subtract<<<grid,block>>>(d_out,d_in1,d_in2,wc,h);
+*/
+__global__ void kernel_subtract(float *const out,float const * const in1,float const * const in2,int const wc,int const h)
+{
+    int x=threadIdx.x+blockIdx.x*blockDim.x;
+    int y=threadIdx.y+blockIdx.y*blockDim.y;
+    int idx=y*wc+x;
+    float a = 0.0f;
+    if(x<wc&&y<h) {
+        a = in1[idx];
+        a -= in2[idx];
+        out[idx] = a;
+    }
+}
+
+/* 调用示例
+* dim3 block(x,y,1);
+* dim3 grid((w*c-1+x*2)/(x*2),(h-1+y)/(y),1);
+* kernel_subtract1<<<grid,block>>>(d_out,d_in1,d_in2,wc,h);
+*/
+__global__ void kernel_subtract1(float *const out,float const * const in1,float const * const in2,int const wc,int const h)
+{
+    int x=threadIdx.x+blockIdx.x*blockDim.x*2;
+    int y=threadIdx.y+blockIdx.y*blockDim.y;
+    float diff=0.0f;
+    int idx;
+    for (int i = 0; i < 2; ++i) {
+        idx = y * wc + x + blockDim.x * i;
+        if (idx <= h * wc) {
+            diff = in1[idx];
+            diff -= in2[idx];
+            out[idx] = diff;
+        }
+    }
+}
+/* 调用示例
+* dim3 block(x,y,1);
+* dim3 grid((w*c-1+x*3)/(x*3),(h-1+y)/(y),1);
+* kernel_subtract2<<<grid,block>>>(d_out,d_in1,d_in2,wc,h);
+*/
+__global__ void kernel_subtract2(float *const out,float const * const in1,float const * const in2,int const wc,int const h)
+{
+    int x=threadIdx.x+blockIdx.x*blockDim.x*3;
+    int y=threadIdx.y+blockIdx.y*blockDim.y;
+    float diff=0.0f;
+    int idx;
+    for (int i = 0; i < 3; ++i) {
+        idx = y * wc + x + blockDim.x * i;
+        if (idx <= h * wc) {
+            diff = in1[idx];
+            diff -= in2[idx];
+            out[idx] = diff;
+        }
+    }
+}
 /******************************************************************************************/
 ///调用核函数实现加速功能
 /******************************************************************************************/
@@ -2153,6 +2230,7 @@ void halfsize_guassian_by_cuda(float * const out_image,float const  * const in_i
 int blur_gaussian_by_cuda(float * const out_image,float const  * const in_image, int const w,int const h,int const c,float sigma,float const  * const out )
 {
     //声明+定义输入输出图片大小及字节数
+    int const fact_w=w*c;
     int const size_image=w*h;
     size_t const bytes=size_image*c* sizeof(float);
 
@@ -2186,7 +2264,7 @@ int blur_gaussian_by_cuda(float * const out_image,float const  * const in_image,
     int x=32;
     int y=4;
     dim3 block(x,y,1);
-    dim3 grid((w*c-1+x*2)/(x*2),(h-1+y)/y,1);
+    dim3 grid((fact_w-1+x*2)/(x*2),(h-1+y)/y,1);
 
     //x维高斯模糊
     kernel_gaussBlur_x1<<<grid,block,(ks+1)* sizeof(float)>>>(d_tmp,d_in,d_blur,w,h,c,ks,weight);
@@ -2194,8 +2272,8 @@ int blur_gaussian_by_cuda(float * const out_image,float const  * const in_image,
     x=32;
     y=8;
     dim3 block1(x,y,1);
-    dim3 grid1((w*c-1+x*3)/(x*3),(h-1+y)/y,1);
-    kernel_gaussBlur_y2<<<grid1,block1,(ks+1)* sizeof(float)>>>(d_out,d_tmp,d_blur,w,h,c,ks,weight);
+    dim3 grid1((fact_w-1+x*3)/(x*3),(h-1+y)/y,1);
+    kernel_gaussBlur_y2<<<grid1,block1,(ks+1)* sizeof(float)>>>(d_out,d_tmp,d_blur,fact_w,h,ks,weight);
 
     //数据从gpu传回cpu
     cudaMemcpy(out_image,d_out,bytes,cudaMemcpyDeviceToHost);
@@ -2217,20 +2295,33 @@ int blur_gaussian2_by_cuda(float * const out_image,float const  * const in_image
     return 0;
 }
 
-/*
-int subtract_by_cuda(float * const out_image,float const  * const in_image, int const w,int const h,int const c,float sigma2,float const  * const out)
+int subtract_by_cuda(float * const out_image,float const  * const in_image1,float const  * const in_image2, int const w,int const h,int const c,float const  * const out)
 {
-
-}*/
-/*
-for (int i = 0; i < image_1->get_value_amount(); ++i)
-{
-out->at(i) = image_1->at(i) - image_2->at(i);
-//if(i<=100)std::cout<<out->at(i)<<std::endl;
+    int const size=w*h;
+    size_t const bytes=size*c*sizeof(float);
+//定义显存指针
+    float *d_in1=NULL;
+    float *d_in2=NULL;
+    float *d_out=NULL;
+//分配显存指针
+    cudaMalloc((void**)&d_in1,bytes);
+    cudaMalloc((void**)&d_in2,bytes);
+    cudaMalloc((void**)&d_out,bytes);
+//传递数据(cpu2gpu)
+    cudaMemcpy(d_in1,in_image1,bytes,cudaMemcpyHostToDevice);
+    cudaMemcpy(d_in2,in_image2,bytes,cudaMemcpyHostToDevice);
+    int x=32;
+    int y=4;
+    dim3 block(x,y,1);
+    dim3 grid((w*c-1+x*3)/(x*3),(h-1+y)/(y),1);
+    kernel_subtract2<<<grid,block>>>(d_out,d_in1,d_in2,w*c,h);
+//传递数据(gpu2cpu)
+    cudaMemcpy(out_image,d_out,bytes,cudaMemcpyDeviceToHost);
+    //比较运算结果
+    //compare(out_image,out,w,h,c);
+//释放显存
+    cudaFree(d_in1);
+    cudaFree(d_in2);
+    cudaFree(d_out);
+    return 0;
 }
-
-///调用gpu代码
-typename Image<T>::Ptr out1(Image<T>::create());
-out1->allocate(w1,h1,c1);
-subtract_by_cuda(&out1->at(0),&image_1->at(0),w1,h1,c1,&out->at(0));
-*/
