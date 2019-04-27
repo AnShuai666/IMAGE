@@ -12,7 +12,7 @@
 //opencv 4000*2250*3 图像处理时间: 14.4ms
 //调用desaturate_by_cuda函数处理时间：36ms,其中H2D 27ms, D2H 8ms,kernel 0.7ms
 //串行实现时间：约200ms
-/*
+/**
  * @property    图像饱和度降低
  * @func        将图像转换为几种HSL图像
  * @param_out   out_image          转换后的图像
@@ -21,7 +21,7 @@
  * @param_in    type               亮度类型
  * @param_in    alpha              是否有alpha通道
  */
-//void desaturate_by_cuda(float * const out_image,float const  *in_image,const int pixel_amount, const int type,const bool alpha);
+void desaturate_by_cuda(float * const out_image,float const  *in_image,const int pixel_amount, const int type,const bool alpha);
 void warm(void);
 
 /**
@@ -140,6 +140,24 @@ int blur_gaussian2_by_cuda(float * const out_image,float const  * const in_image
  * @param c             输入图像的颜色通道数
  * @param out           cpu计算结果，用于对比数据
  * @return
+ * 调用示例：
+ * subtract_by_cuda(&out_image->at(0),&img1->at(0),&img2->at(0),img->width(),img->height(),img->channels(),&out->at(0));
  */
 int subtract_by_cuda(float * const out_image,float const  * const in_image1,float const  * const in_image2, int const w,int const h,int const c,float const  * const out);
+/***
+ * @property   求图像差函数
+ * @func       求差异图像的无符号图像,|in_image1-in_image2|
+ * @param out_image     图像差
+ * @param in_image1     输入图像1
+ * @param in_image2     输入图像2
+ * @param w             输入图像的宽度
+ * @param h             输入图像的高度
+ * @param c             输入图像的颜色通道数
+ * @param out           cpu计算结果，用于对比数据
+ * @return
+ * 调用示例：
+ * difference_by_cuda(&out_image->at(0),&img1->at(0),&img2->at(0),img->width(),img->height(),img->channels(),&out->at(0));
+ */
+int difference_by_cuda(float * const out_image,float const  * const in_image1,float const  * const in_image2, int const w,int const h,int const c,float const  * const out);
+
 #endif //IMAGE_PROCESS_CUH
