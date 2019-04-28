@@ -8,6 +8,9 @@
 #include <cstdio>
 #include <iostream>
 #include "function/function.hpp"
+
+#include "cuda_include/sharedmem.cuh"
+
 #include <vector>
 /***********************************************************************************/
 ///调试用函数
@@ -1245,11 +1248,14 @@ __global__ void kernel_gaussBlur_x2(float *const out,float const *const in,float
 /* 调用示例
 * dim3 block(x,y,1);
 * dim3 grid((w*c-1+x)/(x),(h-1+y)/y,1);
-* kernel_gaussBlur_y<<<grid,block,(ks+1)* sizeof(float)>>>(d_tmp,d_in,d_blur,fact_w,h,ks,weight);
+* kernel_gaussBlur_y<float><<<grid,block,(ks+1)* sizeof(float)>>>(d_tmp,d_in,d_blur,fact_w,h,ks,weight);
 */
-__global__ void kernel_gaussBlur_y(float *const out,float const *const in,float const * const blur,int const fact_w,int const h,int const ks,float const weight)
+template <typename T>
+__global__ void kernel_gaussBlur_y(T *const out,T const *const in,T const * const blur,int const fact_w,int const h,int const ks,T const weight)
 {
-    extern __shared__ float data[];
+    //extern __shared__ float data[];
+    SharedMemory<T> smem;
+    T* data = smem.getPointer();
     int x=threadIdx.x+blockIdx.x*blockDim.x;
     int y=threadIdx.y+blockIdx.y*blockDim.y;
     int share_idx=threadIdx.y*blockDim.x+threadIdx.x;
@@ -1262,7 +1268,7 @@ __global__ void kernel_gaussBlur_y(float *const out,float const *const in,float 
     int out_idx=y*fact_w+x;
     if(x<fact_w&&y<h)
     {
-        float accum=0.0f;
+        T accum=0.0f;
         for (int i = -ks; i <=ks ; ++i)
         {
             int idx =max(0,min(y+i,h-1));//一维高斯模板在输入图像y方向上的对应坐标，以选中点为中心上下各ks个
@@ -1276,11 +1282,14 @@ __global__ void kernel_gaussBlur_y(float *const out,float const *const in,float 
 /*调用示例
  * dim3 block(x,y,1);
  * dim3 grid((w*c-1+x*2)/(x*2),(h-1+y)/y,1);
- * kernel_gaussBlur_y1<<<grid,block,(ks+1)* sizeof(float)>>>(d_tmp,d_in,d_blur,fact_w,h,ks,weight);
+ * kernel_gaussBlur_y1<float><<<grid,block,(ks+1)* sizeof(float)>>>(d_tmp,d_in,d_blur,fact_w,h,ks,weight);
  */
-__global__ void kernel_gaussBlur_y1(float *const out,float const *const in,float const * const blur,int const fact_w,int const h,int const ks,float const weight)
+template <typename T>
+__global__ void kernel_gaussBlur_y1(T *const out,T const *const in,T const * const blur,int const fact_w,int const h,int const ks,T const weight)
 {
-    extern __shared__ float data[];
+    //extern __shared__ float data[];
+    SharedMemory<T> smem;
+    T* data = smem.getPointer();
     int x=threadIdx.x+blockIdx.x*blockDim.x*2;
     int y=threadIdx.y+blockIdx.y*blockDim.y;
     int share_idx=threadIdx.y*blockDim.x+threadIdx.x;
@@ -1293,7 +1302,7 @@ __global__ void kernel_gaussBlur_y1(float *const out,float const *const in,float
     int out_idx=y*fact_w+x;
     if(x<fact_w&&y<h)
     {
-        float accum=0.0f;
+        T accum=0.0f;
         for (int i = -ks; i <=ks ; ++i)
         {
             int idx =max(0,min(y+i,h-1));//一维高斯模板在输入图像y方向上的对应坐标，以选中点为中心上下各ks个
@@ -1307,7 +1316,7 @@ __global__ void kernel_gaussBlur_y1(float *const out,float const *const in,float
     int out_idx1=y*fact_w+x1;
     if(x1<fact_w&&y<h)
     {
-        float accum=0.0f;
+        T accum=0.0f;
         for (int i = -ks; i <=ks ; ++i)
         {
             int idx =max(0,min(y+i,h-1));//一维高斯模板在输入图像y方向上的对应坐标，以选中点为中心上下各ks个
@@ -1321,11 +1330,14 @@ __global__ void kernel_gaussBlur_y1(float *const out,float const *const in,float
 /* 调用示例
  * dim3 block(x,y,1);
  * dim3 grid((w*c-1+x*3)/(x*3),(h-1+y)/y,1);
- * kernel_gaussBlur_y2<<<grid,block,(ks+1)* sizeof(float)>>>(d_tmp,d_in,d_blur,fact_w,h,ks,weight);
+ * kernel_gaussBlur_y2<float><<<grid,block,(ks+1)* sizeof(float)>>>(d_tmp,d_in,d_blur,fact_w,h,ks,weight);
  */
-__global__ void kernel_gaussBlur_y2(float *const out,float const *const in,float const * const blur,int const fact_w,int const h,int const ks,float const weight)
+template <typename T>
+__global__ void kernel_gaussBlur_y2(T *const out,T const *const in,T const * const blur,int const fact_w,int const h,int const ks,T const weight)
 {
-    extern __shared__ float data[];
+    //extern __shared__ float data[];
+    SharedMemory<T> smem;
+    T* data = smem.getPointer();
     int x=threadIdx.x+blockIdx.x*blockDim.x*3;
     int y=threadIdx.y+blockIdx.y*blockDim.y;
     int share_idx=threadIdx.y*blockDim.x+threadIdx.x;
@@ -1338,7 +1350,7 @@ __global__ void kernel_gaussBlur_y2(float *const out,float const *const in,float
     int out_idx=y*fact_w+x;
     if(x<fact_w&&y<h)
     {
-        float accum=0.0f;
+        T accum=0.0f;
         for (int i = -ks; i <=ks ; ++i)
         {
             int idx =max(0,min(y+i,h-1));//一维高斯模板在输入图像y方向上的对应坐标，以选中点为中心上下各ks个
@@ -1352,7 +1364,7 @@ __global__ void kernel_gaussBlur_y2(float *const out,float const *const in,float
     int out_idx1=y*fact_w+x1;
     if(x1<fact_w&&y<h)
     {
-        float accum=0.0f;
+        T accum=0.0f;
         for (int i = -ks; i <=ks ; ++i)
         {
             int idx =max(0,min(y+i,h-1));//一维高斯模板在输入图像y方向上的对应坐标，以选中点为中心上下各ks个
@@ -1366,7 +1378,7 @@ __global__ void kernel_gaussBlur_y2(float *const out,float const *const in,float
     int out_idx2=y*fact_w+x2;
     if(x2<fact_w&&y<h)
     {
-        float accum=0.0f;
+        T accum=0.0f;
         for (int i = -ks; i <=ks ; ++i)
         {
             int idx =max(0,min(y+i,h-1));//一维高斯模板在输入图像y方向上的对应坐标，以选中点为中心上下各ks个
@@ -1474,11 +1486,12 @@ __global__ void kernel_difference(float *const out,float const * const in1,float
 * dim3 grid((w*c-1+x*2)/(x*2),(h-1+y)/(y),1);
 * kernel_difference1<<<grid,block>>>(d_out,d_in1,d_in2,wc,h);
 */
-__global__ void kernel_difference1(float *const out,float const * const in1,float const * const in2,int const wc,int const h)
+template <class T>
+__global__ void kernel_difference1(T *const out,T const * const in1,T const * const in2,int const wc,int const h)
 {
     int x=threadIdx.x+blockIdx.x*blockDim.x*2;
     int y=threadIdx.y+blockIdx.y*blockDim.y;
-    float diff=0.0f;
+    T diff=0.0f;
     int idx;
     for (int i = 0; i < 2; ++i) {
         idx = y * wc + x + blockDim.x * i;
@@ -1494,11 +1507,12 @@ __global__ void kernel_difference1(float *const out,float const * const in1,floa
 * dim3 grid((w*c-1+x*3)/(x*3),(h-1+y)/(y),1);
 * kernel_difference2<<<grid,block>>>(d_out,d_in1,d_in2,wc,h);
 */
-__global__ void kernel_difference2(float *const out,float const * const in1,float const * const in2,int const wc,int const h)
+template <class T>
+__global__ void kernel_difference2(T *const out,T const * const in1,T const * const in2,int const wc,int const h)
 {
     int x=threadIdx.x+blockIdx.x*blockDim.x*3;
     int y=threadIdx.y+blockIdx.y*blockDim.y;
-    float diff=0.0f;
+    T diff=0.0f;
     int idx;
     for (int i = 0; i < 3; ++i) {
         idx = y * wc + x + blockDim.x * i;
@@ -1687,7 +1701,7 @@ int blur_gaussian_by_cuda(float * const out_image,float const  * const in_image,
     y=8;
     dim3 block1(x,y,1);
     dim3 grid1((fact_w-1+x*3)/(x*3),(h-1+y)/y,1);
-    kernel_gaussBlur_y2<<<grid1,block1,(ks+1)* sizeof(float)>>>(d_out,d_tmp,d_blur,fact_w,h,ks,weight);
+    kernel_gaussBlur_y2<float><<<grid1,block1,(ks+1)* sizeof(float)>>>(d_out,d_tmp,d_blur,fact_w,h,ks,weight);
 
     //数据从gpu传回cpu
     cudaMemcpy(out_image,d_out,bytes,cudaMemcpyDeviceToHost);
@@ -1732,7 +1746,7 @@ int subtract_by_cuda(float * const out_image,float const  * const in_image1,floa
 //传递数据(gpu2cpu)
     cudaMemcpy(out_image,d_out,bytes,cudaMemcpyDeviceToHost);
     //比较运算结果
-    //compare(out_image,out,w,h,c);
+    compare(out_image,out,w,h,c);
 //释放显存
     cudaFree(d_in1);
     cudaFree(d_in2);
@@ -1759,11 +1773,11 @@ int difference_by_cuda(float * const out_image,float const  * const in_image1,fl
     int y=4;
     dim3 block(x,y,1);
     dim3 grid((w*c-1+x*3)/(x*3),(h-1+y)/(y),1);
-    kernel_difference2<<<grid,block>>>(d_out,d_in1,d_in2,w*c,h);
+    kernel_difference2<float><<<grid,block>>>(d_out,d_in1,d_in2,w*c,h);
 //传递数据(gpu2cpu)
     cudaMemcpy(out_image,d_out,bytes,cudaMemcpyDeviceToHost);
     //比较运算结果
-    //compare(out_image,out,w,h,c);
+    compare(out_image,out,w,h,c);
 //释放显存
     cudaFree(d_in1);
     cudaFree(d_in2);
