@@ -19,7 +19,8 @@ void gpu_cpu2zero(float *cpu,float *gpu,size_t bytes)
     memset(cpu, 0, bytes);
     cudaMemset(gpu,0,bytes);
 }
-void compare(float *const out_image, float const *const out, int const w, int const h, int const c)
+template <typename T>
+void compare(T *const out_image, T const *const out, int const w, int const h, int const c)
 {
     int success = 1;
     float diff=0.000001;
@@ -30,8 +31,8 @@ void compare(float *const out_image, float const *const out, int const w, int co
         {
             for (int k = 0; k < c; ++k)
             {
-                float a = out[j * w * c + i * c + k];
-                float b = out_image[j * w * c + i * c + k];
+                T a = out[j * w * c + i * c + k];
+                T b = out_image[j * w * c + i * c + k];
                 if(a!=b)
                 {
                     if(key<=10)
@@ -1778,18 +1779,30 @@ int difference_by_cu(T * const out_image,T const  * const in_image1,T const  * c
 //传递数据(gpu2cpu)
     cudaMemcpy(out_image,d_out,bytes,cudaMemcpyDeviceToHost);
     //比较运算结果
-    compare(out_image,out,w,h,c);
+    //compare<T>(out_image,out,w,h,c);
 //释放显存
     cudaFree(d_in1);
     cudaFree(d_in2);
     cudaFree(d_out);
     return 0;
 }
-int difference_by_cuda(float * const out_image,float const  * const in_image1,float const  * const in_image2, int const w,int const h,int const c,float const  * const out)
+
+template <typename T>
+int difference_by_cuda(T * const out_image,T const  * const in_image1,T const  * const in_image2,int const w,int const h,int const c,T const  * const out)
+{
+    difference_by_cu<T>(out_image,in_image1,in_image2,w,h,c,out);
+    return 0;
+}
+template<>
+int difference_by_cuda<float>(float * const out_image,float const  * const in_image1,float const  * const in_image2,int const w,int const h,int const c,float const  * const out)
 {
     difference_by_cu<float>(out_image,in_image1,in_image2,w,h,c,out);
+    return 0;
 }
-int difference_by_cuda_char(char * const out_image,char const  * const in_image1,char const  * const in_image2, int const w,int const h,int const c,char const  * const out)
+template<>
+int difference_by_cuda<char>(char * const out_image,char const  * const in_image1,char const  * const in_image2,int const w,int const h,int const c,char const  * const out)
 {
     difference_by_cu<char>(out_image,in_image1,in_image2,w,h,c,out);
+    return 0;
 }
+

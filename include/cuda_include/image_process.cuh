@@ -156,8 +156,34 @@ int subtract_by_cuda(float * const out_image,float const  * const in_image1,floa
  * 调用示例：
  * difference_by_cuda(&out_image->at(0),&img1->at(0),&img2->at(0),img->width(),img->height(),img->channels(),&out->at(0));
  */
-//float类型
-int difference_by_cuda(float * const out_image,float const  * const in_image1,float const  * const in_image2, int const w,int const h,int const c,float const  * const out);
-//char类型
-int difference_by_cuda_char(char * const out_image,char const  * const in_image1,char const  * const in_image2, int const w,int const h,int const c,char const  * const out);
+template <typename T>
+int difference_by_cuda(T * const out_image,
+                       T const  * const in_image1,
+                       T const  * const in_image2,
+                       int const w,
+                       int const h,
+                       int const c,
+                       T const  * const out
+                       );
+template <>
+int difference_by_cuda<float>(float * const out_image,
+                              float const  * const in_image1,
+                              float const  * const in_image2,
+                              int const w,
+                              int const h,
+                              int const c,
+                              float const  * const out
+                              );
+template <>
+int difference_by_cuda<char>(char * const out_image,
+                             char const  * const in_image1,
+                             char const  * const in_image2,
+                             int const w,
+                             int const h,
+                             int const c,
+                             char const  * const out
+                             );
+
+
+
 #endif //IMAGE_PROCESS_CUH
