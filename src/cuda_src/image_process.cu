@@ -1754,14 +1754,15 @@ int subtract_by_cuda(float * const out_image,float const  * const in_image1,floa
     return 0;
 }
 
-int difference_by_cuda(float * const out_image,float const  * const in_image1,float const  * const in_image2, int const w,int const h,int const c,float const  * const out)
+template <class T>
+int difference_by_cu(T * const out_image,T const  * const in_image1,T const  * const in_image2, int const w,int const h,int const c,T const  * const out)
 {
     int const size=w*h;
-    size_t const bytes=size*c*sizeof(float);
+    size_t const bytes=size*c*sizeof(T);
 //定义显存指针
-    float *d_in1=NULL;
-    float *d_in2=NULL;
-    float *d_out=NULL;
+    T *d_in1=NULL;
+    T *d_in2=NULL;
+    T *d_out=NULL;
 //分配显存指针
     cudaMalloc((void**)&d_in1,bytes);
     cudaMalloc((void**)&d_in2,bytes);
@@ -1773,7 +1774,7 @@ int difference_by_cuda(float * const out_image,float const  * const in_image1,fl
     int y=4;
     dim3 block(x,y,1);
     dim3 grid((w*c-1+x*3)/(x*3),(h-1+y)/(y),1);
-    kernel_difference2<float><<<grid,block>>>(d_out,d_in1,d_in2,w*c,h);
+    kernel_difference2<T><<<grid,block>>>(d_out,d_in1,d_in2,w*c,h);
 //传递数据(gpu2cpu)
     cudaMemcpy(out_image,d_out,bytes,cudaMemcpyDeviceToHost);
     //比较运算结果
@@ -1783,4 +1784,12 @@ int difference_by_cuda(float * const out_image,float const  * const in_image1,fl
     cudaFree(d_in2);
     cudaFree(d_out);
     return 0;
+}
+int difference_by_cuda(float * const out_image,float const  * const in_image1,float const  * const in_image2, int const w,int const h,int const c,float const  * const out)
+{
+    difference_by_cu<float>(out_image,in_image1,in_image2,w,h,c,out);
+}
+int difference_by_cuda_char(char * const out_image,char const  * const in_image1,char const  * const in_image2, int const w,int const h,int const c,char const  * const out)
+{
+    difference_by_cu<char>(out_image,in_image1,in_image2,w,h,c,out);
 }
