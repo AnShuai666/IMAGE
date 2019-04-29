@@ -57,7 +57,7 @@ image::Sift::process()
         return;
     }
 
-    image::TimerLess timer, total_timer;
+    util::TimerLess timer, total_timer;
 
     if (this->options.verbose_output)
     {
