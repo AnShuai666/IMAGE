@@ -16,6 +16,21 @@ void gpu_cpu2zero1(T *cpu,T *gpu,size_t bytes)
     memset(cpu, 0, bytes);
     cudaMemset(gpu,0,bytes);
 }
+
+/******************************************************************************************/
+///功能：填充图像
+/*  函数名                           线程块大小       耗费时间
+ *  kernel_fill_color	            702.651us	    [32,4,1]
+ *  kernel_fill_color3	            705.469us	    [32,16,1]
+ *  kernel_fill_color3_by_share	    400.097us	    [32,4,1]
+ *  kernel_fill_color15_by_share	253.638us	    [32,4,1]**
+ */
+/******************************************************************************************/
+/* 调用示例
+ * dim3 block(x,y,1);
+ * dim3 grid((wc-1+x)/x,(h-1+y)/y,1);
+ * kernel_fill_color<T><<<grid,block>>>(d_out,d_color,wc,h,c);
+ */
 template <typename T>
 __global__ void kernel_fill_color(T * image, T *color,int const wc,int const h,int const c)
 {
@@ -30,6 +45,11 @@ __global__ void kernel_fill_color(T * image, T *color,int const wc,int const h,i
     }
 }
 
+/* 调用示例
+ * dim3 block(x,y,1);
+ * dim3 grid((wc-1+x*3)/(x*3),(h-1+y)/y,1);
+ * kernel_fill_color3<T><<<grid,block>>>(d_out,d_color,wc,h,c);
+ */
 template <typename T>
 __global__ void kernel_fill_color3(T * image, T *color,int const wc,int const h,int const c)
 {
@@ -58,6 +78,11 @@ __global__ void kernel_fill_color3(T * image, T *color,int const wc,int const h,
     }
 }
 
+/* 调用示例
+ * dim3 block(x,y,1);
+ * dim3 grid((wc-1+x*3)/(x*3),(h-1+y)/y,1);
+ * kernel_fill_color3_by_share<T><<<grid,block,colorbytes>>>(d_out,d_color,wc,h,c);
+ */
 template <typename T>
 __global__ void kernel_fill_color3_by_share(T * image, T *color,int const wc,int const h,int const c)
 {
@@ -82,6 +107,11 @@ __global__ void kernel_fill_color3_by_share(T * image, T *color,int const wc,int
     }
 }
 
+/* 调用示例
+ * dim3 block(x,y,1);
+ * dim3 grid((wc-1+x*15)/(x*15),(h-1+y)/y,1);
+ * kernel_fill_color15_by_share<T><<<grid,block,colorbytes>>>(d_out,d_color,wc,h,c);
+ */
 template <typename T>
 __global__ void kernel_fill_color15_by_share(T * image, T *color,int const wc,int const h,int const c)
 {
@@ -107,10 +137,15 @@ __global__ void kernel_fill_color15_by_share(T * image, T *color,int const wc,in
     }
 }
 
+
+
+/******************************************************************************************/
+///调用核函数实现加速功能
+/******************************************************************************************/
 template <typename T>
-int fill_color_cu(T *image,T *color,int const w,int const h,int const c,int const color_size,T *contrast)
+int fill_color_cu(T *image,T *color,int const w,int const h,int const c,int const color_size)
 {
-    bool flag= false;
+    //bool flag= false;
     if(c!=color_size)
     {
         std::cout<<"颜色通道不匹配"<<std::endl;
@@ -131,59 +166,15 @@ int fill_color_cu(T *image,T *color,int const w,int const h,int const c,int cons
 
     //线程网格划分
     int x=32;
-    int y;
-
-    /**********************************未展开***********************************/
-    for ( y = 4; y <=32 ; y<<=1) {
-        std::cout<<"block("<<x<<","<<y<<")"<<std::endl;
-        dim3 block(x,y,1);
-        dim3 grid((wc-1+x)/(x),(h-1+y)/y,1);
-        gpu_cpu2zero1<T>(image,d_out,imagebytes);
-        kernel_fill_color<T><<<grid,block>>>(d_out,d_color,wc,h,c);
-        cudaMemcpy(image,d_out,imagebytes,cudaMemcpyDeviceToHost);
-        compare1<T>(image,contrast,w*c,h,flag);
-    }
-    /**********************************三重展开***********************************/
-    for ( y = 4; y <=32 ; y<<=1) {
-        std::cout<<"block("<<x<<","<<y<<")"<<std::endl;
-        dim3 block(x,y,1);
-        dim3 grid((wc-1+x*3)/(x*3),(h-1+y)/y,1);
-        gpu_cpu2zero1<T>(image,d_out,imagebytes);
-        kernel_fill_color3<T><<<grid,block>>>(d_out,d_color,wc,h,c);
-        cudaMemcpy(image,d_out,imagebytes,cudaMemcpyDeviceToHost);
-        compare1<T>(image,contrast,w*c,h,flag);
-    }
-    /**********************************三重展开+共享内存***********************************/
-    for ( y = 4; y <=32 ; y<<=1) {
-        std::cout<<"block("<<x<<","<<y<<")"<<std::endl;
-        dim3 block(x,y,1);
-        dim3 grid((wc-1+x*3)/(x*3),(h-1+y)/y,1);
-        gpu_cpu2zero1<T>(image,d_out,imagebytes);
-        kernel_fill_color3_by_share<T><<<grid,block,colorbytes>>>(d_out,d_color,wc,h,c);
-        cudaMemcpy(image,d_out,imagebytes,cudaMemcpyDeviceToHost);
-        compare1<T>(image,contrast,w*c,h,flag);
-    }
-    /**********************************十五重展开+共享内存***********************************/
-    for ( y = 4; y <=32 ; y<<=1) {
-        std::cout<<"block("<<x<<","<<y<<")"<<std::endl;
-        dim3 block(x,y,1);
-        dim3 grid((wc-1+x*15)/(x*15),(h-1+y)/y,1);
-        gpu_cpu2zero1<T>(image,d_out,imagebytes);
-        kernel_fill_color15_by_share<T><<<grid,block,colorbytes>>>(d_out,d_color,wc,h,c);
-        cudaMemcpy(image,d_out,imagebytes,cudaMemcpyDeviceToHost);
-        compare1<T>(image,contrast,w*c,h,flag);
-    }
-
-
-
-    /*
+    int y=4;
     dim3 block(x,y,1);
     dim3 grid((wc-1+x*15)/(x*15),(h-1+y)/y,1);
-    gpu_cpu2zero1<T>(image,d_out,imagebytes);
-    fcolor15_by_share<T><<<grid,block,colorbytes>>>(d_out,d_color,wc,h,c);
-    //gpu2cpu
-    cudaMemcpy(image,d_out,imagebytes,cudaMemcpyDeviceToHost);*/
 
+    kernel_fill_color15_by_share<T><<<grid,block,colorbytes>>>(d_out,d_color,wc,h,c);
+
+    //gpu2cpu
+    cudaMemcpy(image,d_out,imagebytes,cudaMemcpyDeviceToHost);
+    //compare1<T>(image,contrast,w*c,h,flag);
     //释放显存
     cudaFree(d_out);
     cudaFree(d_color);
@@ -192,20 +183,20 @@ int fill_color_cu(T *image,T *color,int const w,int const h,int const c,int cons
 template <typename T>
 int fill_color_by_cuda(T *image,T *color,int const w,int const h,int const c,int const color_size,T *contrast)
 {
-    fill_color_cu<T>(image,color,w,h,c, color_size,contrast);
+    fill_color_cu<T>(image,color,w,h,c, color_size);
     return 0;
 }
 template <>
 int fill_color_by_cuda<char>(char *image,char *color,int const w,int const h,int const c,int const color_size,char *contrast)
 {
-    fill_color_cu<char>(image,color,w,h,c, color_size,contrast);
-
+    fill_color_cu<char>(image,color,w,h,c, color_size);
+    //compare1<char>(image,contrast,w*c,h, false);
     return 0;
 }
 template <>
 int fill_color_by_cuda<float>(float  *image,float *color,int const w,int const h,int const c,int const color_size,float *contrast)
 {
-    fill_color_cu<float>(image,color,w,h,c, color_size,contrast);
+    fill_color_cu<float>(image,color,w,h,c, color_size);
     //compare1<float>(image,contrast,w*c,h, true);
     return 0;
 }
