@@ -64,20 +64,20 @@ void compare(T *const out_image, T const *const out, int const w, int const h, i
     }
 }
 
-void compare_split(float const *const in_image, float *out_1, float *out_2, float *out_3, int const weight,
+void compare_split(float const *const in_image, float *out_1, float *out_2, float *out_3, int const width,
                    int const height) {
     bool success = 1;
     for (int j = 0; j < height; ++j) {
-        for (int i = 0; i < weight; ++i) {
-            float a_0 = in_image[j * weight * 3 + i * 3];
-            float a_1 = in_image[j * weight * 3 + i * 3 + 1];
-            float a_2 = in_image[j * weight * 3 + i * 3 + 2];
+        for (int i = 0; i < width; ++i) {
+            float a_0 = in_image[j * width * 3 + i * 3];
+            float a_1 = in_image[j * width * 3 + i * 3 + 1];
+            float a_2 = in_image[j * width * 3 + i * 3 + 2];
 
-            float b_0 = out_1[j * weight + i];
-            float b_1 = out_2[j * weight + i];
-            float b_2 = out_3[j * weight + i];
+            float b_0 = out_1[j * width + i];
+            float b_1 = out_2[j * width + i];
+            float b_2 = out_3[j * width + i];
             if (a_0 != b_0) {
-                printf("idx:%d\t%f\t%f\n", j * weight + i, a_0, b_0);
+                printf("idx:%d\t%f\t%f\n", j * width + i, a_0, b_0);
                 success = 0;
             }
             if (!success) {
@@ -85,7 +85,7 @@ void compare_split(float const *const in_image, float *out_1, float *out_2, floa
                 exit(1);
             }
             if (a_1 != b_1) {
-                printf("idx:%d\t%f\t%f\n", j * weight + i, a_1, b_1);
+                printf("idx:%d\t%f\t%f\n", j * width + i, a_1, b_1);
                 success = 0;
             }
             if (!success) {
@@ -93,7 +93,7 @@ void compare_split(float const *const in_image, float *out_1, float *out_2, floa
                 exit(1);
             }
             if (a_2 != b_2) {
-                printf("idx:%d\t%f\t%f\n", j * weight + i, a_2, b_2);
+                printf("idx:%d\t%f\t%f\n", j * width + i, a_2, b_2);
                 success = 0;
             }
             if (!success) {
@@ -242,7 +242,7 @@ __global__ void kernel_desaturate(float *out,float const *in, const int size,con
 /* 调用示例
  * dim3 block (x,y,1);
  * dim3 grid ((ow-1+x)/x,(oh-1+y)/y,1);
- * kernel_doublesize<<<grid,block>>>(d_out,d_in,ow,oh,weight,channels);
+ * kernel_doublesize<<<grid,block>>>(d_out,d_in,ow,oh,width,channels);
  */
 __global__ void kernel_doublesize(float *out,float *in,int const image_x,int const image_y,int const iw,int const ic)
 {
@@ -271,7 +271,7 @@ __global__ void kernel_doublesize(float *out,float *in,int const image_x,int con
 /* 调用示例
  * dim3 block (x,y,1);
  * dim3 grid ((ow-1+x*2)/(x*2),(oh-1+y)/y,1);
- * kernel_doublesize1<<<grid,block>>>(d_out,d_in,ow,oh,weight,channels);
+ * kernel_doublesize1<<<grid,block>>>(d_out,d_in,ow,oh,width,channels);
  */
 __global__ void kernel_doublesize1(float *out,float *in,int const image_x,int const image_y,int const iw,int const ic)
 {
@@ -300,7 +300,7 @@ __global__ void kernel_doublesize1(float *out,float *in,int const image_x,int co
 /* 调用示例
  * dim3 block (x,y,1);
  * dim3 grid ((ow-1+x*3)/(x*3),(oh-1+y)/y,1);
- * kernel_doublesize2<<<grid,block>>>(d_out,d_in,ow,oh,weight,channels);
+ * kernel_doublesize2<<<grid,block>>>(d_out,d_in,ow,oh,width,channels);
 */
 __global__ void kernel_doublesize2(float *out,float *in,int const image_x,int const image_y,int const iw,int const ic)
 {
@@ -329,7 +329,7 @@ __global__ void kernel_doublesize2(float *out,float *in,int const image_x,int co
 /* 调用示例
  * dim3 block (x,y,1);
  * dim3 grid ((ow-1+x)/x,(oh-1+y)/y,1);
- * kernel_doublesizebyshare<<<grid,block,share_x*share_y*channels*sizeof(float)>>>(d_out,d_in,ow,oh,weight,height,channels);
+ * kernel_doublesizebyshare<<<grid,block,share_x*share_y*channels*sizeof(float)>>>(d_out,d_in,ow,oh,width,height,channels);
 */
 __global__ void kernel_doublesizebyshare(float *out,float *in,int const ow,int const oh,int const iw,int const ih,int const ic)
 {
@@ -379,7 +379,7 @@ __global__ void kernel_doublesizebyshare(float *out,float *in,int const ow,int c
 /* 调用示例
  * dim3 block (x,y,1);
  * dim3 grid ((ow-1+x*2)/(x*2),(oh-1+y)/y,1);
- * kernel_doublesizebyshare1<<<grid,block,share_x*share_y*2*channels*sizeof(float)>>>(d_out,d_in,ow,oh,weight,height,channels);
+ * kernel_doublesizebyshare1<<<grid,block,share_x*share_y*2*channels*sizeof(float)>>>(d_out,d_in,ow,oh,width,height,channels);
 */
 __global__ void kernel_doublesizebyshare1(float *out,float *in,int const ow,int const oh,int const iw,int const ih,int const ic)
 {
@@ -429,7 +429,7 @@ __global__ void kernel_doublesizebyshare1(float *out,float *in,int const ow,int 
 /* 调用示例
  * dim3 block (x,y,1);
  * dim3 grid ((ow-1+x*3)/(x*3),(oh-1+y)/y,1);
- * kernel_doublesizebyshare2<<<grid,block,share_x*share_y*3*channels*sizeof(float)>>>(d_out,d_in,ow,oh,weight,height,channels);
+ * kernel_doublesizebyshare2<<<grid,block,share_x*share_y*3*channels*sizeof(float)>>>(d_out,d_in,ow,oh,width,height,channels);
  */
 __global__ void kernel_doublesizebyshare2(float *out,float *in,int const ow,int const oh,int const iw,int const ih,int const ic)
 {
@@ -490,7 +490,7 @@ __global__ void kernel_doublesizebyshare2(float *out,float *in,int const ow,int 
 /* 调用示例
  * dim3 block (x,y,1);
  * dim3 grid ((ow-1+x)/x,(oh-1+y)/y,1);
- * kernel_halfsize<<<grid,block>>>(d_out,d_in,ow,oh,weight,height,channels);
+ * kernel_halfsize<<<grid,block>>>(d_out,d_in,ow,oh,width,height,channels);
  */
 __global__ void kernel_halfsize(float *out,float *in,int const ow,int const oh,int const iw,int const ih,int const ic)
 {
@@ -518,7 +518,7 @@ __global__ void kernel_halfsize(float *out,float *in,int const ow,int const oh,i
 /* 调用示例
  * dim3 block (x,y,1);
  * dim3 grid ((ow-1+x*2)/(x*2),(oh-1+y)/y,1);
- * kernel_halfsize1<<<grid,block>>>(d_out,d_in,ow,oh,weight,height,channels);
+ * kernel_halfsize1<<<grid,block>>>(d_out,d_in,ow,oh,width,height,channels);
  */
 __global__ void kernel_halfsize1(float *out,float *in,int const ow,int const oh,int const iw,int const ih,int const ic)
 {
@@ -546,7 +546,7 @@ __global__ void kernel_halfsize1(float *out,float *in,int const ow,int const oh,
 /* 调用示例
  * dim3 block (x,y,1);
  * dim3 grid ((ow-1+x*3)/(x*3),(oh-1+y)/y,1);
- * kernel_halfsize2<<<grid,block>>>(d_out,d_in,ow,oh,weight,height,channels);
+ * kernel_halfsize2<<<grid,block>>>(d_out,d_in,ow,oh,width,height,channels);
  */
 __global__ void kernel_halfsize2(float *out,float *in,int const ow,int const oh,int const iw,int const ih,int const ic)
 {
@@ -574,7 +574,7 @@ __global__ void kernel_halfsize2(float *out,float *in,int const ow,int const oh,
 /* 调用示例
  * dim3 block (x,y,1);
  * dim3 grid ((ow-1+x)/x,(oh-1+y)/y,1);
- * kernel_halfsizebyshare<<<grid,block,share_x*share_y*channels* sizeof(float)>>>(d_out,d_in,ow,oh,weight,height,channels);
+ * kernel_halfsizebyshare<<<grid,block,share_x*share_y*channels* sizeof(float)>>>(d_out,d_in,ow,oh,width,height,channels);
  */
 __global__ void kernel_halfsizebyshare(float *out,float *in,int const ow,int const oh,int const iw,int const ih,int const ic)
 {
@@ -637,7 +637,7 @@ __global__ void kernel_halfsizebyshare(float *out,float *in,int const ow,int con
 /* 调用示例
  * dim3 block (x,y,1);
  * dim3 grid ((ow-1+x*2)/(x*2),(oh-1+y)/y,1);
- * kernel_halfsizebyshare1<<<grid,block,share_x*share_y*channels* sizeof(float)>>>(d_out,d_in,ow,oh,weight,height,channels);
+ * kernel_halfsizebyshare1<<<grid,block,share_x*share_y*channels* sizeof(float)>>>(d_out,d_in,ow,oh,width,height,channels);
  */
 __global__ void kernel_halfsizebyshare1(float *out,float *in,int const ow,int const oh,int const iw,int const ih,int const ic)
 {
@@ -711,26 +711,26 @@ __global__ void kernel_halfsizebyshare1(float *out,float *in,int const ow,int co
 /******************************************************************************************/
 /* 调用示例
  * dim3 block1(x, y, 1);
- * dim3 grid1((weight - 1 + x) / x, (height - 1 + y) / y, 1);
- * kernel_splitbyshare <<< grid1, block1, x * y * 3 * sizeof(float) >>> (d_c_0, d_c_1, d_c_2, d_in, weight, height);
+ * dim3 grid1((width - 1 + x) / x, (height - 1 + y) / y, 1);
+ * kernel_splitbyshare <<< grid1, block1, x * y * 3 * sizeof(float) >>> (d_c_0, d_c_1, d_c_2, d_in, width, height);
  */
-__global__ void kernel_splitbyshare(float *out_channels_0,float *out_channels_1,float *out_channels_2,float * in,int const weight,int const height)
+__global__ void kernel_splitbyshare(float *out_channels_0,float *out_channels_1,float *out_channels_2,float * in,int const width,int const height)
 {
     extern __shared__ float data[];
     int out_x=threadIdx.x+blockIdx.x*blockDim.x;
     int out_y=threadIdx.y+blockIdx.y*blockDim.y;
-    int idx=out_y*weight+out_x;
+    int idx=out_y*width+out_x;
     int fidx=threadIdx.y*blockDim.x*3+threadIdx.x*3;
     int share_x=blockDim.x*3;//共享块x维长度
 
     int shidx0=threadIdx.y*share_x+blockDim.x*0+threadIdx.x;
     int shidx1=threadIdx.y*share_x+blockDim.x*1+threadIdx.x;
     int shidx2=threadIdx.y*share_x+blockDim.x*2+threadIdx.x;
-    int inidx0=out_y*weight*3+blockIdx.x*share_x+blockDim.x*0+threadIdx.x;
-    int inidx1=out_y*weight*3+blockIdx.x*share_x+blockDim.x*1+threadIdx.x;
-    int inidx2=out_y*weight*3+blockIdx.x*share_x+blockDim.x*2+threadIdx.x;
+    int inidx0=out_y*width*3+blockIdx.x*share_x+blockDim.x*0+threadIdx.x;
+    int inidx1=out_y*width*3+blockIdx.x*share_x+blockDim.x*1+threadIdx.x;
+    int inidx2=out_y*width*3+blockIdx.x*share_x+blockDim.x*2+threadIdx.x;
 
-    if(out_x<weight&&out_y<height)
+    if(out_x<width&&out_y<height)
     {
         data[shidx0]=in[inidx0];
         data[shidx1]=in[inidx1];
@@ -744,19 +744,19 @@ __global__ void kernel_splitbyshare(float *out_channels_0,float *out_channels_1,
 
 /* 调用示例
  * dim3 block3(x, y, 1);
- * dim3 grid3((weight - 1 + x*2) / (x*2), (height - 1 + y) / y, 1);
- * kernel_splitbyshare1<<<grid3, block3, x * y * 6 * sizeof(float) >>> (d_c_0, d_c_1, d_c_2, d_in, weight, height);
+ * dim3 grid3((width - 1 + x*2) / (x*2), (height - 1 + y) / y, 1);
+ * kernel_splitbyshare1<<<grid3, block3, x * y * 6 * sizeof(float) >>> (d_c_0, d_c_1, d_c_2, d_in, width, height);
  */
-__global__ void kernel_splitbyshare1(float *out_channels_0,float *out_channels_1,float *out_channels_2,float * in,int const weight,int const height)
+__global__ void kernel_splitbyshare1(float *out_channels_0,float *out_channels_1,float *out_channels_2,float * in,int const width,int const height)
 {
     extern __shared__ float data[];
     int out_x=threadIdx.x+blockIdx.x*blockDim.x*2;
     int out_y=threadIdx.y+blockIdx.y*blockDim.y;
-    int idx=out_y*weight+out_x;
+    int idx=out_y*width+out_x;
 
     int share_x=blockDim.x*6;//共享块x维最大值
     int shsp=threadIdx.y*share_x+threadIdx.x;//共享块内索引起点（start point）
-    int insp=out_y*weight*3+blockIdx.x*share_x+threadIdx.x;//输入数组内索引起点;
+    int insp=out_y*width*3+blockIdx.x*share_x+threadIdx.x;//输入数组内索引起点;
     int fidx=threadIdx.y*share_x+threadIdx.x*3;
     int inc=blockDim.x*3;//增量
 
@@ -774,7 +774,7 @@ __global__ void kernel_splitbyshare1(float *out_channels_0,float *out_channels_1
     int inidx4=insp+blockDim.x*4;
     int inidx5=insp+blockDim.x*5;
 
-    if(out_x<weight&&out_y<height)
+    if(out_x<width&&out_y<height)
     {
         data[shidx0]=in[inidx0];
         data[shidx1]=in[inidx1];
@@ -794,19 +794,19 @@ __global__ void kernel_splitbyshare1(float *out_channels_0,float *out_channels_1
 
 /* 调用示例
  * dim3 block4(x, y, 1);
- * dim3 grid4((weight - 1 + x*3) / (x*3), (height - 1 + y) / y, 1);
- * kernel_splitbyshare2<<<grid4, block4, x * y * 9 * sizeof(float) >>> (d_c_0, d_c_1, d_c_2, d_in, weight, height);
+ * dim3 grid4((width - 1 + x*3) / (x*3), (height - 1 + y) / y, 1);
+ * kernel_splitbyshare2<<<grid4, block4, x * y * 9 * sizeof(float) >>> (d_c_0, d_c_1, d_c_2, d_in, width, height);
  */
-__global__ void kernel_splitbyshare2(float *out_channels_0,float *out_channels_1,float *out_channels_2,float * in,int const weight,int const height)
+__global__ void kernel_splitbyshare2(float *out_channels_0,float *out_channels_1,float *out_channels_2,float * in,int const width,int const height)
 {
     extern __shared__ float data[];
     int out_x=threadIdx.x+blockIdx.x*blockDim.x*3;
     int out_y=threadIdx.y+blockIdx.y*blockDim.y;
-    int idx=out_y*weight+out_x;
+    int idx=out_y*width+out_x;
 
     int share_x=blockDim.x*9;//共享块x维最大值
     int shsp=threadIdx.y*share_x+threadIdx.x;//共享块内索引起点（start point）
-    int insp=out_y*weight*3+blockIdx.x*share_x+threadIdx.x;//输入数组内索引起点;
+    int insp=out_y*width*3+blockIdx.x*share_x+threadIdx.x;//输入数组内索引起点;
     int fidx=threadIdx.y*share_x+threadIdx.x*3;
     int inc=blockDim.x*3;//增量
     int inc1=blockDim.x*6;//增量
@@ -831,7 +831,7 @@ __global__ void kernel_splitbyshare2(float *out_channels_0,float *out_channels_1
     int inidx7=insp+blockDim.x*7;
     int inidx8=insp+blockDim.x*8;
 
-    if(out_x<weight&&out_y<height)
+    if(out_x<width&&out_y<height)
     {
         data[shidx0]=in[inidx0];
         data[shidx1]=in[inidx1];
@@ -858,16 +858,16 @@ __global__ void kernel_splitbyshare2(float *out_channels_0,float *out_channels_1
 
 /* 调用示例
  * dim3 block2(x, y, 1);
- * dim3 grid2((weight - 1 + x) / x, (height - 1 + y) / y, 1);
- * kernel_split<<< grid2, block2>>> (d_c_0, d_c_1, d_c_2, d_in, weight, height);
+ * dim3 grid2((width - 1 + x) / x, (height - 1 + y) / y, 1);
+ * kernel_split<<< grid2, block2>>> (d_c_0, d_c_1, d_c_2, d_in, width, height);
  */
-__global__ void kernel_split(float *out_channels_0,float *out_channels_1,float *out_channels_2,float * in,int const weight,int const height)
+__global__ void kernel_split(float *out_channels_0,float *out_channels_1,float *out_channels_2,float * in,int const width,int const height)
 {
     int out_x=threadIdx.x+blockIdx.x*blockDim.x;
     int out_y=threadIdx.y+blockIdx.y*blockDim.y;
-    int idx=out_y*weight+out_x;
-    int inidx=out_y * weight * 3 + out_x * 3;
-    if(out_x<weight&&out_y<height) {
+    int idx=out_y*width+out_x;
+    int inidx=out_y * width * 3 + out_x * 3;
+    if(out_x<width&&out_y<height) {
         float a=in[inidx+0];
         float b=in[inidx+1];
         float c=in[inidx+2];
@@ -879,16 +879,16 @@ __global__ void kernel_split(float *out_channels_0,float *out_channels_1,float *
 
 /* 调用示例
  * dim3 block5(x, y, 1);
- * dim3 grid5((weight - 1 + x*2) / (x*2), (height - 1 + y) / y, 1);
- * kernel_split1<<< grid5, block5>>> (d_c_0, d_c_1, d_c_2, d_in, weight, height);
+ * dim3 grid5((width - 1 + x*2) / (x*2), (height - 1 + y) / y, 1);
+ * kernel_split1<<< grid5, block5>>> (d_c_0, d_c_1, d_c_2, d_in, width, height);
  */
-__global__ void kernel_split1(float *out_channels_0,float *out_channels_1,float *out_channels_2,float * in,int const weight,int const height)
+__global__ void kernel_split1(float *out_channels_0,float *out_channels_1,float *out_channels_2,float * in,int const width,int const height)
 {
     int out_x=threadIdx.x+blockIdx.x*blockDim.x*2;
     int out_y=threadIdx.y+blockIdx.y*blockDim.y;
-    int idx=out_y*weight+out_x;
-    int inidx=out_y * weight * 3 + out_x * 3;
-    if(out_x<weight&&out_y<height) {
+    int idx=out_y*width+out_x;
+    int inidx=out_y * width * 3 + out_x * 3;
+    if(out_x<width&&out_y<height) {
         float a=in[inidx+0];
         float b=in[inidx+1];
         float c=in[inidx+2];
@@ -906,16 +906,16 @@ __global__ void kernel_split1(float *out_channels_0,float *out_channels_1,float 
 
 /* 调用示例
  * dim3 block6(x, y, 1);
- * dim3 grid6((weight - 1 + x*3) / (x*3), (height - 1 + y) / y, 1);
- * kernel_split2<<< grid6, block6>>> (d_c_0, d_c_1, d_c_2, d_in, weight, height);
+ * dim3 grid6((width - 1 + x*3) / (x*3), (height - 1 + y) / y, 1);
+ * kernel_split2<<< grid6, block6>>> (d_c_0, d_c_1, d_c_2, d_in, width, height);
  */
-__global__ void kernel_split2(float *out_channels_0,float *out_channels_1,float *out_channels_2,float * in,int const weight,int const height)
+__global__ void kernel_split2(float *out_channels_0,float *out_channels_1,float *out_channels_2,float * in,int const width,int const height)
 {
     int out_x=threadIdx.x+blockIdx.x*blockDim.x*3;
     int out_y=threadIdx.y+blockIdx.y*blockDim.y;
-    int idx=out_y*weight+out_x;
-    int inidx=out_y * weight * 3 + out_x * 3;
-    if(out_x<weight&&out_y<height) {
+    int idx=out_y*width+out_x;
+    int inidx=out_y * width * 3 + out_x * 3;
+    if(out_x<width&&out_y<height) {
         float a=in[inidx+0];
         float b=in[inidx+1];
         float c=in[inidx+2];
@@ -947,7 +947,7 @@ __global__ void kernel_split2(float *out_channels_0,float *out_channels_1,float 
 /* 调用示例
  * dim3 block(x, y, 1);
  * dim3 grid((ow - 1 + x) / (x), (oh - 1 + y) / y, 1);
- * kernel_halfsize_guass << < grid, block >> > (d_out, d_in, ow, oh, weight, height, channels, d_w);
+ * kernel_halfsize_guass << < grid, block >> > (d_out, d_in, ow, oh, width, height, channels, d_w);
  */
 __global__ void kernel_halfsize_guass(float *out,float *in,int const ow,int const oh,int const iw,int const ih,int const ic,float const *w)
 {
@@ -1029,7 +1029,7 @@ __global__ void kernel_halfsize_guass(float *out,float *in,int const ow,int cons
 /* 调用示例
  * dim3 block(x, y, 1);
  * dim3 grid((ow - 1 + x) / (x), (oh - 1 + y) / y, 1);
- * kernel_halfsize_guass1 << < grid, block >> > (d_out, d_in, ow, oh, weight, height, channels, d_w);
+ * kernel_halfsize_guass1 << < grid, block >> > (d_out, d_in, ow, oh, width, height, channels, d_w);
  */
 __global__ void kernel_halfsize_guass1(float *out,float *in,int const ow,int const oh,int const iw,int const ih,int const ic,float const *w)
 {
@@ -1557,11 +1557,11 @@ void desaturate_by_cuda(float  * const out_image,float const *in_image,const int
     cudaFree(d_out);
 }
 
-void double_size_by_cuda(float * const out_image,float const  * const in_image,int const weight,int const height,int const channels,float const * const out)
+void double_size_by_cuda(float * const out_image,float const  * const in_image,int const width,int const height,int const channels,float const * const out)
 {
-    int const ow=weight<<1;
+    int const ow=width<<1;
     int const oh=height<<1;
-    int const size_in=weight*height;
+    int const size_in=width*height;
     int const size_out=ow*oh;
     size_t const bytes_in=size_in*channels* sizeof(float);
     size_t const bytes_out=size_out*channels* sizeof(float);
@@ -1577,18 +1577,18 @@ void double_size_by_cuda(float * const out_image,float const  * const in_image,i
     dim3 block2 (x,y,1);
     dim3 grid2 ((ow-1+x*3)/(x*3),(oh-1+y)/y,1);
     cudaMalloc((void**)&d_out,bytes_out);
-    kernel_doublesize2<<<grid2,block2>>>(d_out,d_in,ow,oh,weight,channels);
+    kernel_doublesize2<<<grid2,block2>>>(d_out,d_in,ow,oh,width,channels);
     cudaMemcpy(out_image,d_out,bytes_out,cudaMemcpyDeviceToHost);
 //释放分配的内存
     cudaFree(d_in);
     cudaFree(d_out);
 }
 
-void halfsize_by_cuda(float * const out_image,float const  * const in_image,int const weight,int const height,int const channels,float const  * const out)
+void halfsize_by_cuda(float * const out_image,float const  * const in_image,int const width,int const height,int const channels,float const  * const out)
 {
-    int ow=(weight+1)>>1;
+    int ow=(width+1)>>1;
     int oh=(height+1)>>1;
-    int const size_in=weight*height;
+    int const size_in=width*height;
     int const size_out=ow*oh;
     size_t const bytes_in=size_in*channels* sizeof(float);
     size_t const bytes_out=size_out*channels* sizeof(float);
@@ -1603,7 +1603,7 @@ void halfsize_by_cuda(float * const out_image,float const  * const in_image,int 
     int const y=8;
     dim3 block (x,y,1);
     dim3 grid ((ow-1+x*2)/(x*2),(oh-1+y)/y,1);
-    kernel_halfsize1<<<grid,block>>>(d_out,d_in,ow,oh,weight,height,channels);
+    kernel_halfsize1<<<grid,block>>>(d_out,d_in,ow,oh,width,height,channels);
     cudaMemcpy(out_image,d_out,bytes_out,cudaMemcpyDeviceToHost);
     //compare(out_image,out,ow,oh,channels);//对比运行结果
 
@@ -1611,11 +1611,11 @@ void halfsize_by_cuda(float * const out_image,float const  * const in_image,int 
     cudaFree(d_out);
 }
 
-void halfsize_guassian_by_cuda(float * const out_image,float const  * const in_image, int const weight,int const height,int const channels,float sigma2,float const  * const out)
+void halfsize_guassian_by_cuda(float * const out_image,float const  * const in_image, int const width,int const height,int const channels,float sigma2,float const  * const out)
 {
-    int ow=(weight+1)>>1;
+    int ow=(width+1)>>1;
     int oh=(height+1)>>1;
-    int const size_in=weight*height;
+    int const size_in=width*height;
     int const size_out=ow*oh;
     //声明+定义输入/输出图像字节数
     size_t const bytes_in=size_in*channels* sizeof(float);
@@ -1644,7 +1644,7 @@ void halfsize_guassian_by_cuda(float * const out_image,float const  * const in_i
     //定义grid和block大小
     dim3 block(x, y, 1);
     dim3 grid((ow - 1 + x) / (x), (oh - 1 + y) / y, 1);
-    kernel_halfsize_guass1 <<< grid, block >>> (d_out, d_in, ow, oh, weight, height, channels, d_w);
+    kernel_halfsize_guass1 <<< grid, block >>> (d_out, d_in, ow, oh, width, height, channels, d_w);
     //传出输入图像
     cudaMemcpy(out_image, d_out, bytes_out, cudaMemcpyDeviceToHost);
     //比较结果

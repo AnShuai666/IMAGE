@@ -31,14 +31,14 @@ void warm(void);
  *                                      偶数行：(y/2,)与(y/2+1,)的平均值
  * @param_out   out_image          放大后的图像首地址
  * @param_in    in_image           待放大图像首地址
- * @param_in    weight             输入图像的宽度
+ * @param_in    width              输入图像的宽度
  * @param_in    height             输入图像的高度
  * @param_in    channels           输入图像的颜色通道数
  * @param_in    out                cpu计算结果，用于对比数据
  * 调用示例：
  * double_size_by_cuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels(),&out->at(0));
  */
-void double_size_by_cuda(float * const out_image,float const  * const in_image,int const weight,int const height,int const channels,float const * const out);
+void double_size_by_cuda(float * const out_image,float const  * const in_image,int const width,int const height,int const channels,float const * const out);
 
 /**
  * @property    图像缩放
@@ -46,14 +46,14 @@ void double_size_by_cuda(float * const out_image,float const  * const in_image,i
  *                                 若最后一行或最后一列为奇数列．则越界部分再取最后一行或最后一列
  * @param_out   out_image          放大后的图像首地址
  * @param_in    in_image           待放大图像首地址
- * @param_in    weight             输入图像的宽度
+ * @param_in    width             输入图像的宽度
  * @param_in    height             输入图像的高度
  * @param_in    channels           输入图像的颜色通道数
  * @param_in    out                cpu计算结果，用于对比数据
  * 调用示例：
  * halfsize_by_cuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels(),&out->at(0));
  */
-void halfsize_by_cuda(float * const out_image,float const  * const in_image,int const weight,int const height,int const channels,float const  * const out);
+void halfsize_by_cuda(float * const out_image,float const  * const in_image,int const width,int const height,int const channels,float const  * const out);
 
 /**
  * @property    图像缩放
@@ -75,7 +75,7 @@ void halfsize_by_cuda(float * const out_image,float const  * const in_image,int 
  *                                      x[3] = min(2*x + 2, (int)weight - 1);
  * @param_out   out_image          放大后的图像首地址
  * @param_in    in_image           待放大图像首地址
- * @param_in    weight             输入图像的宽度
+ * @param_in    width             输入图像的宽度
  * @param_in    height             输入图像的高度
  * @param_in    channels           输入图像的颜色通道数
  * @param_in    sigma2             目标高斯尺度平方值　　也就是方差
@@ -83,7 +83,7 @@ void halfsize_by_cuda(float * const out_image,float const  * const in_image,int 
  * 调用示例：
  * halfsize_guassian_by_cuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels(),sigma2,&out->at(0));
  */
-void halfsize_guassian_by_cuda(float * const out_image,float const  * const in_image, int const weight,int const height,int const channels,float sigma2,float const  * const out);
+void halfsize_guassian_by_cuda(float * const out_image,float const  * const in_image, int const width,int const height,int const channels,float sigma2,float const  * const out);
 /**
  * @property    分离式高斯模糊函数
  * @func        对图像进行高斯模糊    高斯核为高斯函数f(x,y)=1/[(2pi)*sigma^2] * e^-((x^2 + y^2)/2sigma2)
@@ -128,61 +128,40 @@ int blur_gaussian_by_cuda(float * const out_image,float const  * const in_image,
 int blur_gaussian2_by_cuda(float * const out_image,float const  * const in_image, int const w,int const h,int const c,float sigma2,float const  * const out);
 
 /***
- * @property   求图像差函数
- * @func       求差异图像的有符号图像,in_image1-in_image2
- * @param out_image     图像差
- * @param in_image1     输入图像1
- * @param in_image2     输入图像2
- * @param w             输入图像的宽度
- * @param h             输入图像的高度
- * @param c             输入图像的颜色通道数
- * @param out           cpu计算结果，用于对比数据
+ * @property    求图像差函数
+ * @func        求差异图像的有符号图像,in_image1-in_image2
+ * @param_out   out_image     图像差
+ * @param_in    in_image1     输入图像1
+ * @param_in    in_image2     输入图像2
+ * @param_in    w             输入图像的宽度
+ * @param_in    h             输入图像的高度
+ * @param_in    c             输入图像的颜色通道数
+ * @param_in    out           cpu计算结果，用于对比数据
  * @return
  * 调用示例：
  * subtract_by_cuda(&out_image->at(0),&img1->at(0),&img2->at(0),img->width(),img->height(),img->channels(),&out->at(0));
  */
 int subtract_by_cuda(float * const out_image,float const  * const in_image1,float const  * const in_image2, int const w,int const h,int const c,float const  * const out);
 /***
- * @property   求图像差函数
- * @func       求差异图像的无符号图像,|in_image1-in_image2|
- * @param out_image     图像差
- * @param in_image1     输入图像1
- * @param in_image2     输入图像2
- * @param w             输入图像的宽度
- * @param h             输入图像的高度
- * @param c             输入图像的颜色通道数
- * @param out           cpu计算结果，用于对比数据
+ * @property    求图像差函数
+ * @func        求差异图像的无符号图像,|in_image1-in_image2|
+ * @paramout    out_image     图像差
+ * @paramin     in_image1     输入图像1
+ * @paramin     in_image2     输入图像2
+ * @paramin     w             输入图像的宽度
+ * @paramin     h             输入图像的高度
+ * @paramin     c             输入图像的颜色通道数
+ * @paramin     out           cpu计算结果，用于对比数据
  * @return
  * 调用示例：
  * difference_by_cuda(&out_image->at(0),&img1->at(0),&img2->at(0),img->width(),img->height(),img->channels(),&out->at(0));
  */
 template <typename T>
-int difference_by_cuda(T * const out_image,
-                       T const  * const in_image1,
-                       T const  * const in_image2,
-                       int const w,
-                       int const h,
-                       int const c,
-                       T const  * const out
-                       );
+int difference_by_cuda(T * const out_image,T const  * const in_image1,T const  * const in_image2,int const w,int const h,int const c,T const  * const out);
 template <>
-int difference_by_cuda<float>(float * const out_image,
-                              float const  * const in_image1,
-                              float const  * const in_image2,
-                              int const w,
-                              int const h,
-                              int const c,
-                              float const  * const out
-                              );
+int difference_by_cuda<float>(float * const out_image,float const  * const in_image1,float const  * const in_image2, int const w,int const h,int const c,float const  * const out);
 template <>
-int difference_by_cuda<char>(char * const out_image,
-                             char const  * const in_image1,
-                             char const  * const in_image2,
-                             int const w,
-                             int const h,
-                             int const c,
-                             char const  * const out
-                             );
+int difference_by_cuda<char>(char * const out_image,char const  * const in_image1,char const  * const in_image2, int const w,int const h,int const c,char const  * const out);
 
 
 
