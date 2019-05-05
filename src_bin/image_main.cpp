@@ -1,11 +1,11 @@
 //
 // Created by AnShuai on 18-12-18.
 //
-#include "image.hpp"
-#include "Matrix/matrix.hpp"
-#include "Matrix/vector.hpp"
+#include "IMAGE/image.hpp"
+#include "MATH/Matrix/matrix.hpp"
+#include "MATH/Matrix/vector.hpp"
 #include <iostream>
-using namespace matrix;
+using namespace math::matrix;
 using namespace image;
 using namespace std;
 

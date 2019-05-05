@@ -27,7 +27,7 @@ endif ()
 
 configure_file(
         "${PROJECT_SOURCE_DIR}/config/IMAGEConfig.h.in"
-        "${PROJECT_SOURCE_DIR}/include/IMAGEConfig.h"
+        "include/IMAGE/IMAGEConfig.h"
 )
 
 configure_file(
@@ -40,6 +40,12 @@ configure_file(
         "${PROJECT_SOURCE_DIR}/config/IMAGEConfigVersion.cmake.in"
         "${PROJECT_SOURCE_DIR}/cmakemodule/IMAGEConfigVeision.cmake" @ONLY
 )
+
+set(MATH_DIR /home/as/MATH/cmakemodule)
+find_package(MATH REQUIRED)
+message(${MATH_FOUND})
+message(${MATH_INCLUDE_DIR})
+message(${MATH_LIBRARIES})
 
 install(FILES IMAGEConfig.cmake
         DESTINATION share/IMAGE)

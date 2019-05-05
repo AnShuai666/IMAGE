@@ -4,11 +4,11 @@
  * @date    2019-03-27
  * @email   1028792866@qq.com
 */
-#include "sift.hpp"
-#include "image_io.h"
-#include "Util/timer.h"
+#include "IMAGE/sift.hpp"
+#include "IMAGE/image_io.h"
+#include "MATH/Util/timer.h"
 #include <iostream>
-#include <visualizer.hpp>
+#include <IMAGE/visualizer.hpp>
 
 //自定义排序函数 描述子尺度从大到小排序
 bool scale_compare(image::Sift::Descriptor const& d1, image::Sift::Descriptor const& d2)
@@ -52,7 +52,7 @@ int main(int argc, char ** argv)
     image::Sift sift(sift_options);
     sift.set_image(image);
 
-    image::TimerHigh timer;
+    util::TimerHigh timer;
     sift.process();
     std::cout<<"计算Sift特征用时 "<<timer.get_elapsed()<<" 毫秒"<<std::endl;
 
