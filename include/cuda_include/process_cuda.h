@@ -6,7 +6,6 @@
 #define IMAGE_IMAGE_PROCESS_H
 
 //#include "define.h"
-#include "image.hpp"
 #include "function/function.hpp"
 #include "image_process.cuh"
 #include "Util/timer.h"
@@ -471,7 +470,7 @@ rescale_half_size_gaussian_cu(typename Image<T>::ConstPtr image, float sigma2)
 
         int out_pos = 0;
         int const rowstride = iw * ic;
-        image::TimerHigh timer1;
+        util::TimerHigh timer1;
         for (int y = 0; y < oh; ++y)
         {
             int y2 = (int)y << 1;
@@ -675,16 +674,17 @@ rescale_half_size_gaussian_cu(typename Image<T>::ConstPtr image, float sigma2)
         typename Image<T>::Ptr out(Image<T>::create());
         out->allocate(w1,h1,c1);
 
+        util::TimerHigh timer1;
         for (int i = 0; i < image_1->get_value_amount(); ++i)
         {
             out->at(i) = image_1->at(i) - image_2->at(i);
-            if(i<=100)std::cout<<out->at(i)<<std::endl;
+            //if(i<=100)std::cout<<out->at(i)<<std::endl;
         }
-
+        std::cout<<"cpu: "<<timer1.get_elapsed()<<"毫秒"<<std::endl;
         ///调用gpu代码
         typename Image<T>::Ptr out1(Image<T>::create());
         out1->allocate(w1,h1,c1);
-        //subtract_by_cuda(&out1->at(0),&image_1->at(0),w1,h1,c1,&out->at(0));
+        subtract_by_cuda(&out1->at(0),&image_1->at(0),&image_2->at(0),w1,h1,c1,&out->at(0));
 
         return out;
     }
@@ -711,6 +711,7 @@ rescale_half_size_gaussian_cu(typename Image<T>::ConstPtr image, float sigma2)
         typename Image<T>::Ptr out(Image<T>::create());
         out->allocate(w1,h1,c1);
 
+        util::TimerHigh timer1;
         for (int i = 0; i < image_1->get_value_amount(); ++i)
         {
             if (image_1->at(i) > image_2->at(i) )
@@ -721,6 +722,13 @@ rescale_half_size_gaussian_cu(typename Image<T>::ConstPtr image, float sigma2)
                 out->at(i) = image_2->at(i) - image_1->at(i);
             }
         }
+        std::cout<<"cpu: "<<timer1.get_elapsed()<<"毫秒"<<std::endl;
+
+        ///调用gpu代码
+        typename Image<T>::Ptr out1(Image<T>::create());
+        out1->allocate(w1,h1,c1);
+
+        difference_by_cuda(&out1->at(0),&image_1->at(0),&image_2->at(0),w1,h1,c1,&out->at(0));
 
         return out;
     }
