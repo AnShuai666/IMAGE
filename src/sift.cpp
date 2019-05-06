@@ -6,10 +6,10 @@
 */
 
 #include <fstream>
-#include "include/sift.hpp"
-#include "include/image_process.hpp"
-#include "Util/timer.h"
-#include "function/function.hpp"
+#include "IMAGE/sift.hpp"
+#include "IMAGE/image_process.hpp"
+#include "MATH/Util/timer.h"
+#include "MATH/function/function.hpp"
 
 IMAGE_NAMESPACE_BEGIN
 

@@ -1,4 +1,4 @@
-include_directories(..)
+include_directories(../include)
 include_directories(../../MATH/include)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
@@ -16,13 +16,14 @@ if (JPEG_FOUND)
 endif ()
 
 set(HEADERS
-        ${PROJECT_SOURCE_DIR}/include/define.h
-        ${PROJECT_SOURCE_DIR}/include/image.hpp
-        ${PROJECT_SOURCE_DIR}/include/image_io.h
-        ${PROJECT_SOURCE_DIR}/include/sift.hpp
-        ${PROJECT_SOURCE_DIR}/include/image_process.hpp
-        ${PROJECT_SOURCE_DIR}/include/visualizer.hpp
-        ${PROJECT_SOURCE_DIR}/include/nearest_neighbor.hpp
+        ../include/IMAGE/define.h
+        ../include/IMAGE/image.hpp
+        ../include/IMAGE/image_io.h
+        ../include/IMAGE/sift.hpp
+        ../include/IMAGE/image_process.hpp
+        ../include/IMAGE/visualizer.hpp
+        ../include/IMAGE/nearest_neighbor.hpp
+
         )
 
 set(SOURCE_FILES
