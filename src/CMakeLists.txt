@@ -1,5 +1,5 @@
 include_directories(../include)
-include_directories(../../MATH/include)
+include_directories(${MATH_INCLUDE_DIRS})
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 find_package(PNG REQUIRED)
