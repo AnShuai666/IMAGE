@@ -5,8 +5,8 @@
  * @email   1028792866@qq.com
 */
 
-#include "include/image_process.hpp"
-#include "include/image.hpp"
+#include "IMAGE/image_process.hpp"
+#include "IMAGE/image.hpp"
 IMAGE_NAMESPACE_BEGIN
 FloatImage::Ptr
 byte_to_float_image(image::Image<unsigned char>::ConstPtr image)

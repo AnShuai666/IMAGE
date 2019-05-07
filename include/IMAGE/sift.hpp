@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 //#include "define.h"
-#include "Matrix/vector.hpp"
+#include "MATH/Matrix/vector.hpp"
 #include "image.hpp"
 
 IMAGE_NAMESPACE_BEGIN

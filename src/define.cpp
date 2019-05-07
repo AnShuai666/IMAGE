@@ -1,4 +1,4 @@
-#include "include/define.h"
+#include "IMAGE/define.h"
 
 void checkfile(FILE *fp, char const* const filename, int const linenum)
 {

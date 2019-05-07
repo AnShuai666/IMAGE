@@ -9,8 +9,8 @@
 #define IMAGE_IMAGE_PROCESS_HPP
 
 //#include "define.h"
-#include "image.hpp"
-#include "function/function.hpp"
+#include "IMAGE/image.hpp"
+#include "MATH/function/function.hpp"
 
 IMAGE_NAMESPACE_BEGIN
 /*******************************************************************
