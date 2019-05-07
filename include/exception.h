@@ -10,7 +10,7 @@
 
 #include <exception>
 #include <string>
-#include "define.h"
+#include "IMAGE/define.h"
 
 IMAGE_NAMESPACE_BEGIN
 

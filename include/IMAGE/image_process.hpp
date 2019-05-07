@@ -10,7 +10,7 @@
 
 //#include "define.h"
 #include "IMAGE/image.hpp"
-#include "MATH/function/function.hpp"
+#include "function/function.hpp"
 
 IMAGE_NAMESPACE_BEGIN
 /*******************************************************************
@@ -57,15 +57,18 @@ void Image_resize_nearest(const Image<T>& src,Image<T>& dst,int width, int heigh
     float scale_y=(float)src_h/height;
 
     for(int i=0;i<height;i++){
-        int dst_offst=i*width*channels;
+        //int dst_offst=i*width*channels;
         int src_row=(int)(i*scale_y);
         src_row=src_row<src_h?src_row:src_h-1;
-        int src_offst=src_row*src_w*channels;
+        //int src_offst=src_row*src_w*channels;
+        T* dst_row_ptr=dst.ptr(i);
+        const T* src_row_ptr=src.ptr(src_row);
         for(int j=0;j<width;j++){
             int src_col=(int)(j*scale_x);
             src_col=src_col<src_w?src_col:src_w-1;
             for(int ch=0;ch<channels;ch++) {
-                dst[dst_offst+j*channels+ch]=src[src_offst+src_col*channels+ch];
+                //dst[dst_offst+j*channels+ch]=src[src_offst+src_col*channels+ch];
+                dst_row_ptr[j*channels+ch]=src_row_ptr[src_col*channels+ch];
             }
         }
     }

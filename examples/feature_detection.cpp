@@ -85,13 +85,14 @@
 //
 #include <flann/flann.hpp>
 #include "features2d/features2d.hpp"
-#include "image_io.h"
+#include "IMAGE/image_io.h"
 #include "timer.h"
 #include <iostream>
-#include <visualizer.hpp>
-#include "image_process.hpp"
+#include "IMAGE/visualizer.hpp"
+#include "IMAGE/image_process.hpp"
 #include <opencv2/opencv.hpp>
 #include <opencv2/xfeatures2d.hpp>
+using namespace features2d;
 void unpack(const int kptoctave, int& octave, int& layer, float& scale)
 {
     octave = kptoctave & 255;
@@ -103,8 +104,8 @@ int main()
 {
 
     image::ByteImage::Ptr image,image2;
-    std::string image_filename = "/home/doing/lena.jpg";
-    std::string image_filename2 = "/home/doing/lena2.jpg";
+    std::string image_filename2 = "/home/doing/lena4.jpg";
+    std::string image_filename = "/home/doing/lena3.jpg";
 #define USECV 0
 #if USECV
     cv::Ptr<cv::Feature2D> cvsift = cv::xfeatures2d::SIFT::create();
@@ -134,6 +135,7 @@ int main()
     image::FloatImage::Ptr img_gray_ptr=make_shared<image::Image<float>>(image->height(),image->width(),1);
     for(int i=0;i<image_gray->get_value_amount();i++)
         img_gray_ptr->get_data()[i]=(float)image_gray->get_data()[i];
+    image::Image<float> copy=*img_gray_ptr;
     //img_gray_ptr->get_data().assign(image->get_data().begin(),image->get_data().end());
     Mat* img_gray=(Mat*)(img_gray_ptr.get());
 
@@ -143,19 +145,45 @@ int main()
         img_gray_ptr2->get_data()[i]=(float)image_gray2->get_data()[i];
     //img_gray_ptr->get_data().assign(image->get_data().begin(),image->get_data().end());
     Mat* img_gray2=(Mat*)(img_gray_ptr2.get());
-    Ptr <features2d::Feature2D> sift = features2d :: SIFT :: create();
+    shared_ptr<features2d::Feature2D> sift = features2d :: SIFT :: create();
     vector<features2d::KeyPoint> keyPoint,keyPoint2;
     Mat descriptors,descriptors2;
     Mat mask;
     sift->detect(*img_gray,keyPoint,mask);
+//    for(int i=0;i<keyPoint.size();i++)
+//    {
+//        cv::KeyPoint pt;
+//        pt.pt.x=keyPoint[i].pt.x;
+//        pt.pt.y=keyPoint[i].pt.y;
+//        pt.response=keyPoint[i].response;
+//        pt.angle=keyPoint[i].angle;
+//        pt.size=keyPoint[i].size;
+//        pt.octave=keyPoint[i].octave;
+//        pt.class_id=keyPoint[i].class_id;
+//        cvkeyPoint.push_back(pt);
+//    }
     descriptors.resize(128,keyPoint.size(),1);
     sift->compute(*img_gray,keyPoint,descriptors);
+
     sift->detect(*img_gray2,keyPoint2,mask);
+//    for(int i=0;i<keyPoint2.size();i++)
+//    {
+//        cv::KeyPoint pt;
+//        pt.pt.x=keyPoint2[i].pt.x;
+//        pt.pt.y=keyPoint2[i].pt.y;
+//        pt.response=keyPoint2[i].response;
+//        pt.angle=keyPoint2[i].angle;
+//        pt.size=keyPoint2[i].size;
+//        pt.octave=keyPoint2[i].octave;
+//        pt.class_id=keyPoint2[i].class_id;
+//        cvkeyPoint2.push_back(pt);
+//    }
     descriptors2.resize(128,keyPoint2.size(),1);
     sift->compute(*img_gray2,keyPoint2,descriptors2);
     cout<<keyPoint.size()<<endl;
     cout<<keyPoint2.size()<<endl;
 #if USECV
+
     float *data=new float[keyPoint.size()*2];
     float *cvdata=new float[cvkeyPoint.size()*2];
     for(int i=0;i<keyPoint.size();i++)
@@ -176,10 +204,10 @@ int main()
     flann::Features<float> query=flann::Features<float>(descriptors2.get_data().data(),descriptors2.rows(),descriptors2.cols());
     flann::Features<int> indices(new int[query.rows*nn], query.rows, nn);
     flann::Features<float> dists(new float[query.rows*nn], query.rows, nn);
-    flann::Index<flann::L2<float> > index(dataset, flann::HierarchicalClusteringIndexParams());
+    flann::Index<flann::L2<float> > index(dataset, flann::KDTreeIndexParams());
     index.buildIndex();
     index.knnSearch(query, indices, dists, nn, flann::SearchParams(128));
-#if USECV
+#if 0
     for(int i=0;i<cvkeyPoint.size();i++)
     {
         int octave, layer;
@@ -193,9 +221,10 @@ int main()
     }
     return 0;
 #endif
-    float min_dist=dists[0][0];
+    float min_dist=0;
     for(int i=0;i<dists.rows;i++)
-        min_dist=min(min_dist,dists[i][0]);
+        min_dist+=dists[i][0];
+    min_dist/=dists.rows;
     image::ByteImage::Ptr res=make_shared<image::ByteImage>(image::ByteImage(image->width()*2,image->height(),3));
     for(int i=0;i<image->height();i++){
         int offset=i*image->width()*image->channels();
@@ -210,7 +239,7 @@ int main()
     for(int i=0;i<keyPoint2.size();i++)
     {
         uint8_t color[3]={(uint8_t)(rand()%255),(uint8_t)(rand()%255),(uint8_t)(rand()%255)};
-        if(dists[i][0]<min_dist*30) {
+        if(dists[i][0]<min_dist*0.4) {
             sift_vis.draw_line(*res, keyPoint[indices[i][0]].pt.x, keyPoint[indices[i][0]].pt.y,
                                keyPoint2[i].pt.x + image->width(), keyPoint2[i].pt.y, color);
             num++;

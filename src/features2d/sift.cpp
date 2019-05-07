@@ -102,12 +102,12 @@
 //    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \**********************************************************************************************/
 
-#include "include/features2d/features2d.hpp"
+#include "features2d/features2d.hpp"
 #include <iostream>
 #include <stdarg.h>
 #include <Matrix/matrix.hpp>
 #include <Matrix/matrix_LU.hpp>
-#include "image_process.hpp"
+#include "IMAGE/image_process.hpp"
 #include <math.h>
 namespace features2d
 {
@@ -177,11 +177,11 @@ protected:
      double sigma;
 };
 
-Ptr<SIFT> SIFT::create( int _nfeatures, int _nOctaveLayers,
+shared_ptr<SIFT> SIFT::create( int _nfeatures, int _nOctaveLayers,
                      double _contrastThreshold, double _edgeThreshold, double _sigma )
 {
     SIFT* sift = new SIFT_Impl(_nfeatures, _nOctaveLayers, _contrastThreshold, _edgeThreshold, _sigma);
-    return Ptr<SIFT>(sift);
+    return shared_ptr<SIFT>(sift);
 }
 
 /******************************* Defs and macros *****************************/

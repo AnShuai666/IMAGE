@@ -8,7 +8,7 @@
 #define IMAGE_TIMER_H
 
 #include <chrono>
-#include "define.h"
+#include "IMAGE/define.h"
 IMAGE_NAMESPACE_BEGIN
 /********************************************************************
  *~~~~~~~~~~~~~~~~~~~~~~~TimerHigh类的声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~

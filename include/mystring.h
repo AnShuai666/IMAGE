@@ -8,7 +8,7 @@
 #ifndef IMAGE_STRING_H
 #define IMAGE_STRING_H
 
-#include "define.h"
+#include "IMAGE/define.h"
 #include <string>
 IMAGE_NAMESPACE_BEGIN
 

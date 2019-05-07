@@ -4,9 +4,9 @@
  * @date    2018-12-18
  * @e-mail   1028792866@qq.com
 */
-#include "include/image_io.h"
-#include "include/mystring.h"
-#include "include/exception.h"
+#include "IMAGE/image_io.h"
+#include "mystring.h"
+#include "exception.h"
 #include <fstream>
 #include <png.h>
 #include <jpeglib.h>

@@ -42,15 +42,17 @@
 
 #ifndef FEATURES2D_HPP
 #define FEATURES2D_HPP
-#include "ptr.hpp"
 #include <Matrix/matrix.hpp>
-#include "Array.h"
 #include "types.hpp"
-typedef Mat InputArray;
-typedef Mat OutputArray;
+#include "IMAGE/image.hpp"
+
 
 namespace features2d
 {
+
+typedef image::Image<float>        Mat;
+typedef image::Image<float>        InputArray;
+typedef image::Image<float>        OutputArray;
 
 class  KeyPoint
 {
@@ -159,7 +161,7 @@ public:
     @param sigma The sigma of the Gaussian applied to the input image at the octave \#0. If your image
     is captured with a weak camera with soft lenses, you might want to reduce the number.
      */
-    static Ptr<SIFT> create( int nfeatures = 0, int nOctaveLayers = 3,
+    static shared_ptr<SIFT> create( int nfeatures = 0, int nOctaveLayers = 3,
                                      double contrastThreshold = 0.04, double edgeThreshold = 10,
                                      double sigma = 1.6);
 };
@@ -208,7 +210,7 @@ public:
     @param upright Up-right or rotated features flag (true - do not compute orientation of features;
     false - compute orientation).
      */
-     static Ptr<SURF> create(double hessianThreshold=100,
+     static shared_ptr<SURF> create(double hessianThreshold=100,
                                     int nOctaves = 4, int nOctaveLayers = 3,
                                     bool extended = false, bool upright = false);
 

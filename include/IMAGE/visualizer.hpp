@@ -20,22 +20,22 @@ struct KeypointVis
     float radius;
     float orientation;
 };
+enum KeypointStyle
+{
+    RADIUS_BOX_ORIENTATION,
+    RADIUS_CIRCLE_ORIENTATION,
+    SMALL_CIRCLE_STATIC,
+    SMALL_DOT_STATIC
+};
 
+typedef std::vector<KeypointVis> Keypoints;
 
 
 template <typename T>
 class Visualizer
 {
 public:
-    enum KeypointStyle
-    {
-        RADIUS_BOX_ORIENTATION,
-        RADIUS_CIRCLE_ORIENTATION,
-        SMALL_CIRCLE_STATIC,
-        SMALL_DOT_STATIC
-    };
 
-    typedef std::vector<KeypointVis> Keypoints;
     Keypoints keypoints;
 
 public:
@@ -92,7 +92,7 @@ private:
 };
 
 template <typename T>
-typename Visualizer<T>::Keypoints&
+Keypoints&
 Visualizer<T>::save_keypoints(typename Image<T>::Ptr image)
 {
 

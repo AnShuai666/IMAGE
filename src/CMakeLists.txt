@@ -16,23 +16,19 @@ if (JPEG_FOUND)
 endif ()
 
 set(HEADERS
-        ${PROJECT_SOURCE_DIR}/include/define.h
-        ${PROJECT_SOURCE_DIR}/include/image.hpp
-        ${PROJECT_SOURCE_DIR}/include/image_io.h
+        ${PROJECT_SOURCE_DIR}/include/IMAGE/define.h
+        ${PROJECT_SOURCE_DIR}/include/IMAGE/image.hpp
+        ${PROJECT_SOURCE_DIR}/include/IMAGE/image_io.h
         ${PROJECT_SOURCE_DIR}/include/exception.h
         ${PROJECT_SOURCE_DIR}/include/mystring.h
-        #${PROJECT_SOURCE_DIR}/include/sift.hpp
-        ${PROJECT_SOURCE_DIR}/include/image_process.hpp
+        ${PROJECT_SOURCE_DIR}/include/IMAGE/image_process.hpp
         ${PROJECT_SOURCE_DIR}/include/timer.h
-        ${PROJECT_SOURCE_DIR}/include/visualizer.hpp
-        ${PROJECT_SOURCE_DIR}/include/nearest_neighbor.hpp
-        ${PROJECT_SOURCE_DIR}/include/features2d/Array.h
-        ${PROJECT_SOURCE_DIR}/include/features2d/ptr.hpp
+        ${PROJECT_SOURCE_DIR}/include/IMAGE/visualizer.hpp
+        ${PROJECT_SOURCE_DIR}/include/IMAGE/nearest_neighbor.hpp
         ${PROJECT_SOURCE_DIR}/include/features2d/features2d.hpp
         )
 
 set(SOURCE_FILES
-        features2d/Array.cpp
         features2d/sift.cpp
         features2d/feature2d.cpp
         define.cpp
@@ -43,7 +39,7 @@ set(SOURCE_FILES
 
 link_directories(/home/doing/gitHub/MATH/lib)
 
-add_library(image SHARED ${HEADERS} ${SOURCE_FILES}  )
+add_library(image SHARED ${HEADERS} ${SOURCE_FILES})
 
 target_link_libraries(image ${PNG_LIBRARIES} ${JPEG_LIBRARIES} )
 target_link_libraries(image matrix_LU)
