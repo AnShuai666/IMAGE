@@ -11,7 +11,7 @@
 #include "include/image_process.hpp"
 #include "include/timer.h"
 #include "function/function.hpp"
-
+//#include <flann/flann.hpp>
 IMAGE_NAMESPACE_BEGIN
 
 image::Sift::Sift(image::Sift::Options const &options):
@@ -445,13 +445,13 @@ Sift::keypoint_localization (void)
 
         /* Get corresponding octave and DoG images. */
         Octave const& oct(this->octaves[kp.octave - this->options.min_octave]);
-        int sample = static_cast<int>(kp.sample);
+        int sample = oct.img_dog.size();
         //TODO::sample表示前一层？@anshuai
-        image::FloatImage::ConstPtr dogs[3] = { oct.img_dog[sample + 0], oct.img_dog[sample + 1], oct.img_dog[sample + 2] };
+        //image::FloatImage::ConstPtr dogs[3] = { oct.img_dog[sample + 0], oct.img_dog[sample + 1], oct.img_dog[sample + 2] };
 
         /* Shorthand for image width and height. */
-        int const w = dogs[0]->width();
-        int const h = dogs[0]->height();
+        int const w = oct.img_dog[0]->width();
+        int const h = oct.img_dog[0]->height();
         /* The integer and floating point location of the keypoints. */
         int ix = static_cast<int>(kp.x);
         int iy = static_cast<int>(kp.y);
@@ -467,7 +467,7 @@ Sift::keypoint_localization (void)
          * The procedure might get iterated around a neighboring pixel if
          * the accurate keypoint is off by >0.6 from the center pixel.
          */
-#define AT(S,OFF) (dogs[S]->at(px + OFF))
+#define AT(S,OFF) (oct.img_dog[is+S]->at(px + OFF))
         for (int j = 0; j < 5; ++j)
         {
             std::size_t px = iy * w + ix;
@@ -538,14 +538,16 @@ Sift::keypoint_localization (void)
             // dx =0 表示|dx|>0.6f
             //TODO::不同DOG层之间的偏移？
             //TODO：:0.6f?偏移超过0.5即说明离其他像素更近。
-            int dx = (delta_x > 0.6f && ix < w-2) * 1 + (delta_x < -0.6f && ix > 1) * -1;
-            int dy = (delta_y > 0.6f && iy < h-2) * 1 + (delta_y < -0.6f && iy > 1) * -1;
+            int dx = (delta_x > 0.5f && ix < w-2) * 1 + (delta_x < -0.5f && ix > 1) * -1;
+            int dy = (delta_y > 0.5f && iy < h-2) * 1 + (delta_y < -0.5f && iy > 1) * -1;
+            int ds = (delta_s > 0.5f && is <  oct.img_dog.size()-3) * 1 + (delta_s < -0.5f && is > 0) * -1;
             /* If the accurate location is closer to another pixel,
              * repeat localization around the other pixel. */
-            if (dx != 0 || dy != 0)
+            if (dx != 0 || dy != 0|| ds!=0)
             {
                 ix += dx;
                 iy += dy;
+                is += ds;
                 continue;
             }
             /* Accurate location looks good. */
@@ -568,7 +570,7 @@ Sift::keypoint_localization (void)
         /*    此处添加代码    */
         /*                  */
         /************************************************************************************/
-        float val = dogs[1]->at(ix, iy, 0) + 0.5f * (Dx * delta_x + Dy * delta_y + Ds * delta_s);
+        float val = oct.img_dog[is+1]->at(ix, iy, 0) + 0.5f * (Dx * delta_x + Dy * delta_y + Ds * delta_s);
         /* Calcualte edge response score Tr(H)^2 / Det(H), see Section 4.1. */
 
         /**************************去除边缘点，参考第33页slide 仔细阅读代码 ****************************/
@@ -597,11 +599,10 @@ Sift::keypoint_localization (void)
          */
         if (std::abs(val) < this->options.contrast_threshold
             || hessian_score < 0.0f || hessian_score > score_thres
-            || std::abs(delta_x) > 1.5f || std::abs(delta_y) > 1.5f || std::abs(delta_s) > 1.0f
-            || kp.sample < -1.0f
-                           || kp.sample > (float)this->options.num_samples_per_octave
-                                                 || kp.x < 0.0f || kp.x > (float)(w - 1)
-                                                 || kp.y < 0.0f || kp.y > (float)(h - 1))
+            || std::abs(delta_x) > 0.5f || std::abs(delta_y) > 0.5f || std::abs(delta_s) > 0.5f
+            || kp.sample <= -1.0f| kp.sample >= sample
+            || kp.x < 0.0f || kp.x > (float)(w - 1)
+            || kp.y < 0.0f || kp.y > (float)(h - 1))
         {
             //std::cout << " REJECTED!" << std::endl;
             continue;

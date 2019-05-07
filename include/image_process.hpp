@@ -38,7 +38,99 @@ enum DesaturateType
 /*******************************************************************
 *~~~~~~~~~~~~~~~~~~~~~常用图像函数处理声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 *******************************************************************/
+enum resize_mode{
+    INTER_NEAREST=0,
+    INTER_LINEAR=1
+};
+template <typename T>
+void Image_resize_nearest(const Image<T>& src,Image<T>& dst,int width, int height) {
+    //最邻近插值法
+    if(width==src.width()&&height==src.height()) {
+        dst=Image<T>(src);
+        return;
+    }
+    int src_h=src.height();
+    int src_w=src.width();
+    int channels=src.channels();
+    dst.resize(width,height,channels);
+    float scale_x=(float)src_w/width;
+    float scale_y=(float)src_h/height;
 
+    for(int i=0;i<height;i++){
+        int dst_offst=i*width*channels;
+        int src_row=(int)(i*scale_y);
+        src_row=src_row<src_h?src_row:src_h-1;
+        int src_offst=src_row*src_w*channels;
+        for(int j=0;j<width;j++){
+            int src_col=(int)(j*scale_x);
+            src_col=src_col<src_w?src_col:src_w-1;
+            for(int ch=0;ch<channels;ch++) {
+                dst[dst_offst+j*channels+ch]=src[src_offst+src_col*channels+ch];
+            }
+        }
+    }
+}
+template <typename T>
+void Image_resize_linear(const Image<T>& src,Image<T>& dst,int width, int height) {
+        //最邻近插值法
+        if(width==src.width()&&height==src.height()) {
+            dst=Image<T>(src);
+            return;
+        }
+        int src_h=src.height();
+        int src_w=src.width();
+        int channels=src.channels();
+        dst.resize(width,height,channels);
+        float scale_x=(float)src_w/width;
+        float scale_y=(float)src_h/height;
+
+        T* dataDst=dst.get_data().data();
+        int stepDst=width*channels;
+        const T* dataSrc=src.get_data().data();
+        int stepSrc=src_w*channels;
+        for(int i=0;i<height;i++){
+            int dst_offst=i*width*channels;
+            float fy=(float)((i+0.5)*scale_y-0.5);
+            int sy=std::floor(fy);
+            fy-=sy;
+            sy=std::min(sy,src_h-2);
+            sy=std::max(sy,0);
+            short cbufy[2];
+            cbufy[0]=(short)((1.f-fy)*2048);
+            cbufy[1]=2048-cbufy[0];
+            for(int j=0;j<width;j++){
+                float fx=(float)((j+0.5)*scale_x-0.5);
+                int sx=std::floor(fx);
+                fx-=sx;
+                if(sx<0){
+                    fx=0,sx=0;
+                }
+                if(sx>=src_w-1){
+                    fx=0,sx=src_w-2;
+                }
+                short cbufx[2];
+                cbufx[0]=(short)((1.f-fx)*2048);
+                cbufx[1]=2048-cbufx[0];
+                for(int k=0;k<channels;k++)
+                {
+                    *(dataDst+ i*stepDst + channels*j + k) = (int)(*(dataSrc + sy*stepSrc + channels*sx + k) * cbufx[0] * cbufy[0]
+                            + *(dataSrc + (sy+1)*stepSrc + channels*sx + k) * cbufx[0] * cbufy[1]
+                            + *(dataSrc + sy*stepSrc + channels*(sx+1) + k) * cbufx[1] * cbufy[0]
+                            + *(dataSrc + (sy+1)*stepSrc + channels*(sx+1) + k) * cbufx[1] * cbufy[1])>> 22;
+                }
+            }
+        }
+    }
+template <typename T>
+void Image_resize(const Image<T>& src,Image<T>& dst,int width, int height,resize_mode mode=INTER_LINEAR){
+    if(mode==INTER_NEAREST)
+    {
+        Image_resize_nearest<T>(src,dst,width,height);
+    } else if(mode ==INTER_LINEAR )
+    {
+        Image_resize_linear<T>(src,dst,width,height);
+    }
+}
 /*
 *  @property   图像转换
 *  @func       将图像中位图转换为浮点图像，灰度值范围从[0-255]->[0.0,1.0]
@@ -165,7 +257,8 @@ rescale_half_size_gaussian(typename Image<T>::ConstPtr image, float sigma2 = 0.7
 template <typename T>
 typename Image<T>::Ptr
 blur_gaussian(typename Image<T>::ConstPtr in, float sigma);
-
+template <typename T>
+void blur_gaussian(const Image<T>* in,Image<T>* out,  float sigma);
 /*
 *  @property   图像模糊
 *  @func       将对图像进行高斯模糊,运用高斯卷积核,进行可分离卷积,先对x方向进行卷积,再在y方向进行卷积,
@@ -191,6 +284,9 @@ blur_gaussian2(typename Image<T>::ConstPtr in, float sigma2);
 template <typename T>
 typename Image<T>::Ptr
 subtract(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2);
+
+template <typename T>
+void subtract(const Image<T>& image_1, const Image<T>& image_2,Image<T>& dst);
 
 /*
 *  @property   求图像差
@@ -552,6 +648,86 @@ blur_gaussian(typename Image<T>::ConstPtr in, float sigma)
 }
 
 template <typename T>
+void blur_gaussian(const Image<T>* in,Image<T>* out, float sigma)
+{
+    if(out->width()!=in->width()||out->height()!=in->height()||out->channels()!=in->channels())
+    {
+        //throw std::invalid_argument("输出图像尺寸应等于输入图像!\n");
+        out->resize(in->width(),in->height(),in->channels());
+    }
+    if (in == nullptr)
+    {
+        throw std::invalid_argument("没有输入图像!\n");
+    }
+
+    if(MATH_EPSILON_EQ(sigma,0.0f,0.1f))
+    {
+        //out->get_data().assign(in->get_data().begain(),in->get_data().end());
+        out->resize(in->width(),in->height(),in->channels());
+        int amount=in->get_value_amount();
+        for(int i=0;i<amount;i++)
+            out->get_data()[i]=in->get_data()[i];
+        return;
+    }
+
+    int const w = in->width();
+    int const h = in->height();
+    int const c = in->channels();
+    int const ks = std::ceil(sigma * 2.884f);
+    std::vector<float> kernel(ks + 1);
+    float weight = 0;
+
+    for (int i = 0; i < ks + 1; ++i)
+    {
+        kernel[i] = math::func::gaussian((float)i, sigma);
+        weight += kernel[i]*2;
+    }
+    weight-=kernel[0];
+    //可分离高斯核实现
+    //x方向对对象进行卷积
+    Image<float>::Ptr sep(Image<float>::create(w,h,c));
+    int px = 0;
+    for (int y = 0; y < h; ++y)
+    {
+        for (int x = 0; x < w; ++x,++px)
+        {
+            for (int cc = 0; cc < c; ++cc)
+            {
+                float accum=0;
+                for (int i = -ks; i <=ks; ++i)
+                {
+                    int idx = math::func::clamp(x + i,0,w - 1);
+                    accum += in->at(y * w + idx, cc) * kernel[abs(i)];
+                    //printf("%f\n",kernel[abs(i)]);
+                }
+                sep->at(px,cc) = accum / weight;
+            }
+        }
+    }
+    //y方向对图像进行卷积
+    px=0;
+    for (int y = 0; y < h; ++y)
+    {
+        for (int x = 0; x < w; ++x,++px)
+        {
+            for (int cc = 0; cc < c; ++cc)
+            {
+                float accum =0;
+                for (int i = -ks; i <= ks; ++i)
+                {
+                    int idx = math::func::clamp(y+i,0,(int)h - 1);
+                    accum += sep->at(idx * w + x, cc)* kernel[abs(i)];
+                }
+                //printf("%f\n",accum / weight);
+                out->at(px,cc) = (T)(accum / weight);
+            }
+        }
+    }
+    return;
+}
+
+
+template <typename T>
 typename Image<T>::Ptr
 blur_gaussian2(typename Image<T>::ConstPtr in, float sigma2)
 {
@@ -622,6 +798,7 @@ blur_gaussian2(typename Image<T>::ConstPtr in, float sigma2)
 //    }
 //    return out;
 }
+
 //TODO::to be CUDA@YANG
 //opencv 4000*2250*3 图像处理时间：4.76ms
 template <typename T>
@@ -657,6 +834,38 @@ subtract(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_
 
     return out;
 }
+
+template <typename T>
+void subtract(const Image<T>& image_1,const Image<T>& image_2,Image<T>& dst)
+{
+    if (image_1.empty() || image_2.empty())
+    {
+        throw std::invalid_argument("至少有一幅图像为空!不满足要求!\n");
+    }
+    int const w1 = image_1.width();
+    int const h1 = image_1.height();
+    int const c1 = image_1.channels();
+
+    if(w1 != image_2.width() || h1 != image_2.height() || c1 != image_2.channels())
+    {
+        throw std::invalid_argument("两图像尺寸不匹配!\n");
+    }
+    if(typeid(T)== typeid(uint8_t)
+       || typeid(T)== typeid(uint16_t)
+       || typeid(T)== typeid(uint32_t)
+       || typeid(T)== typeid(uint64_t)){
+        throw std::invalid_argument("无符号图像不满足要求!\n");
+    }
+
+
+    dst.resize(w1,h1,c1);
+
+    for (int i = 0; i < image_1.get_value_amount(); ++i)
+    {
+        dst.at(i) = image_1.at(i) - image_2.at(i);
+    }
+}
+
 //TODO::to be CUDA@YANG
 //opencv 4000*2250*3 图像处理时间：3.34ms
 template <typename T>

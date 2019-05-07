@@ -5,12 +5,12 @@
  * @e-mail   1028792866@qq.com
 */
 #include "include/image_io.h"
-#include "include/string.h"
+#include "include/mystring.h"
 #include "include/exception.h"
 #include <fstream>
 #include <png.h>
 #include <jpeglib.h>
-#include <string.h>
+#include <mystring.h>
 #include <errno.h>
 IMAGE_NAMESPACE_BEGIN
 

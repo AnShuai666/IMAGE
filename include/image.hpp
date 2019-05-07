@@ -119,6 +119,12 @@ public:
     int channels() const;
 
     /*
+    *  @property   判断是否为空
+    *  @func       判断是否为空
+    *  @return     bool
+    */
+    bool empty() const;
+    /*
     *  @property   判断图像是否合法
     *  @func       如果图像w,h,c任意为0，则返回false
     *  @return     bool
@@ -445,7 +451,9 @@ public:
      *  @func       将图像进行初始化,
      *  @param_in   image1
      */
-    Image(Image<T> const& image1);
+     Image(Image<T> const& image1)  ;
+
+     virtual ~Image();
 
      /*
      *  @property   智能指针构造函数
@@ -541,6 +549,14 @@ public:
     */
     void delete_channel(int channel);
 
+     /*
+    *  @property   访问图像某行数据
+    *  @func       线性访问图像数据
+    *  @param_in   index    图像数据行索引值
+    *  @return     T* 该行第一个数据的指针
+    */
+    T* ptr(int row);
+    const T* ptr(int row) const;
     /*
     *  @property   访问图像数据
     *  @func       线性访问图像数据
@@ -615,6 +631,13 @@ public:
     */
     void linear_at(float x, float y, T* px) const;
 
+     /*
+ *  @property   重载运算符=
+ *  @func       图像=赋值
+ *  @param_in   待复制图像
+ *  @return     复制后图像引用
+ */
+     Image<T>& operator= (Image<T> const& image);
     /*
     *  @property   重载运算符[]
     *  @func       访问图像数据
@@ -735,6 +758,12 @@ IMAGE_NAMESPACE_BEGIN
     ImageBase::channels() const
     {
         return this->c;
+    }
+
+    inline bool
+    ImageBase::empty() const
+    {
+        return (w*h*c==0);
     }
 
     inline bool
@@ -1181,6 +1210,11 @@ IMAGE_NAMESPACE_BEGIN
     }
 
     template <typename T>
+    Image<T>::~Image() {
+
+    }
+
+    template <typename T>
     inline typename Image<T>::Ptr
     Image<T>::create()
     {
@@ -1407,6 +1441,24 @@ IMAGE_NAMESPACE_BEGIN
         }
         this->resize(this->w, this->h, this->c - 1);
     }
+    template <typename T>
+    T* Image<T>::ptr(int row){
+        if(row>=this->h) {
+            throw("row_index out image range\n");
+        }
+        T* data_ptr = this->data.data();
+        data_ptr+=row*this->w*this->c;
+        return data_ptr;
+    };
+    template <typename T>
+    const T* Image<T>::ptr(int row) const{
+        if(row>=this->h) {
+            throw("row_index out image range\n");
+        }
+        const T* data_ptr = this->data.data();
+        data_ptr+=row*this->w*this->c;
+        return data_ptr;
+    };
 
     template <typename T>
     inline T const&
@@ -1536,7 +1588,17 @@ IMAGE_NAMESPACE_BEGIN
             px[i] = this->linear_at(x,y,1 + i);
         }
     }
-
+    template <typename T>
+    Image<T>& Image<T>::operator = (Image<T> const& image){
+        if(this==&image)
+            return *this;
+        this->w=image.w;
+        this->h=image.h;
+        this->c=image.c;
+        this->data.resize(image.data.size());
+        this->data.assign(image.data.begin(),image.data.end());
+        return *this;
+    };
     template <typename T>
     inline T const&
     Image<T>::operator[](int index) const
