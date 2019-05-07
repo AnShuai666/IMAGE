@@ -311,7 +311,8 @@ template <typename T>
 typename Image<T>::Ptr
 expand_grayscale(typename Image<T>::ConstPtr image);
 
-
+template <typename _Tp1,typename _Tp2>
+void converTo(const TypedImageBase<_Tp1>& src,TypedImageBase<_Tp2>& dst,float alpha=1.f,float offset=0.f);
 IMAGE_NAMESPACE_END
 
 /*******************************************************************
@@ -912,6 +913,33 @@ expand_grayscale(typename Image<T>::ConstPtr image)
 {
     //typename Image<T>::Ptr image_ptr = Image<T>::create(*image);
     return image;
+}
+
+template <typename _Tp1,typename _Tp2>
+void converTo(const TypedImageBase<_Tp1>& src,TypedImageBase<_Tp2>& dst,float alpha,float offset)
+{
+    if(dst.empty())
+        dst.resize(src.width(),src.height(),src.channels());
+    else {
+        if (dst.height() != src.height()
+            || dst.width() != src.width()
+            || dst.channels() != src.channels()) {
+            throw ("convert func need same size\n");
+        }
+    }
+    float EPSILON =1.192093e-007;
+
+    const _Tp1* src_ptr=src.get_data_pointer();
+    _Tp2* dst_ptr=dst.get_data_pointer();
+    if(alpha-1.f>EPSILON){
+        for(int i=0;i<src.get_value_amount();i++)
+            dst_ptr[i]=(_Tp2)(src_ptr[i]+offset);
+    }else{
+        for(int i=0;i<src.get_value_amount();i++)
+            dst_ptr[i]=(_Tp2)(src_ptr[i]*alpha+offset);
+    }
+
+
 }
 
 IMAGE_NAMESPACE_END

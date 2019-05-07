@@ -53,7 +53,7 @@ namespace features2d
 typedef image::Image<float>        Mat;
 typedef image::Image<float>        InputArray;
 typedef image::Image<float>        OutputArray;
-
+static const float EPSILON =1.192093e-007;
 class  KeyPoint
 {
         public:

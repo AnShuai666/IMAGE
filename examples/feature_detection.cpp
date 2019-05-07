@@ -103,9 +103,10 @@ void unpack(const int kptoctave, int& octave, int& layer, float& scale)
 int main()
 {
 
-    image::ByteImage::Ptr image,image2;
-    std::string image_filename2 = "/home/doing/lena4.jpg";
-    std::string image_filename = "/home/doing/lena3.jpg";
+    image::ByteImage::Ptr image=make_shared<ByteImage>();
+    image::ByteImage::Ptr image2=make_shared<ByteImage>();
+    std::string image_filename2 = "/home/doing/box.jpg";
+    std::string image_filename = "/home/doing/box2.jpg";
 #define USECV 0
 #if USECV
     cv::Ptr<cv::Feature2D> cvsift = cv::xfeatures2d::SIFT::create();
@@ -120,31 +121,28 @@ int main()
     cout<<cvkeyPoint.size()<<endl;
     cout<<cvkeyPoint2.size()<<endl;
 #endif
-    try
-    {
-        std::cout<<"加载 "<<image_filename<<"中..."<<std::endl;
-        image = image::load_image(image_filename);
-        image2 = image::load_image(image_filename2);
-    }
-    catch (std::exception& e)
-    {
-        std::cerr<<"错误: "<<e.what()<<std::endl;
-        return 1;
-    }
+
+    cv::Mat cvimg_gray=cv::imread(image_filename,0);
+    cv::Mat cvimg_gray2=cv::imread(image_filename2,0);
+
+    image = image::load_image(image_filename);
+    image2 = image::load_image(image_filename2);
+
     image::ByteImage::Ptr image_gray=image::desaturate<unsigned char>(image,DESATURATE_LUMINANCE);
-    image::FloatImage::Ptr img_gray_ptr=make_shared<image::Image<float>>(image->height(),image->width(),1);
-    for(int i=0;i<image_gray->get_value_amount();i++)
-        img_gray_ptr->get_data()[i]=(float)image_gray->get_data()[i];
-    image::Image<float> copy=*img_gray_ptr;
-    //img_gray_ptr->get_data().assign(image->get_data().begin(),image->get_data().end());
+    image::FloatImage::Ptr img_gray_ptr=make_shared<image::Image<float>>(image->width(),image->height(),1);
+    converTo(*image_gray,*img_gray_ptr);
     Mat* img_gray=(Mat*)(img_gray_ptr.get());
 
     image::ByteImage::Ptr image_gray2=image::desaturate<unsigned char>(image2,DESATURATE_LUMINANCE);
-    image::FloatImage::Ptr img_gray_ptr2=make_shared<image::Image<float>>(image2->height(),image2->width(),1);
-    for(int i=0;i<image_gray2->get_value_amount();i++)
-        img_gray_ptr2->get_data()[i]=(float)image_gray2->get_data()[i];
-    //img_gray_ptr->get_data().assign(image->get_data().begin(),image->get_data().end());
+    image::FloatImage::Ptr img_gray_ptr2=make_shared<image::Image<float>>(image2->width(),image2->height(),1);
+    converTo(*image_gray2,*img_gray_ptr2);
+    //for(int i=0;i<image_gray2->get_value_amount();i++)
+     //   img_gray_ptr2->get_data()[i]=(float)image_gray2->get_data()[i];
     Mat* img_gray2=(Mat*)(img_gray_ptr2.get());
+
+
+
+
     shared_ptr<features2d::Feature2D> sift = features2d :: SIFT :: create();
     vector<features2d::KeyPoint> keyPoint,keyPoint2;
     Mat descriptors,descriptors2;
@@ -239,7 +237,7 @@ int main()
     for(int i=0;i<keyPoint2.size();i++)
     {
         uint8_t color[3]={(uint8_t)(rand()%255),(uint8_t)(rand()%255),(uint8_t)(rand()%255)};
-        if(dists[i][0]<min_dist*0.4) {
+        if(dists[i][0]<min_dist*0.3) {
             sift_vis.draw_line(*res, keyPoint[indices[i][0]].pt.x, keyPoint[indices[i][0]].pt.y,
                                keyPoint2[i].pt.x + image->width(), keyPoint2[i].pt.y, color);
             num++;
@@ -259,7 +257,7 @@ int main()
     image::ByteImage::Ptr image_out;
     image_out = sift_vis.draw_keypoints(image,keypoints,image::RADIUS_CIRCLE_ORIENTATION);
     //保存图像 还需要重载
-    std::string image_out_name = "result_sift3.png";
+    std::string image_out_name = "result_sift4.png";
     std::cout<<"保存图像: "<<std::endl;
     image::save_image(res,image_out_name);
     image_out_name = "result_sift1.png";
