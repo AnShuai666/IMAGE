@@ -7,7 +7,7 @@
 #include <cuda_runtime.h>
 #include <cstdio>
 #include <iostream>
-#include "function/function.hpp"
+#include "MATH/function/function.hpp"
 
 #include "cuda_include/sharedmem.cuh"
 
