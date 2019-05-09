@@ -20,14 +20,10 @@ void gpu_cpu2zero1(T *cpu,T *gpu,size_t bytes)
 
 
 /*网格划分
-for ( x = 32; x >8 ; x>>=1)
-{
-    for ( y = 32; y >2 ; y>>=1)
+for ( y = 32; y >2 ; y>>=1)
     {
-    if (x * y < 128)continue;
-    std::cout<<"block("<<x<<","<<y<<")"<<std::endl;
+    std::cout<<"block("<<block.x<<","<<block.y<<")"<<std::endl;
     }
-}
 */
 /******************************************************************************************/
 ///功能：填充图像
@@ -56,7 +52,6 @@ __global__ void kernel_fill_color(T * image, T *color,int const wc,int const h,i
         image[idx]=color[channels];
     }
 }
-
 /* 调用示例
  * dim3 block(x,y,1);
  * dim3 grid((wc-1+x*3)/(x*3),(h-1+y)/y,1);
@@ -89,7 +84,6 @@ __global__ void kernel_fill_color3(T * image, T *color,int const wc,int const h,
         image[idx]=local_color[channels];
     }
 }
-
 /* 调用示例
  * dim3 block(x,y,1);
  * dim3 grid((wc-1+x*3)/(x*3),(h-1+y)/y,1);
@@ -118,7 +112,6 @@ __global__ void kernel_fill_color3_by_share(T * image, T *color,int const wc,int
         }
     }
 }
-
 /* 调用示例
  * dim3 block(x,y,1);
  * dim3 grid((wc-1+x*15)/(x*15),(h-1+y)/y,1);
@@ -246,7 +239,6 @@ __global__ void kernel_add_channels_stride2(T *dst,T *src, int const w,int const
                 dst[idx_out+j]=value[j];
                 dst[idx_out+blockDim.x*c_add+j]=value[j];
             }
-
             for (int i = 0; i <c ; ++i)
             {
                 dst[idx_out+num_channels+i]=src[idx_in+i];
@@ -256,9 +248,60 @@ __global__ void kernel_add_channels_stride2(T *dst,T *src, int const w,int const
     }
 }
 
+///功能:交换颜色通道
+/*  函数名                           线程块大小       耗费时间
+ * kernel_swap_channels	            283.847us	   [32,4,1]**
+ * kernel_swap_channels2	        293.352us	   [32,4,1]
+ */
+///核函数
+/* 调用示例
+ * dim3 block(x,y,1);
+ * dim3 grid((w-1+x)/(x),(h-1+y)/y,1);
+ * kernel_swap_channels<T><<<grid,block>>>(d_in,w,h,c,swap_c1,swap_c2);
+ */
+template <typename T>
+__global__ void kernel_swap_channels(T *src,int const w,int const h,int const c, int const swap_c1,int const swap_c2)
+{
+    int const x=threadIdx.x+blockDim.x*blockIdx.x;
+    int const y=threadIdx.y+blockDim.y*blockIdx.y;
+    int const idx=y*w+x;
+    if(x<w&&y<h)
+    {
+        T a,b;
+        a=src[idx*c+swap_c1];
+        b=src[idx*c+swap_c2];
+        src[idx*c+swap_c1]=b;
+        src[idx*c+swap_c2]=a;
+    }
+}
+/* 调用示例
+ * dim3 block(x,y,1);
+ * dim3 grid((w-1+x)/(x),(h-1+y*2)/(y*2),1);
+ * kernel_swap_channels2<T><<<grid,block>>>(d_in,w,h,c,swap_c1,swap_c2);
+ */
+template <typename T>
+__global__ void kernel_swap_channels2(T *src,int const w,int const h,int const c, int const swap_c1,int const swap_c2)
+{
+    int  x=threadIdx.x+blockIdx.x*blockDim.x;
+    int  y=threadIdx.y+blockIdx.y*blockDim.y*2;
+    for(int i=0;i<2;i++)
+    {
+        int idx=(y+blockDim.y*i)*w*c+x*c;
+        if(x<w&&(y+blockDim.y*i)<h)
+        {
+            T a,b;
+            a=src[idx+swap_c1];
+            b=src[idx+swap_c2];
+            src[idx+swap_c1]=b;
+            src[idx+swap_c2]=a;
+        }
+    }
+}
+
 /******************************************************************************************/
 ///调用核函数实现加速功能
 /******************************************************************************************/
+
 ///填充颜色通道函数
 template <typename T>
 int fill_color_cu(T *image,T *color,int const w,int const h,int const c,int const color_size)
@@ -315,7 +358,7 @@ int add_channels_cu(T *dst_image,T * src_image,int const w,int const h, int cons
     size_t const bytes_src=wc*h* sizeof(T);
     size_t const bytes_dst=wc_add*h* sizeof(T);
     //声明显存指针
-    T *d_in,*d_out,*d_value;
+    T *d_in=NULL,*d_out=NULL,*d_value=NULL;
     //定义显存指针
     cudaMalloc((void**)&d_value,bytes_value);
     cudaMalloc((void**)&d_in,bytes_src);
@@ -341,6 +384,37 @@ int add_channels_cu(T *dst_image,T * src_image,int const w,int const h, int cons
     return 0;
 }
 
+///交换颜色通道函数
+template <typename T>
+int swap_channels_by_cu(T *src,int const w,int const h,int c,int const swap_c1,int swap_c2)
+{
+    if(swap_c1==swap_c2)return 0;
+    if(swap_c1<0||swap_c1>=c||swap_c2<0||swap_c2>=c)
+    {
+        std::cerr<<"swap_channels_by_cuda函数所要交换的颜色通道不合适!!"<<std::endl;
+        return 1;
+    }
+    //计算字节数
+    size_t const bytes=w*h*c* sizeof(T);
+    //声明显存指针
+    T *d_in=NULL;
+    //定义显存指针
+    cudaMalloc((void**)&d_in,bytes);
+    //cpu2gpu
+    cudaMemcpy(d_in,src,bytes,cudaMemcpyHostToDevice);
+    //网格划分
+    int x=32;
+    int y=4;
+    dim3 block(x,y,1);
+    dim3 grid((w-1+x)/(x),(h-1+y)/y,1);
+    //核函数
+    kernel_swap_channels<T><<<grid,block>>>(d_in,w,h,c,swap_c1,swap_c2);
+    //gpu2cpu
+    cudaMemcpy(src,d_in,bytes,cudaMemcpyDeviceToHost);
+    //释放显存指针
+    cudaFree(d_in);
+    return 0;
+}
 
 
 
@@ -357,14 +431,14 @@ int fill_color_by_cuda(T *image,T *color,int const w,int const h,int const c,int
     return 0;
 }
 template <>
-int fill_color_by_cuda<char>(char *image,char *color,int const w,int const h,int const c,int const color_size,char *contrast)
+int fill_color_by_cuda(char *image,char *color,int const w,int const h,int const c,int const color_size,char *contrast)
 {
     fill_color_cu<char>(image,color,w,h,c, color_size);
     //compare1<char>(image,contrast,w*c,h, false);
     return 0;
 }
 template <>
-int fill_color_by_cuda<float>(float  *image,float *color,int const w,int const h,int const c,int const color_size,float *contrast)
+int fill_color_by_cuda(float  *image,float *color,int const w,int const h,int const c,int const color_size,float *contrast)
 {
     fill_color_cu<float>(image,color,w,h,c, color_size);
     //compare1<float>(image,contrast,w*c,h, true);
@@ -379,17 +453,17 @@ int add_channels_by_cuda(T *dst_image,T  * src_image,int const w,int const h, in
     return  0;
 }
 template <>
-int add_channels_by_cuda<char>(char *dst_image,char  * src_image,int const w,int const h, int const c, int const num_channels,char * value,char *contrast)
+int add_channels_by_cuda(char *dst_image,char  * src_image,int const w,int const h, int const c, int const num_channels,char * value,char *contrast)
 {
     add_channels_cu<char>(dst_image,src_image, w, h, c,num_channels,value);
-    compare1(dst_image,contrast,w*c,h, false);
+    compare1<char>(dst_image,contrast,w*c,h, false);
     return  0;
 }
 template <>
-int add_channels_by_cuda<float>(float *dst_image,float  * src_image,int const w,int const h, int const c, int const num_channels,float * value,float *contrast)
+int add_channels_by_cuda(float *dst_image,float  * src_image,int const w,int const h, int const c, int const num_channels,float * value,float *contrast)
 {
     add_channels_cu<float>(dst_image,src_image, w, h, c,num_channels,value);
-    //compare1(dst_image,contrast,w*c,h, true);
+    //compare1<float>(dst_image,contrast,w*c,h, true);
     return  0;
 }
 
@@ -402,16 +476,38 @@ int add_channels_front_by_cuda(T *dst_image,T  * src_image,int const w,int const
     return 0;
 }
 template <>
-int add_channels_front_by_cuda<char>(char *dst_image,char  * src_image,int const w,int const h, int const c, vector<char> value,bool _front_back,char *contrast)
+int add_channels_front_by_cuda(char *dst_image,char  * src_image,int const w,int const h, int const c, vector<char> value,bool _front_back,char *contrast)
 {
     add_channels_cu<char>(dst_image,src_image, w, h, c,(int)value.size(),&value.at(0),_front_back);
-    compare1(dst_image,contrast,w*c,h, false);
+    compare1<char>(dst_image,contrast,w*c,h, false);
     return 0;
 }
 template <>
-int add_channels_front_by_cuda<float>(float *dst_image,float  * src_image,int const w,int const h, int const c, vector<float> value,bool _front_back,float *contrast)
+int add_channels_front_by_cuda(float *dst_image,float  * src_image,int const w,int const h, int const c, vector<float> value,bool _front_back,float *contrast)
 {
     add_channels_cu<float>(dst_image,src_image, w, h, c,(int)value.size(),&value.at(0),_front_back);
-    compare1(dst_image,contrast,w*c,h, false);
+    compare1<float>(dst_image,contrast,w*c,h, false);
+    return 0;
+}
+
+///交换颜色通道
+template <typename T>
+int swap_channels_by_cuda(T *src,int const w,int const h,int c,int const swap_c1,int swap_c2,T *contrast)
+{
+    swap_channels_by_cu(src,w,h,c,swap_c1,swap_c2);
+    return 0;
+}
+template <>
+int swap_channels_by_cuda(char *src,int const w,int const h,int c,int const swap_c1,int swap_c2,char *contrast)
+{
+    swap_channels_by_cu<char>(src,w,h,c,swap_c1,swap_c2);
+    //compare1<char>(src,contrast,w*c,h, false);
+    return 0;
+}
+template <>
+int swap_channels_by_cuda(float *src,int const w,int const h,int c,int const swap_c1,int swap_c2,float *contrast)
+{
+    swap_channels_by_cu<float>(src,w,h,c,swap_c1,swap_c2);
+    //compare1<float>(src,contrast,w*c,h, true);
     return 0;
 }

@@ -28,10 +28,10 @@ template <typename T>
 int fill_color_by_cuda(T *image,T *color,int const w,int const h,int const c,int const color_size,T *contrast);
 
 template <>
-int fill_color_by_cuda<char>(char *image,char *color,int const w,int const h,int const c,int const color_size,char *contrast);
+int fill_color_by_cuda(char *image,char *color,int const w,int const h,int const c,int const color_size,char *contrast);
 
 template <>
-int fill_color_by_cuda<float>(float  *image,float *color,int const w,int const h,int const c,int const color_size,float *contrast);
+int fill_color_by_cuda(float  *image,float *color,int const w,int const h,int const c,int const color_size,float *contrast);
 
 
 /**
@@ -52,13 +52,12 @@ int fill_color_by_cuda<float>(float  *image,float *color,int const w,int const h
 template <typename T>
 int add_channels_by_cuda(T *dst_image,T  * src_image,int const w,int const h, int const c, int const num_channels,T * value,T *contrast);
 template <>
-int add_channels_by_cuda<char>(char *dst_image,char  * src_image,int const w,int const h, int const c, int const num_channels,char * value,char *contrast);
+int add_channels_by_cuda(char *dst_image,char  * src_image,int const w,int const h, int const c, int const num_channels,char * value,char *contrast);
 template <>
-int add_channels_by_cuda<float>(float *dst_image,float  * src_image,int const w,int const h, int const c, int const num_channels,float * value,float *contrast);
+int add_channels_by_cuda(float *dst_image,float  * src_image,int const w,int const h, int const c, int const num_channels,float * value,float *contrast);
 
 
 /**
- *
  * @func            添加颜色通道(向后添加/向前添加)
  * @property        为已存在图像添加一个新的颜色通道
  * @param_out       dst_image       添加颜色通道后的图像
@@ -76,7 +75,30 @@ int add_channels_by_cuda<float>(float *dst_image,float  * src_image,int const w,
 template <typename T>
 int add_channels_front_by_cuda(T *dst_image,T  * src_image,int const w,int const h, int const c, std::vector<T> value,bool _front_back,T *contrast);
 template <>
-int add_channels_front_by_cuda<char>(char *dst_image,char  * src_image,int const w,int const h, int const c, std::vector<char> value,bool _front_back,char *contrast);
+int add_channels_front_by_cuda(char *dst_image,char  * src_image,int const w,int const h, int const c, std::vector<char> value,bool _front_back,char *contrast);
 template <>
-int add_channels_front_by_cuda<float>(float *dst_image,float  * src_image,int const w,int const h, int const c, std::vector<float> value,bool _front_back,float *contrast);
+int add_channels_front_by_cuda(float *dst_image,float  * src_image,int const w,int const h, int const c, std::vector<float> value,bool _front_back,float *contrast);
+
+/**
+ *
+ * @func            交换颜色通道
+ * @property        交换输入图像的两个颜色通道
+ * @param_in_out    src             待交换图像
+ * @param_in        w               图像宽
+ * @param_in        h               图像高
+ * @param_in        c               图像颜色通道
+ * @param_in        swap_c1         参与交换的颜色通道1
+ * @param_in        swap_c2         参与交换的颜色通道2
+ * @param_in        contrast        cpu实现,与gpu实现对比
+ * @return
+ * 调用示例:
+ * swap_channels_by_cuda(&src_gpu.at(0),src_gpu.width(),src_gpu.height(),src_gpu.channels(),0,2,&src_cpu.at(0));
+ */
+template <typename T>
+int swap_channels_by_cuda(T *src,int const w,int const h,int c,int const swap_c1,int swap_c2,T *contrast);
+template <>
+int swap_channels_by_cuda(char *src,int const w,int const h,int c,int const swap_c1,int swap_c2,char *contrast);
+template <>
+int swap_channels_by_cuda(float *src,int const w,int const h,int c,int const swap_c1,int swap_c2,float *contrast);
+
 #endif //_IMAGE_1_CUH_
