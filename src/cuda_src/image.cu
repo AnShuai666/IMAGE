@@ -19,7 +19,6 @@ void gpu_cpu2zero1(T *cpu,T *gpu,size_t bytes)
 }
 
 
-
 /******************************************************************************************/
 ///功能：填充图像
 /*  函数名                           线程块大小       耗费时间
@@ -389,6 +388,104 @@ __global__ void kernel_copy_channels(T *image,int const w,int const h,int const 
     }
 }
 
+///功能:删除颜色通道
+/*  函数名                           线程块大小       耗费时间
+ * kernel_delete_channel	        468.206us	   [32,4,1]
+ * kernel_delete_channel2	        322.506us	   [32,2,1]**
+ * kernel_delete_channel3	        334.987us	   [32,2,1]
+ */
+///核函数
+/* 调用示例
+ * dim3 block(x,y,1);
+ * dim3 grid((src_w*dst_c-1+x*5)/(x*5),(src_h-1+y)/y,1);
+ * kernel_delete_channel<T><<<grid,block>>>(d_out,d_in,src_w,src_h,src_c,dst_c,del_c);
+ */
+template <typename T>
+__global__ void kernel_delete_channel(T *dst,T *src,int const w,int const h,int const c,int const dst_c,int const del_c)
+{
+    int x=threadIdx.x+blockIdx.x*blockDim.x*5;
+    int y=threadIdx.y+blockIdx.y*blockDim.y;
+    for (int i = 0; i <5 ; ++i) {
+
+        if(x<w*dst_c&&y<h)
+        {
+            int idx_out=y*w*dst_c+x;
+            int channel=idx_out%dst_c;
+            int pixel=idx_out/dst_c;
+            int idx_in=pixel*c+channel;
+            T value;
+            if(channel>=del_c)idx_in+=1;
+            value=src[idx_in];
+            dst[idx_out]=value;
+        }
+        x+=blockDim.x;
+    }
+}
+/* 调用示例
+ * dim3 block(x,y,1);
+ * dim3 grid((src_w-1+x*2)/(x*2),(src_h-1+y)/y,1);
+ * kernel_delete_channel2<T><<<grid,block>>>(d_out,d_in,src_w,src_h,src_c,dst_c,del_c);
+ */
+template <typename T>
+__global__ void kernel_delete_channel2(T *dst,T *src,int const w,int const h,int const c,int const dst_c,int const del_c)
+{
+    int x=threadIdx.x+blockIdx.x*blockDim.x*2;
+    int y=threadIdx.y+blockIdx.y*blockDim.y;
+    if(x<w&&y<h)
+    {
+        int pixel=y*w+x;
+        int pixel1=y*w+x+blockDim.x;
+        T value;
+        int j=0;
+        for (int i = 0; i <c ; ++i)
+        {
+            if(i!=del_c)
+            {
+                value=src[pixel*c+i];
+                dst[pixel*dst_c+j]=value;
+                value=src[pixel1*c+i];
+                dst[pixel1*dst_c+j]=value;
+                j++;
+            }
+        }
+    }
+}
+/* 调用示例
+ * dim3 block(x,y,1);
+ * dim3 grid((src_w-1+x*3)/(x*3),(src_h-1+y)/y,1);
+ * kernel_delete_channel3<T><<<grid,block>>>(d_out,d_in,src_w,src_h,src_c,dst_c,del_c);
+ */
+template <typename T>
+__global__ void kernel_delete_channel3(T *dst,T *src,int const w,int const h,int const c,int const dst_c,int const del_c)
+{
+    int x=threadIdx.x+blockIdx.x*blockDim.x*3;
+    int y=threadIdx.y+blockIdx.y*blockDim.y;
+    if(x<w&&y<h)
+    {
+        int pixel=y*w+x;
+        int pixel2=pixel+blockDim.x;
+        int pixel3=pixel2+blockDim.x;
+        T value;
+        int j=0;
+        for (int i = 0; i <c ; ++i)
+        {
+            if(i!=del_c)
+            {
+                value=src[pixel*c+i];
+                dst[pixel*dst_c+j]=value;
+                value=src[pixel2*c+i];
+                dst[pixel2*dst_c+j]=value;
+                value=src[pixel3*c+i];
+                dst[pixel3*dst_c+j]=value;
+                j++;
+            }
+        }
+    }
+}
+
+
+
+
 /******************************************************************************************/
 ///调用核函数实现加速功能
 /******************************************************************************************/
@@ -541,7 +638,7 @@ int swap_channels_by_cu(T *src,int const w,int const h,int c,int const swap_c1,i
     cudaFree(d_in);
     return 0;
 }
-///功能:复制颜色通道
+///复制颜色通道
 template <typename  T>
 int copy_channels_by_cu(T *image,int const w,int const h,int const c,int const copy_c,int const paste_c)
 {
@@ -576,6 +673,38 @@ int copy_channels_by_cu(T *image,int const w,int const h,int const c,int const c
     cudaFree(d_in);
     return 0;
 }
+///删除颜色通道
+template <typename T>
+int delete_channel_by_cu(T *dstImage,T *srcImage,int const src_w,int const src_h,int const src_c,int const del_c)
+{
+    if(del_c<0||del_c>=src_c)return 0;
+    int const dst_c=src_c-1;//输出通道数
+    //计算所需存储的字节数
+    size_t const bytes_in=src_w*src_h*src_c* sizeof(T);
+    size_t const bytes_out=src_w*src_h*dst_c* sizeof(T);
+    //声明显存指针
+    T *d_in=NULL;
+    T *d_out=NULL;
+    //定义显存指针
+    cudaMalloc(&d_in,bytes_in);
+    cudaMalloc(&d_out,bytes_out);
+    //cpu2gpu
+    cudaMemcpy(d_in,srcImage,bytes_in,cudaMemcpyHostToDevice);
+    //网格划分
+    int x=32;
+    int y=2;
+    dim3 block(x,y,1);
+    dim3 grid((src_w-1+x*2)/(x*2),(src_h-1+y)/y,1);
+    //核函数
+    kernel_delete_channel2<T><<<grid,block>>>(d_out,d_in,src_w,src_h,src_c,dst_c,del_c);
+    //gpu2cpu
+    cudaMemcpy(dstImage,d_out,bytes_out,cudaMemcpyDeviceToHost);
+    //释放显存指针
+    cudaFree(d_in);
+    cudaFree(d_out);
+    return 0;
+}
+
 
 
 
@@ -688,14 +817,27 @@ template <>
 int copy_channels_by_cuda(float *image,int const w,int const h,int const c,int const copy_c,int const paste_c,float *contrast)
 {
     copy_channels_by_cu<float>(image,w,h,c,copy_c,paste_c);
-    compare1<float>(image,contrast,w*c,h, false);
+    compare1<float>(image,contrast,w*c,h, true);
     return 0;
 }
 
-
-/*网格划分
-for ( y = 16; y >1 ; y>>=1)
-    {
-    std::cout<<"block("<<x<<","<<y<<")"<<std::endl;
-    }
-*/
+///删除颜色通道
+template <typename T>
+int delete_channel_by_cuda(T *dstImage,T *srcImage,int const src_w,int const src_h,int const src_c,int const del_c,T *contrast)
+{
+    return 0;
+}
+template <>
+int delete_channel_by_cuda(char *dstImage,char *srcImage,int const src_w,int const src_h,int const src_c,int const del_c,char *contrast)
+{
+    delete_channel_by_cu<char>(dstImage,srcImage,src_w,src_h,src_c,del_c);
+    compare1<char>(dstImage,contrast,src_w*(src_c-1),src_h,false);
+    return 0;
+}
+template <>
+int delete_channel_by_cuda(float *dstImage,float *srcImage,int const src_w,int const src_h,int const src_c,int const del_c,float *contrast)
+{
+    delete_channel_by_cu<float>(dstImage,srcImage,src_w,src_h,src_c,del_c);
+    compare1<float>(dstImage,contrast,src_w*(src_c-1),src_h,true);
+    return 0;
+}

@@ -8,8 +8,6 @@
 #ifndef _IMAGE_1_CUH_
 #define _IMAGE_1_CUH_
 
-
-
 /**
  * @func            填充图像
  * @property        每个颜色通道赋相同的值,值取自color数组
@@ -80,7 +78,6 @@ template <>
 int add_channels_front_by_cuda(float *dst_image,float  * src_image,int const w,int const h, int const c, std::vector<float> value,bool _front_back,float *contrast);
 
 /**
- *
  * @func            交换颜色通道
  * @property        交换输入图像的两个颜色通道
  * @param_in_out    src             待交换图像
@@ -103,7 +100,6 @@ int swap_channels_by_cuda(float *src,int const w,int const h,int c,int const swa
 
 
 /**
- *
  * @func            复制颜色通道
  * @property        复制输入图像的两个颜色通道
  * @param_in_out    image           输入图像
@@ -124,4 +120,24 @@ int copy_channels_by_cuda(char *image,int const w,int const h,int const c,int co
 template <>
 int copy_channels_by_cuda(float *image,int const w,int const h,int const c,int const copy_c,int const paste_c,float *contrast);
 
+/**
+ * @func            删除颜色通道
+ * @property        删除输入图像的某个颜色通道(del_c)
+ * @param_out       dstImage          删除颜色通道后的图像
+ * @param_in        srcImage          输入图像
+ * @param_in        src_w             图像宽
+ * @param_in        src_h             图像高
+ * @param_in        src_c             图像颜色通道
+ * @param_in        del_c             需删除的颜色通道
+ * @param_in        contrast          cpu实现,与gpu实现对比
+ * @return
+ * 调用示例:
+ * delete_channel_by_cuda(&dst_gpu.at(0),&src_gpu.at(0),src_gpu.width(),src_gpu.height(),src_gpu.channels(),del_c,&src_cpu.at(0));
+ */
+template <typename T>
+int delete_channel_by_cuda(T *dstImage,T *srcImage,int const src_w,int const src_h,int const src_c,int const del_c,T *contrast);
+template <>
+int delete_channel_by_cuda(char *dstImage,char *srcImage,int const src_w,int const src_h,int const src_c,int const del_c,char *contrast);
+template <>
+int delete_channel_by_cuda(float *dstImage,float *srcImage,int const src_w,int const src_h,int const src_c,int const del_c,float *contrast);
 #endif //_IMAGE_1_CUH_
