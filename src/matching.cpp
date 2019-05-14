@@ -5,8 +5,8 @@
  * @e-mail   1028792866@qq.com
 */
 
-#include "include/matching.h"
-#include "include/nearest_neighbor.hpp"
+#include "IMAGE/matching.h"
+#include "IMAGE/nearest_neighbor.hpp"
 IMAGE_NAMESPACE_BEGIN
 void Matching::remove_inconsistent_matches(image::Matching::Result *matches)
 {

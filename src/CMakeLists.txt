@@ -23,6 +23,8 @@ set(HEADERS
         ../include/IMAGE/image_process.hpp
         ../include/IMAGE/visualizer.hpp
         ../include/IMAGE/nearest_neighbor.hpp
+        ../include/IMAGE/matching.h
+        ../include/IMAGE/image_pyramid.h
 
         )
 
@@ -31,6 +33,8 @@ set(SOURCE_FILES
         image_io.cpp
         sift.cpp
         image_process.cpp
+        matching.cpp
+        image_pyramid.cpp
         )
 add_library(image SHARED ${HEADERS} ${SOURCE_FILES}  )
 target_link_libraries(image ${PNG_LIBRARIES} ${JPEG_LIBRARIES} )
