@@ -47,14 +47,14 @@ message(${MATH_FOUND})
 message(${MATH_INCLUDE_DIR})
 message(${MATH_LIBRARIES})
 
-install(FILES IMAGEConfig.cmake
-        DESTINATION share/IMAGE)
-install(FILES IMAGEConfigVersion.cmake
-        DESTINATION share/IMAGE)
-
 add_subdirectory(examples)
 add_subdirectory(src)
 add_subdirectory(src_bin)
 
-install(FILES IMAGEConfig.h
+install(FILES cmakemodule/IMAGEConfig.cmake
+        DESTINATION share/IMAGE)
+install(FILES cmakemodule/IMAGEConfigVeision.cmake
+        DESTINATION share/IMAGE)
+install(DIRECTORY include/IMAGE/
         DESTINATION include/IMAGE)
+

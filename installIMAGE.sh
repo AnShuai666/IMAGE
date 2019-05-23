@@ -12,15 +12,16 @@ else
     echo "ERROR"
 fi
 
-rm -drf build
-rm -drf $INSTALL_DIR/include/IMAGE
-rm -drf $INSTALL_DIR/lib/IMAGE
-rm -drf $INSTALL_DIR/bin/IMAGE
-rm -drf $INSTALL_DIR/share/IMAGE
+#rm -drf build
+#rm -drf $INSTALL_DIR/include/IMAGE
+#rm -drf $INSTALL_DIR/lib/IMAGE
+#rm -drf $INSTALL_DIR/bin/IMAGE
+#rm -drf $INSTALL_DIR/share/IMAGE
 
 
 
-mkdir build
+#mkdir build
+#chmod 777 -r build
 
 cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}

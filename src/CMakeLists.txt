@@ -38,7 +38,12 @@ set(SOURCE_FILES
         )
 add_library(image SHARED ${HEADERS} ${SOURCE_FILES}  )
 target_link_libraries(image ${PNG_LIBRARIES} ${JPEG_LIBRARIES} )
-
+install(TARGETS image
+        LIBRARY DESTINATION lib/IMAGE
+        ARCHIVE DESTINATION lib/IMAGE
+        RUNTIME DESTINATION bin/IMAGE
+        )
 if (CUDA_FOUND)
     add_subdirectory(cuda_src)
 endif ()
+
