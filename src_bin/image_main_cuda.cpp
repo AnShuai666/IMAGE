@@ -1,11 +1,11 @@
 
-#include "image_io.h"
-#include "cuda_include/process_cuda.h"
-#include "sift.hpp"
-#include "Util/timer.h"
-#include "image_process.hpp"
-
+#include "IMAGE/image_io.h"
+#include "MATH/Util/timer.h"
+#include "IMAGE/image_process.hpp"
 #include <iostream>
+#include "cuda_include/process_cuda_1.h"
+#include "cuda_include/image_1.cuh"
+
 using namespace std;
 int main(int argc, char ** argv)
 {
@@ -34,10 +34,12 @@ int main(int argc, char ** argv)
     cout<<"*************调试开始*************"<<endl;
     //image::rescale_half_size_gaussian_cu<float>(image::byte_to_float_image(image));
     srcImage1=image::blur_gaussian_cu<float>(image::byte_to_float_image(image), 0.75f);
-    srcImage2=image::blur_gaussian2_cu<float>(image::byte_to_float_image(image), 0.75f);
+    //srcImage2=image::blur_gaussian2_cu<float>(image::byte_to_float_image(image), 0.75f);
 
+    util::TimerHigh timer1;
     srcImage3=image::blur_gaussian<float>(image::byte_to_float_image(image), 0.75f);
-    srcImage4=image::blur_gaussian2<float>(image::byte_to_float_image(image), 0.75f);
+    image::subtract<float>(srcImage1,srcImage3);
+    std::cout<<"cpu: "<<timer1.get_elapsed()<<"毫秒"<<std::endl;
 
     image::subtract_cu<float>(srcImage1, srcImage3);
     cout<<"*************调试结束*************"<<endl;

@@ -6,12 +6,12 @@
  * @邮箱
 */
 
-#include "image_io.h"
-#include "Util/timer.h"
-#include "image_process.hpp"
+#include "IMAGE/image_io.h"
+#include "MATH/Util/timer.h"
+#include "IMAGE/image_process.hpp"
 #include <iostream>
 
-#include "cuda_include/image.cuh"
+#include "cuda_include/image_1.cuh"
 
 using namespace std;
 int main(int argc, char ** argv)
