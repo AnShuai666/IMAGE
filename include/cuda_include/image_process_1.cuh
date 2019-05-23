@@ -163,6 +163,16 @@ int difference_by_cuda<float>(float * const out_image,float const  * const in_im
 template <>
 int difference_by_cuda<char>(char * const out_image,char const  * const in_image1,char const  * const in_image2, int const w,int const h,int const c,char const  * const out);
 
-
-
+/**
+ * @property    图像变换
+ * @func        将图像中位图转换为浮点图像，灰度值范围从[0-255]->[0.0,1.0]
+ * @param_out   dstImage    输出图像
+ * @param_in    srcImage    输入图像
+ * @param_in    width       输入图像的宽度
+ * @param_in    height      输入图像的高度
+ * @param_in    channels    输入图像的颜色通道数
+ * @param_in    contrast    cpu计算结果，用于对比数据
+ * @return
+ */
+int byte_to_float_image_by_cuda(float * dstImage,unsigned char *srcImage,int const width,int const height,int const channels,float * contrast);
 #endif //IMAGE_PROCESS_1_CUH
