@@ -10,7 +10,7 @@
 
 //#include "define.h"
 #include "IMAGE/image.hpp"
-#include "MATH/function/function.hpp"
+#include "MATH/Function/function.hpp"
 
 IMAGE_NAMESPACE_BEGIN
 /*******************************************************************
