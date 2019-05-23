@@ -13,3 +13,14 @@ wechat: AS18354287036
 
 Do Jing:
 
+编译：
+
+./build.sh
+
+安装：
+
+sudo ./installMATH.sh
+
+卸载：
+
+sudo ./uninstallMATH.sh
