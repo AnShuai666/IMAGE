@@ -1,0 +1,84 @@
+#指定工程的编译器
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set(IS_MSVC TRUE )
+    message(STATUS "编译器为${CMAKE_CXX_COMPILER_ID}")
+endif ()
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(IS_GNU TRUE )
+    message(STATUS "编译器为${CMAKE_CXX_COMPILER_ID}")
+endif ()
+if (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
+    set(IS_CLANG TRUE )
+    message(STATUS "编译器为${CMAKE_CXX_COMPILER_ID}")
+endif ()
+
+
+#用来在指定文件夹下找指定源文件的宏函数。结果存在SRC_VAR列表中
+macro(IMAGE_ADD_SOURCE_DIR SRC_DIR SRC_VAR)
+    set(GLOB_EXPRESSIONS "")
+    foreach(ARG ${ARGN})
+        list(APPEND GLOB_EXPRESSIONS ${SRC_DIR}/${ARG} )
+    endforeach()
+
+
+    #产生一个匹配GLOB_EXPRESSIONS的文件列表，并将他存储到 SRC_VAR中，
+    #，RELATIVE被指定，返回指定路径CMAKE_CURRENT_DIR的相对路径
+    file(GLOB ${SRC_VAR} RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+            ${GLOB_EXPRESSIONS})
+    #string(REPLACE (match_string)
+    #(replace_string) (output variable)
+    #(input) [(input)...])
+    #将SRC_DIR列表中存在的"/"全部替换为"\"”\\“输出只有一个'\',有一个应该是转义字符，
+    #并存在GROUP变量中 感觉这两步没啥用 VS中用来保持目录结构的
+    string(REPLACE "/" "\\" GROUP_NAME ${SRC_DIR})
+    source_group(${GROUP_NAME} FILES )
+
+    #移除变量
+    unset(GLOB_EXPRESSIONS)
+    unset(ARG)
+    unset(GROUP_NAME)
+endmacro(IMAGE_ADD_SOURCE_DIR)
+
+#给变量IMAGE_SOURCES 添加各类源文件
+macro(IMAGE_ADD_SOURCES)
+    set(SOURCE_FILES "")
+    foreach(SOURCE_FILE ${ARGN})
+        #绝对路径 匹配/开头的
+        if (SOURCE_FILE MATCHES "^/.*")
+            list(APPEND SOURCE_FILES ${SOURCE_FILE})             #
+        else()#相对路径
+            list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE_FILE}")
+        endif ()
+    endforeach()
+
+    #将这些操作的结果向上传递
+    set(IMAGE_SOURCES ${IMAGE_SOURCES} ${SOURCE_FILES} PARENT_SCOPE)
+endmacro(IMAGE_ADD_SOURCES)
+
+#给IMAGE库添加CUDA源文件
+macro(IMAGE_ADD_CUDA_SOURCES)
+    set(CUDA_SOURCE_FILES "")
+    foreach(CUDA_SOURCE_FILE ${ARGN})
+        if (CUDA_SOURCE_FILE MATCHES "^/.*")
+            list(APPEND CUDA_SOURCE_FILES ${SOURCE_FILE})
+        else()
+            list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${CUDA_SOURCE_FILE}")
+        endif ()
+    endforeach()
+
+    set(IMAGE_CUDA_SOURCES ${IMAGE_CUDA_SOURCES} ${CUDA_SOURCE_FILES} PARENT_SCOPE)
+endmacro(IMAGE_ADD_CUDA_SOURCES)
+
+#生成测试文件的可执行程序
+macro(IMAGE_ADD_TEST TARGET_NAME)
+    if(TESTS_ENABLED)
+        add_executable(${TARGET_NAME} ${ARGN})
+        target_link_libraries(${TARGET_NAME} ${Boost_LIBRARIES})
+        set_target_properties(${TARGRT_NAME} PROPERTIES FOLDER
+            ${IMAGE_SOURCE_DIR}/bin)
+        add_test("${IMAGE_SOURCE_DIR}/bin/${TARGET_NAME}" ${TARGET_NAME})
+        if(IS_MSVC)
+            install(TARGETS ${TARGET_NAME} DESTINATION bin/)
+        endif()
+    endif()
+endmacro(IMAGE_ADD_TEST)
