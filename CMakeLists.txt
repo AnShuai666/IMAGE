@@ -41,7 +41,7 @@ configure_file(
         "${PROJECT_SOURCE_DIR}/cmakemodule/IMAGEConfigVeision.cmake" @ONLY
 )
 
-set(MATH_DIR /home/as/MATH/cmakemodule)
+
 find_package(MATH REQUIRED)
 message(${MATH_FOUND})
 message(${MATH_INCLUDE_DIR})
