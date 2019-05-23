@@ -43,9 +43,9 @@ configure_file(
 
 
 find_package(MATH REQUIRED)
-message(${MATH_FOUND})
-message(${MATH_INCLUDE_DIR})
-message(${MATH_LIBRARIES})
+message(STATUS ${MATH_FOUND})
+message(STATUS ${MATH_INCLUDE_DIR})
+message(STATUS ${MATH_LIBS})
 
 add_subdirectory(examples)
 add_subdirectory(src)
