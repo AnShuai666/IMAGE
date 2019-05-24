@@ -20,7 +20,8 @@ rm -drf $INSTALL_DIR/share/IMAGE
 
 
 
-mkdir build
+#mkdir build
+#chmod 777 -r build
 
 cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}

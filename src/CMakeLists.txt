@@ -1,5 +1,7 @@
 include_directories(../../MATH/include)
 include_directories(../include)
+include_directories(${MATH_INCLUDE_DIRS})
+link_directories(${MATH_LIBRARY_DIRS})
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 find_package(PNG REQUIRED)
@@ -26,6 +28,8 @@ set(HEADERS
         ${PROJECT_SOURCE_DIR}/include/IMAGE/visualizer.hpp
         ${PROJECT_SOURCE_DIR}/include/IMAGE/nearest_neighbor.hpp
         ${PROJECT_SOURCE_DIR}/include/features2d/features2d.h
+        ${PROJECT_SOURCE_DIR}/include/IMAGE/matching.h
+        ${PROJECT_SOURCE_DIR}/include/IMAGE/image_pyramid.h
         )
 
 set(SOURCE_FILES
@@ -36,7 +40,10 @@ set(SOURCE_FILES
         image_io.cpp
         #sift.cpp
         image_process.cpp
-        features2d/Fast.cpp)
+        features2d/Fast.cpp
+        matching.cpp
+        image_pyramid.cpp
+        )
 
 link_directories(/home/doing/gitHub/MATH/lib)
 
@@ -45,6 +52,11 @@ add_library(image SHARED ${HEADERS} ${SOURCE_FILES})
 target_link_libraries(image ${PNG_LIBRARIES} ${JPEG_LIBRARIES} )
 target_link_libraries(image matrix_LU)
 
+install(TARGETS image
+        LIBRARY DESTINATION lib/IMAGE
+        ARCHIVE DESTINATION lib/IMAGE
+        RUNTIME DESTINATION bin/IMAGE
+        )
 if (CUDA_FOUND)
     add_subdirectory(cuda_src)
 endif ()
