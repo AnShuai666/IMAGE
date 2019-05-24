@@ -53,7 +53,17 @@ namespace features2d
 typedef image::Image<float>        Mat;
 typedef image::Image<float>        InputArray;
 typedef image::Image<float>        OutputArray;
+typedef image::Image<unsigned char>        UCMat;
+typedef image::Image<unsigned char>        UCInputArray;
+typedef image::Image<unsigned char>        UCOutputArray;
 static const float EPSILON =1.192093e-007;
+
+
+float  Atan(float y,float x);//输入一个2维向量，计算这个向量的方向，以度为单位（范围是0度---360度）。
+int  Round(double x);//返回跟参数最接近的整数值；
+int  Floor(double x);//返回不大于参数的最大整数值；
+int  Ceil(double x);//返回不小于参数的最小整数值。
+
 class  KeyPoint
 {
         public:
@@ -107,7 +117,9 @@ public:
      */
 
     virtual void detect( InputArray& image,std::vector<KeyPoint>& keypoints,
-                                 InputArray& mask );
+                         UCInputArray& mask );
+    virtual void detect( UCInputArray& image,std::vector<KeyPoint>& keypoints,
+                         UCInputArray& mask );
 
  /** @brief Computes the descriptors for a set of keypoints detected in an image (first variant) or image set
     (second variant).
@@ -120,22 +132,38 @@ public:
     descriptors computed for a keypoints[i]. Row j is the keypoints (or keypoints[i]) is the
     descriptor for keypoint j-th keypoint.
      */
-     virtual void compute( InputArray& image,
+    virtual void compute( InputArray& image,
                                   std::vector<KeyPoint>& keypoints,
                                   OutputArray& descriptors );
+    virtual void compute( UCInputArray& image,
+                          std::vector<KeyPoint>& keypoints,
+                          OutputArray& descriptors );
 
 
 
 
     /** Detects keypoints and computes the descriptors */
-     virtual void detectAndCompute( InputArray& image, InputArray& mask,
+     virtual void detectAndCompute( InputArray& image, UCInputArray& mask,
                                            std::vector<KeyPoint>& keypoints,
-                                           OutputArray& descriptors,
-                                           bool useProvidedKeypoints=false );
+                                           OutputArray& descriptors);
+    /** Detects keypoints and computes the descriptors */
+    virtual void detectAndCompute( UCInputArray& image, UCInputArray& mask,
+                                   std::vector<KeyPoint>& keypoints,
+                                   OutputArray& descriptors);
 
      virtual int descriptorSize() const;
      virtual int descriptorType() const;
      virtual int defaultNorm() const;
+
+private:
+    virtual void detectOrCompute( InputArray& image, UCInputArray& mask,
+                                   std::vector<KeyPoint>& keypoints,
+                                   OutputArray& descriptors,
+                                   bool useProvidedKeypoints=false );
+    virtual void detectOrCompute( UCInputArray& image, UCInputArray& mask,
+                                  std::vector<KeyPoint>& keypoints,
+                                  OutputArray& descriptors,
+                                  bool useProvidedKeypoints=false );
 };
 
 /** @brief Class for extracting keypoints and computing descriptors using the Scale Invariant Feature Transform
@@ -255,7 +283,7 @@ class  KeyPointsFilter
         /*
          * Remove keypoints from some image by mask for pixels of this image.
          */
-        static void runByPixelsMask( std::vector<KeyPoint>& keypoints, const Mat& mask );
+        static void runByPixelsMask( std::vector<KeyPoint>& keypoints, const UCMat& mask );
         /*
          * Remove duplicated keypoints.
          */
@@ -269,6 +297,105 @@ class  KeyPointsFilter
          * Retain the specified number of the best keypoints (according to the response)
          */
         static void retainBest( std::vector<KeyPoint>& keypoints, int npoints );
+};
+
+
+
+class  FastFeatureDetector : public Feature2D
+{
+    public:
+    enum
+    {
+        TYPE_5_8 = 0, TYPE_7_12 = 1, TYPE_9_16 = 2,
+        THRESHOLD = 10000, NONMAX_SUPPRESSION=10001, FAST_N=10002,
+    };
+
+    static shared_ptr<FastFeatureDetector> create( int threshold=10,
+                                                    bool nonmaxSuppression=true,
+                                                    int type=FastFeatureDetector::TYPE_9_16 );
+
+    virtual void setThreshold(int threshold) = 0;
+    virtual int getThreshold() const = 0;
+
+    virtual void setNonmaxSuppression(bool f) = 0;
+    virtual bool getNonmaxSuppression() const = 0;
+
+    virtual void setType(int type) = 0;
+    virtual int getType() const = 0;
+};
+
+/** @brief Class implementing the ORB (*oriented BRIEF*) keypoint detector and descriptor extractor
+
+described in @cite RRKB11 . The algorithm uses FAST in pyramids to detect stable keypoints, selects
+the strongest features using FAST or Harris response, finds their orientation using first-order
+moments and computes the descriptors using BRIEF (where the coordinates of random point pairs (or
+k-tuples) are rotated according to the measured orientation).
+ */
+class  ORB : public Feature2D
+{
+    public:
+    enum { kBytes = 32, HARRIS_SCORE=0, FAST_SCORE=1 };
+
+    /** @brief The ORB constructor
+
+    @param nfeatures The maximum number of features to retain.
+    @param scaleFactor Pyramid decimation ratio, greater than 1. scaleFactor==2 means the classical
+    pyramid, where each next level has 4x less pixels than the previous, but such a big scale factor
+    will degrade feature matching scores dramatically. On the other hand, too close to 1 scale factor
+    will mean that to cover certain scale range you will need more pyramid levels and so the speed
+    will suffer.
+    @param nlevels The number of pyramid levels. The smallest level will have linear size equal to
+    input_image_linear_size/pow(scaleFactor, nlevels - firstLevel).
+    @param edgeThreshold This is size of the border where the features are not detected. It should
+    roughly match the patchSize parameter.
+    @param firstLevel The level of pyramid to put source image to. Previous layers are filled
+    with upscaled source image.
+    @param WTA_K The number of points that produce each element of the oriented BRIEF descriptor. The
+    default value 2 means the BRIEF where we take a random point pair and compare their brightnesses,
+    so we get 0/1 response. Other possible values are 3 and 4. For example, 3 means that we take 3
+    random points (of course, those point coordinates are random, but they are generated from the
+    pre-defined seed, so each element of BRIEF descriptor is computed deterministically from the pixel
+    rectangle), find point of maximum brightness and output index of the winner (0, 1 or 2). Such
+    output will occupy 2 bits, and therefore it will need a special variant of Hamming distance,
+    denoted as NORM_HAMMING2 (2 bits per bin). When WTA_K=4, we take 4 random points to compute each
+    bin (that will also occupy 2 bits with possible values 0, 1, 2 or 3).
+    @param scoreType The default HARRIS_SCORE means that Harris algorithm is used to rank features
+    (the score is written to KeyPoint::score and is used to retain best nfeatures features);
+    FAST_SCORE is alternative value of the parameter that produces slightly less stable keypoints,
+    but it is a little faster to compute.
+    @param patchSize size of the patch used by the oriented BRIEF descriptor. Of course, on smaller
+    pyramid layers the perceived image area covered by a feature will be larger.
+    @param fastThreshold
+     */
+    static shared_ptr<ORB> create(int nfeatures=500, float scaleFactor=1.2f, int nlevels=8, int edgeThreshold=31,
+                                   int firstLevel=0, int scoreType=ORB::HARRIS_SCORE, int fastThreshold=20);
+
+//    virtual void setMaxFeatures(int maxFeatures) = 0;
+//    virtual int getMaxFeatures() const = 0;
+//
+//    virtual void setScaleFactor(double scaleFactor) = 0;
+//    virtual double getScaleFactor() const = 0;
+//
+//    virtual void setNLevels(int nlevels) = 0;
+//    virtual int getNLevels() const = 0;
+//
+//    virtual void setEdgeThreshold(int edgeThreshold) = 0;
+//    virtual int getEdgeThreshold() const = 0;
+//
+//    virtual void setFirstLevel(int firstLevel) = 0;
+//    virtual int getFirstLevel() const = 0;
+//
+//    virtual void setWTA_K(int wta_k) = 0;
+//    virtual int getWTA_K() const = 0;
+//
+//    virtual void setScoreType(int scoreType) = 0;
+//    virtual int getScoreType() const = 0;
+//
+//    virtual void setPatchSize(int patchSize) = 0;
+//    virtual int getPatchSize() const = 0;
+//
+//    virtual void setFastThreshold(int fastThreshold) = 0;
+//    virtual int getFastThreshold() const = 0;
 };
 
 }

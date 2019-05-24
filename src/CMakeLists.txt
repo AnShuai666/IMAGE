@@ -25,17 +25,18 @@ set(HEADERS
         ${PROJECT_SOURCE_DIR}/include/timer.h
         ${PROJECT_SOURCE_DIR}/include/IMAGE/visualizer.hpp
         ${PROJECT_SOURCE_DIR}/include/IMAGE/nearest_neighbor.hpp
-        ${PROJECT_SOURCE_DIR}/include/features2d/features2d.hpp
+        ${PROJECT_SOURCE_DIR}/include/features2d/features2d.h
         )
 
 set(SOURCE_FILES
         features2d/sift.cpp
+        features2d/ORB.cpp
         features2d/feature2d.cpp
         define.cpp
         image_io.cpp
         #sift.cpp
         image_process.cpp
-        )
+        features2d/Fast.cpp)
 
 link_directories(/home/doing/gitHub/MATH/lib)
 
@@ -43,7 +44,6 @@ add_library(image SHARED ${HEADERS} ${SOURCE_FILES})
 
 target_link_libraries(image ${PNG_LIBRARIES} ${JPEG_LIBRARIES} )
 target_link_libraries(image matrix_LU)
-target_link_libraries(image ${PNG_LIBRARIES} ${JPEG_LIBRARIES} )
 
 if (CUDA_FOUND)
     add_subdirectory(cuda_src)

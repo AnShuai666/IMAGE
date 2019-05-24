@@ -84,7 +84,7 @@
 //}
 //
 #include <flann/flann.hpp>
-#include "features2d/features2d.hpp"
+#include "features2d/features2d.h"
 #include "IMAGE/image_io.h"
 #include "timer.h"
 #include <iostream>
@@ -102,11 +102,11 @@ void unpack(const int kptoctave, int& octave, int& layer, float& scale)
 }
 int main()
 {
-
+    image::ByteImage::Ptr test=image::ByteImage::create(2,2,3);
     image::ByteImage::Ptr image=make_shared<ByteImage>();
     image::ByteImage::Ptr image2=make_shared<ByteImage>();
-    std::string image_filename2 = "/home/doing/box.jpg";
-    std::string image_filename = "/home/doing/box2.jpg";
+    std::string image_filename2 = "/home/doing/lena.jpg";
+    std::string image_filename = "/home/doing/lena2.jpg";
 #define USECV 0
 #if USECV
     cv::Ptr<cv::Feature2D> cvsift = cv::xfeatures2d::SIFT::create();
@@ -141,45 +141,40 @@ int main()
     Mat* img_gray2=(Mat*)(img_gray_ptr2.get());
 
 
-
-
+    shared_ptr<features2d::Feature2D> orb = features2d :: ORB :: create();
     shared_ptr<features2d::Feature2D> sift = features2d :: SIFT :: create();
     vector<features2d::KeyPoint> keyPoint,keyPoint2;
     Mat descriptors,descriptors2;
-    Mat mask;
-    sift->detect(*img_gray,keyPoint,mask);
-//    for(int i=0;i<keyPoint.size();i++)
-//    {
-//        cv::KeyPoint pt;
-//        pt.pt.x=keyPoint[i].pt.x;
-//        pt.pt.y=keyPoint[i].pt.y;
-//        pt.response=keyPoint[i].response;
-//        pt.angle=keyPoint[i].angle;
-//        pt.size=keyPoint[i].size;
-//        pt.octave=keyPoint[i].octave;
-//        pt.class_id=keyPoint[i].class_id;
-//        cvkeyPoint.push_back(pt);
-//    }
-    descriptors.resize(128,keyPoint.size(),1);
-    sift->compute(*img_gray,keyPoint,descriptors);
-
-    sift->detect(*img_gray2,keyPoint2,mask);
-//    for(int i=0;i<keyPoint2.size();i++)
-//    {
-//        cv::KeyPoint pt;
-//        pt.pt.x=keyPoint2[i].pt.x;
-//        pt.pt.y=keyPoint2[i].pt.y;
-//        pt.response=keyPoint2[i].response;
-//        pt.angle=keyPoint2[i].angle;
-//        pt.size=keyPoint2[i].size;
-//        pt.octave=keyPoint2[i].octave;
-//        pt.class_id=keyPoint2[i].class_id;
-//        cvkeyPoint2.push_back(pt);
-//    }
-    descriptors2.resize(128,keyPoint2.size(),1);
-    sift->compute(*img_gray2,keyPoint2,descriptors2);
+    UCMat mask;
+    //orb->detect(*image_gray,keyPoint,mask);
+    //orb->compute(*image_gray,keyPoint,descriptors);
+    orb->detectAndCompute(*image_gray,mask,keyPoint,descriptors);
+    //sift->detectAndCompute(*img_gray,mask,keyPoint,descriptors);
+    //orb->detect(*image_gray2,keyPoint2,mask);
+    //orb->compute(*image_gray,keyPoint2,descriptors2);
+    orb->detectAndCompute(*image_gray2,mask,keyPoint2,descriptors2);
+    //sift->detectAndCompute(*img_gray2,mask,keyPoint2,descriptors2);
     cout<<keyPoint.size()<<endl;
     cout<<keyPoint2.size()<<endl;
+    image::Visualizer<uint8_t> sift_vis;
+    image::Keypoints keypoints;
+    float angle=0;
+    for(int i=0;i<keyPoint.size();i++)
+    {
+        image::KeypointVis pt;
+        pt.x=keyPoint[i].pt.x;
+        pt.y=keyPoint[i].pt.y;
+        pt.orientation=keyPoint[i].angle;
+        //cout<<pt.orientation<<endl;
+        angle+=pt.orientation;
+        pt.radius=keyPoint[i].response*3000;
+        keypoints.push_back(pt);
+    }
+    cout<<angle/keyPoint.size()<<endl;
+    image::ByteImage::Ptr image_out;
+    image_out = sift_vis.draw_keypoints(image,keypoints,image::RADIUS_CIRCLE_ORIENTATION);
+    std::string image_out_name = "result_sift1.png";
+    image::save_image(image,image_out_name);
 #if USECV
 
     float *data=new float[keyPoint.size()*2];
@@ -232,35 +227,22 @@ int main()
             res->at(offset2+image->width()*image->channels()+j)=image2->at(offset+j);
         }
     }
-    image::Visualizer<uint8_t> sift_vis;
+
     int num=0;
     for(int i=0;i<keyPoint2.size();i++)
     {
         uint8_t color[3]={(uint8_t)(rand()%255),(uint8_t)(rand()%255),(uint8_t)(rand()%255)};
-        if(dists[i][0]<min_dist*0.3) {
+        if(dists[i][0]<min_dist*0.5) {
             sift_vis.draw_line(*res, keyPoint[indices[i][0]].pt.x, keyPoint[indices[i][0]].pt.y,
                                keyPoint2[i].pt.x + image->width(), keyPoint2[i].pt.y, color);
             num++;
         }
     }
     cout<<num<<endl;
-    image::Keypoints keypoints;
-    for(int i=0;i<keyPoint.size();i++)
-    {
-        image::KeypointVis pt;
-        pt.x=keyPoint[i].pt.x;
-        pt.y=keyPoint[i].pt.y;
-        pt.orientation=keyPoint[i].angle;
-        pt.radius=keyPoint[i].response*300;
-        keypoints.push_back(pt);
-    }
-    image::ByteImage::Ptr image_out;
-    image_out = sift_vis.draw_keypoints(image,keypoints,image::RADIUS_CIRCLE_ORIENTATION);
+
     //保存图像 还需要重载
-    std::string image_out_name = "result_sift4.png";
+    image_out_name = "result_sift3.png";
     std::cout<<"保存图像: "<<std::endl;
     image::save_image(res,image_out_name);
-    image_out_name = "result_sift1.png";
-    image::save_image(image,image_out_name);
     return 0;
 }

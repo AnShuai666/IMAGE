@@ -41,20 +41,50 @@
 //M*/
 
 
-#include "features2d/features2d.hpp"
+#include "features2d/features2d.h"
 #include <vector>
 using namespace std;
 namespace features2d
 {
-inline
+float  Atan(float y,float x){
+    const float PI=3.1415926535897932384626433832795;
+    //反正切的角度等于X轴与通过原点和给定坐标点(x, y)的直线之间的夹角。
+    // 结果为正表示从X轴逆时针旋转的角度，结果为负表示从X轴顺时针旋转的角度
+    float angle_pi=std::atan2(y,x);
+    float angle=angle_pi/PI*180.f;
+    if(angle<0)
+        angle=360+angle;
+    return angle;
+}
+int  Round(double x){
+    if(x<0)
+        x-=0.5;
+    if(x>0)
+        x+=0.5;
+    return (int)x;
+}
+int  Floor(double x){
+    if((x-Round(x))<EPSILON)
+        return Round(x);
+    if(x<0)
+        x-=1;
+    return (int)x;
+}
+int  Ceil(double x){
+    if((x-Round(x))<EPSILON)
+        return Round(x);
+    if(x>0)
+        x+=1;
+    return (int)x;
+}
 KeyPoint::KeyPoint()
         : pt(0,0), size(0), angle(-1), response(0), octave(0), class_id(-1) {}
 
-inline
+
 KeyPoint::KeyPoint(Point2f _pt, float _size, float _angle, float _response, int _octave, int _class_id)
         : pt(_pt), size(_size), angle(_angle), response(_response), octave(_octave), class_id(_class_id) {}
 
-inline
+
 KeyPoint::KeyPoint(float x, float y, float _size, float _angle, float _response, int _octave, int _class_id)
         : pt(x, y), size(_size), angle(_angle), response(_response), octave(_octave), class_id(_class_id) {}
 
@@ -71,15 +101,43 @@ Feature2D::~Feature2D() {}
  */
 void Feature2D::detect( InputArray& image,
                         std::vector<KeyPoint>& keypoints,
-                        InputArray& mask )
+                        UCInputArray& mask )
 {
     if( image.empty() )
     {
         keypoints.clear();
         return;
     }
+    if(!mask.empty())
+    {
+        if(mask.rows()!=image.rows()
+        ||mask.cols()!=image.cols()
+        ||mask.channels()!=1){
+            throw("Mask size error\n");
+        }
+    }
     Mat des;
-    detectAndCompute(image, mask, keypoints, des, false);
+    detectOrCompute(image, mask, keypoints, des, false);
+}
+void Feature2D::detect( UCInputArray& image,
+                        std::vector<KeyPoint>& keypoints,
+                        UCInputArray& mask )
+{
+    if( image.empty() )
+    {
+        keypoints.clear();
+        return;
+    }
+    if(!mask.empty())
+    {
+        if(mask.rows()!=image.rows()
+           ||mask.cols()!=image.cols()
+           ||mask.channels()!=1){
+            throw("Mask size error\n");
+        }
+    }
+    Mat des;
+    detectOrCompute(image, mask, keypoints, des, false);
 }
 /*
  * Compute the descriptors for a set of keypoints in an image.
@@ -90,25 +148,96 @@ void Feature2D::detect( InputArray& image,
 void Feature2D::compute( InputArray& image,
                          std::vector<KeyPoint>& keypoints,
                          OutputArray& descriptors ){
+    if( image.empty()||keypoints.empty())
+    {
+        descriptors.release();
+        return;
+    }
+    if(descriptors.empty())
+    {
+        int dsize = descriptorSize();
+        descriptors.resize(dsize, (int)keypoints.size(), 1);
+    }
+    UCMat mask;
+    detectOrCompute(image, mask, keypoints, descriptors, true);
+}
+void Feature2D::compute( UCInputArray& image,
+                         std::vector<KeyPoint>& keypoints,
+                         OutputArray& descriptors ){
+    if( image.empty()||keypoints.empty())
+    {
+        descriptors.release();
+        return;
+    }
+    if(descriptors.empty())
+    {
+        int dsize = descriptorSize();
+        descriptors.resize(dsize, (int)keypoints.size(), 1);
+    }
+    UCMat mask;
+    detectOrCompute(image, mask, keypoints, descriptors, true);
+}
+void Feature2D::detectAndCompute( InputArray& image, UCInputArray& mask,
+                                std::vector<KeyPoint>& keypoints,
+                                OutputArray& descriptors){
     if( image.empty() )
     {
         descriptors.release();
         return;
     }
-    Mat mask;
-    detectAndCompute(image, mask, keypoints, descriptors, true);
+    if(descriptors.empty())//descriptors.empty() 作为标志位判断是否计算描述子
+    {
+        int dsize = descriptorSize();
+        descriptors.resize(dsize, 1, 1);
+    }
+    if(!mask.empty())
+    {
+        if(mask.rows()!=image.rows()
+           ||mask.cols()!=image.cols()
+           ||mask.channels()!=1){
+            throw("Mask size error\n");
+        }
+    }
+    detectOrCompute(image, mask, keypoints, descriptors, false);
 }
-
+void Feature2D::detectAndCompute( UCInputArray& image, UCInputArray& mask,
+                                  std::vector<KeyPoint>& keypoints,
+                                  OutputArray& descriptors){
+    if( image.empty() )
+    {
+        descriptors.release();
+        return;
+    }
+    if(descriptors.empty())//descriptors.empty() 作为标志位判断是否计算描述子
+    {
+        int dsize = descriptorSize();
+        descriptors.resize(dsize, 1, 1);
+    }
+    if(!mask.empty())
+    {
+        if(mask.rows()!=image.rows()
+           ||mask.cols()!=image.cols()
+           ||mask.channels()!=1){
+            throw("Mask size error\n");
+        }
+    }
+    detectOrCompute(image, mask, keypoints, descriptors, false);
+}
 /* Detects keypoints and computes the descriptors */
-void Feature2D::detectAndCompute( InputArray&, InputArray&,
+void Feature2D::detectOrCompute( InputArray&, UCInputArray&,
                                   std::vector<KeyPoint>&,
                                   OutputArray&,
-                                  bool )
-{
+                                  bool){
 
     throw("Error::StsNotImplemented");
 }
+void Feature2D::detectOrCompute( UCInputArray&, UCInputArray&,
+                                 std::vector<KeyPoint>&,
+                                 OutputArray&,
+                                 bool){
 
+    throw("Error::StsNotImplemented");
+}
 
 int Feature2D::descriptorSize() const
 {
@@ -125,6 +254,8 @@ int Feature2D::defaultNorm() const
     int tp = descriptorType();
     return tp == 2;
 }
+
+
 
 
 struct KeypointResponseGreaterThanThreshold
@@ -226,18 +357,18 @@ void KeyPointsFilter::runByKeypointSize( std::vector<KeyPoint>& keypoints, float
 class MaskPredicate
 {
 public:
-    MaskPredicate( const Mat& _mask ) : mask(_mask) {}
+    MaskPredicate( const UCMat& _mask ) : mask(_mask) {}
     bool operator() (const KeyPoint& key_pt) const
     {
-        return mask.at( (int)(key_pt.pt.y + 0.5f), (int)(key_pt.pt.x + 0.5f),0 ) == 0;
+        return mask.at( (int)(key_pt.pt.x + 0.5f), (int)(key_pt.pt.y + 0.5f),0 ) == 0;
     }
 
 private:
-    const Mat mask;
+    const UCMat mask;
     MaskPredicate& operator=(const MaskPredicate&);
 };
 
-void KeyPointsFilter::runByPixelsMask( std::vector<KeyPoint>& keypoints, const Mat& mask )
+void KeyPointsFilter::runByPixelsMask( std::vector<KeyPoint>& keypoints, const UCMat& mask )
 {
 
     if( mask.empty() )

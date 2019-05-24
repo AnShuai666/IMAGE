@@ -102,7 +102,7 @@
 //    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \**********************************************************************************************/
 
-#include "features2d/features2d.hpp"
+#include "features2d/features2d.h"
 #include <iostream>
 #include <stdarg.h>
 #include <Matrix/matrix.hpp>
@@ -117,30 +117,7 @@ namespace features2d
 
  The class implements SIFT algorithm by D. Lowe.
  */
-float inline Atan(float y,float x){
-    const float PI=3.1415926535897932384626433832795;
-    //反正切的角度等于X轴与通过原点和给定坐标点(x, y)的直线之间的夹角。
-    // 结果为正表示从X轴逆时针旋转的角度，结果为负表示从X轴顺时针旋转的角度
-    float angle_pi=std::atan2(y,x);
-    float angle=angle_pi/PI*180.f;
-    if(angle<0)
-        angle=360+angle;
-    return angle;
-}
-int inline Ceil(double x){
-    int round=(int)(x+0.5);
-    return round;
-}
-int inline Round(double x){
-    if(x<0)
-        x-=0.5;
-    if(x>0)
-        x+=0.5;
-    return (int)x;
-}
-int inline Floor(double x){
-    return (int)x;
-}
+
 class SIFT_Impl : public SIFT
 {
 public:
@@ -157,18 +134,18 @@ public:
     //! returns the default norm type
     int defaultNorm() const ;
 
-    //! finds the keypoints and computes descriptors for them using SIFT algorithm.
-    //! Optionally it can compute descriptors for the user-provided keypoints
-    void detectAndCompute(InputArray& img, InputArray& mask,
-                    std::vector<KeyPoint>& keypoints,
-                    OutputArray& descriptors,
-                    bool useProvidedKeypoints = false) ;
 
+private:
     void buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyr, int nOctaves ) const;
     void buildDoGPyramid( const std::vector<Mat>& pyr, std::vector<Mat>& dogpyr ) const;
     void findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const std::vector<Mat>& dog_pyr,
-                               std::vector<KeyPoint>& keypoints ) const;
-
+                                std::vector<KeyPoint>& keypoints ) const;
+    //! finds the keypoints and computes descriptors for them using SIFT algorithm.
+    //! Optionally it can compute descriptors for the user-provided keypoints
+    void detectOrCompute(InputArray& img, UCInputArray& mask,
+                          std::vector<KeyPoint>& keypoints,
+                          OutputArray& descriptors,
+                          bool useProvidedKeypoints = false) ;
 protected:
      int nfeatures;
      int nOctaveLayers;
@@ -252,10 +229,12 @@ static Mat createInitialImage(const Mat& gray_fpt, bool doubleImageSize, float s
         Mat dbl;
         //resize(gray_fpt, dbl, gray_fpt.cols*2, gray_fpt.rows*2);
         image::Image_resize(gray_fpt,dbl,gray_fpt.cols()*2, gray_fpt.rows()*2);
+        //Resize(gray_fpt,dbl,gray_fpt.cols()*2, gray_fpt.rows()*2);
 
         //GaussianBlur(dbl, dbl, Size(), sig_diff, sig_diff);
         Mat blur_dbl;
         image::blur_gaussian<float>(&dbl,&blur_dbl,sig_diff);
+        //GaussBulr(dbl,blur_dbl,sig_diff);
         return blur_dbl;
     }
     else
@@ -299,12 +278,14 @@ void SIFT_Impl::buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyr, in
                 const Mat& src = pyr[(o-1)*(nOctaveLayers + 3) + nOctaveLayers];
                 //resize(src, dst, Size(src.cols/2, src.rows/2),0, 0, INTER_NEAREST);
                 image::Image_resize(src,dst,src.cols()/2, src.rows()/2);
+                //Resize(src,dst,src.cols()/2, src.rows()/2);
             }
             else
             {
                 const Mat& src = pyr[o*(nOctaveLayers + 3) + i-1];
                 //GaussianBlur(src, dst, Size(), sig[i], sig[i]);
                 image::blur_gaussian<float>(&src,&dst,sig[i]);
+                //GaussBulr(src,dst,sig[i]);
             }
         }
     }
@@ -358,7 +339,7 @@ void SIFT_Impl::buildDoGPyramid( const std::vector<Mat>& gpyr, std::vector<Mat>&
 static float calcOrientationHist( const Mat& img, Point pt, int radius,
                                   float sigma, float* hist, int n )
 {
-    int i, j, k, len = (radius*2+1)*(radius*2+1);
+    int i=0, j=0, k=0, len = (radius*2+1)*(radius*2+1);
 
     float expf_scale = -1.f/(2.f * sigma * sigma);
     float* buf=new float[len*5 + n+4];
@@ -368,37 +349,31 @@ static float calcOrientationHist( const Mat& img, Point pt, int radius,
     for( i = 0; i < n; i++ )
         temphist[i] = 0.f;
 
-    for( i = -radius, k = 0; i <= radius; i++ )
+    int y_begain=max(pt.y-radius,1);
+    int y_end=min(pt.y+radius,img.rows()-2);
+    int x_begain=max(pt.x-radius,1);
+    int x_end=min(pt.x+radius,img.cols()-2);
+    for( int y = y_begain; y<=y_end; y++ )
     {
-        int y = pt.y + i;
-        if( y <= 0 || y >= img.rows() - 1 )
-            continue;
-        for( j = -radius; j <= radius; j++ )
+        const float *prev=img.ptr(y-1);
+        const float *cur=img.ptr(y);
+        const float *next=img.ptr(y+1);
+        for( int x=x_begain;x<=x_end;x++)
         {
-            int x = pt.x + j;
-            if( x <= 0 || x >= img.cols() - 1 )
-                continue;
-
-            float dx = (float)(img.at(x+1,y, 0) - img.at(x-1,y, 0));
-            //TODO::
-            //float dy=(float)(img.at(x,y+1, 0) - img.at(x,y-1, 0));
-            float dy = (float)(img.at(x,y-1, 0) - img.at(x,y+1, 0));
-
+            float dx=cur[x+1]-cur[x-1];
+            float dy=prev[x]-next[x];
+            i=abs(x-pt.x);
+            j=abs(y-pt.y);
             X[k] = dx; Y[k] = dy; W[k] = (i*i + j*j)*expf_scale;
             k++;
         }
     }
-
     len = k;
 
     // compute gradient values, orientations and the weights over the pixel neighborhood
     //mag=sqrt(dx*dx+dy*dy)
     //orientation=arctan(dy/dx)
     //weight=e^(-(i*i+j*j)/(2*(1.5sig)^2)
-
-    //cv::hal::exp32f(W, W, len);
-    //cv::hal::fastAtan2(Y, X, Ori, len, true);
-    //cv::hal::magnitude32f(X, Y, Mag, len);
     k = 0;
     for(;k<len;k++){
         W[k]=exp(W[k]);
@@ -455,7 +430,6 @@ static bool adjustLocalExtrema( const std::vector<Mat>& dog_pyr, KeyPoint& kpt, 
 
     float xi=0, xr=0, xc=0, contr=0;
     int i = 0;
-
     for( ; i < SIFT_MAX_INTERP_STEPS; i++ )
     {
         int idx = octv*(nOctaveLayers+2) + layer;
@@ -635,7 +609,7 @@ public:
                                                      SIFT_ORI_SIG_FCTR * scl_octv,
                                                      hist, n);
                     float mag_thr = (float)(omax * SIFT_ORI_PEAK_RATIO);
-                    const float FLT_EPSILON =1.192093e-007;
+                   // const float FLT_EPSILON =1.192093e-007;
                     for( int j = 0; j < n; j++ )
                     {
                         int l = j > 0 ? j - 1 : n - 1;
@@ -646,7 +620,7 @@ public:
                             float bin = j + 0.5f * (hist[l]-hist[r2]) / (hist[l] - 2*hist[j] + hist[r2]);
                             bin = bin < 0 ? n + bin : bin >= n ? bin - n : bin;
                             kpt.angle = 360.f - (float)((360.f/n) * bin);
-                            if(std::abs(kpt.angle - 360.f) < FLT_EPSILON)
+                            if(std::abs(kpt.angle - 360.f) < EPSILON)
                                 kpt.angle = 0.f;
                             {
                                 tls_kpts.push_back(kpt);
@@ -701,11 +675,6 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
             computer(o,i);
         }
 
-    //std::vector<std::vector<KeyPoint>*> kpt_vecs;
-    //tls_kpts_struct.gather(kpt_vecs);
-    //for (size_t i = 0; i < kpt_vecs.size(); ++i) {
-     //   keypoints.insert(keypoints.end(), kpt_vecs[i]->begin(), kpt_vecs[i]->end());
-    //}
     keypoints.insert(keypoints.end(),tls_kpts_struct.begin(),tls_kpts_struct.end());
 }
 
@@ -741,29 +710,37 @@ static void calcSIFTDescriptor( const Mat& img, Point2f ptf, float ori, float sc
                 hist[(i*(d+2) + j)*(n+2) + k] = 0.;
     }
 
-    for( i = -radius, k = 0; i <= radius; i++ )
-        for( j = -radius; j <= radius; j++ )
-        {
+    for( i = -radius, k = 0; i <= radius; i++ ) {
+        int r = pt.y + i;
+        if(r <= 1 || r >= rows - 1)
+            continue;
+        const float *prev = img.ptr(r - 1);
+        const float *cur=img.ptr(r);
+        const float *next=img.ptr(r+1);
+        for (j = -radius; j <= radius; j++) {
+            int c = pt.x + j;
+            if( c <= 1 || c >= cols - 1)
+                continue;
             // Calculate sample's histogram array coords rotated relative to ori.
             // Subtract 0.5 so samples that fall e.g. in the center of row 1 (i.e.
             // r_rot = 1.5) have full weight placed in row 1 after interpolation.
             float c_rot = j * cos_t - i * sin_t;
             float r_rot = j * sin_t + i * cos_t;
-            float rbin = r_rot + d/2 - 0.5f;
-            float cbin = c_rot + d/2 - 0.5f;
-            int r = pt.y + i, c = pt.x + j;
+            float rbin = r_rot + d / 2 - 0.5f;
+            float cbin = c_rot + d / 2 - 0.5f;
 
-            if( rbin > -1 && rbin < d && cbin > -1 && cbin < d &&
-                r > 0 && r < rows - 1 && c > 0 && c < cols - 1 )
-            {
-                float dx = (float)(img.at(c+1,r, 0) - img.at(c-1,r, 0));
-                float dy = (float)(img.at(c,r-1, 0) - img.at(c,r+1, 0));
-                X[k] = dx; Y[k] = dy; RBin[k] = rbin; CBin[k] = cbin;
-                W[k] = (c_rot * c_rot + r_rot * r_rot)*exp_scale;
+            if (rbin > -1 && rbin < d && cbin > -1 && cbin < d) {
+                float dx=cur[c+1]-cur[c-1];
+                float dy=prev[c]-next[c];
+                X[k] = dx;
+                Y[k] = dy;
+                RBin[k] = rbin;
+                CBin[k] = cbin;
+                W[k] = (c_rot * c_rot + r_rot * r_rot) * exp_scale;
                 k++;
             }
         }
-
+    }
     len = k;
     //cv::hal::fastAtan2(Y, X, Ori, len, true);
     //cv::hal::magnitude32f(X, Y, Mag, len);
@@ -923,7 +900,7 @@ static void calcSIFTDescriptor( const Mat& img, Point2f ptf, float ori, float sc
         nrm2 += dst[k]*dst[k];
 
 
-    const float FLT_EPSILON =1.192093e-007;
+
     float thr = std::sqrt(nrm2)*SIFT_DESCR_MAG_THR;
     i = 0, nrm2 = 0;
     for( ; i < len; i++ )
@@ -932,7 +909,7 @@ static void calcSIFTDescriptor( const Mat& img, Point2f ptf, float ori, float sc
         dst[i] = val;
         nrm2 += val*val;
     }
-    nrm2 = SIFT_INT_DESCR_FCTR/std::max(std::sqrt(nrm2), FLT_EPSILON);
+    nrm2 = SIFT_INT_DESCR_FCTR/std::max(std::sqrt(nrm2), EPSILON);
 
     k = 0;
     for( ; k < len; k++ )
@@ -962,7 +939,7 @@ public:
     {
 
         static const int d = SIFT_DESCR_WIDTH, n = SIFT_DESCR_HIST_BINS;
-        const float FLT_EPSILON =1.192093e-007;
+        //const float FLT_EPSILON =1.192093e-007;
         for ( int i = begin; i<end; i++ )
         {
             KeyPoint kpt = keypoints[i];
@@ -976,7 +953,7 @@ public:
             const Mat& img = gpyr[(octave - firstOctave)*(nOctaveLayers + 3) + layer];
 
             float angle = 360.f - kpt.angle;
-            if(std::abs(angle - 360.f) < FLT_EPSILON)
+            if(std::abs(angle - 360.f) < EPSILON)
                 angle = 0.f;
             calcSIFTDescriptor(img, ptf, angle, size*0.5f, d, n, descriptors.ptr((int)i));
         }
@@ -1023,7 +1000,7 @@ int SIFT_Impl::defaultNorm() const
 }
 
 
-void SIFT_Impl::detectAndCompute(InputArray& image, InputArray& mask,
+void SIFT_Impl::detectOrCompute(InputArray& image, UCInputArray& mask,
                       std::vector<KeyPoint>& keypoints,
                       OutputArray& _descriptors,
                       bool useProvidedKeypoints)
@@ -1068,24 +1045,24 @@ void SIFT_Impl::detectAndCompute(InputArray& image, InputArray& mask,
         throw("image too small to SIFT\n");
     }
 
-    //double t, tf = getTickFrequency();
-    //t = (double)getTickCount();
+    double t, tf = CLOCKS_PER_SEC;
+    t = (double)clock();
     buildGaussianPyramid(base, gpyr, nOctaves);
     buildDoGPyramid(gpyr, dogpyr);
 
-    //t = (double)getTickCount() - t;
-    //printf("pyramid construction time: %g\n", t*1000./tf);
+    t = (double)clock() - t;
+    printf("pyramid construction time: %g\n", t*1000./tf);
 
     if( !useProvidedKeypoints )
     {
-        //t = (double)getTickCount();
+        t = (double)clock();
         findScaleSpaceExtrema(gpyr, dogpyr, keypoints);
         KeyPointsFilter::removeDuplicatedSorted( keypoints );
 
         if( nfeatures > 0 )
             KeyPointsFilter::retainBest(keypoints, nfeatures);
-        //t = (double)getTickCount() - t;
-        //printf("keypoint detection time: %g\n", t*1000./tf);
+        t = (double)clock() - t;
+        printf("keypoint detection time: %g\n", t*1000./tf);
 
         if( firstOctave < 0 )
             for( size_t i = 0; i < keypoints.size(); i++ )
@@ -1100,22 +1077,16 @@ void SIFT_Impl::detectAndCompute(InputArray& image, InputArray& mask,
         if( !mask.empty() )
             KeyPointsFilter::runByPixelsMask( keypoints, mask );
     }
-    else
+    if( !_descriptors.empty())
     {
-        // filter keypoints by mask
-        //KeyPointsFilter::runByPixelsMask( keypoints, mask );
-    }
-
-    if( !_descriptors.empty() )
-    {
-        //t = (double)getTickCount();
+        t = (double)clock();
         int dsize = descriptorSize();
         _descriptors.resize(dsize, (int)keypoints.size(), 1);
 
 
         calcDescriptors(gpyr, keypoints, _descriptors, nOctaveLayers, firstOctave);
-        //t = (double)getTickCount() - t;
-        //printf("descriptor extraction time: %g\n", t*1000./tf);
+        t = (double)clock() - t;
+        printf("descriptor extraction time: %g\n", t*1000./tf);
     }
 }
 

@@ -134,15 +134,234 @@ void Image_resize(const Image<T>& src,Image<T>& dst,int width, int height,resize
         Image_resize_linear<T>(src,dst,width,height);
     }
 }
-/*
-*  @property   图像转换
-*  @func       将图像中位图转换为浮点图像，灰度值范围从[0-255]->[0.0,1.0]
-*  @param_in   image            待转换图像
-*  @return     FloatImage::Ptr  转换后的图像 原图不变，获得新图
-*/
-FloatImage::Ptr
-byte_to_float_image(ByteImage::ConstPtr image);
+enum threshold_type{
+            THRESH_BINARY=0,
+            THRESH_BINARY_INV,
+            THRESH_TRUNC,
+            THRESH_TOZERO,
+            THRESH_TOZERO_INV
+        };
+template <typename T>
+void Image_threshold(const Image<T>& src,Image<T>&dst,double thresh, double maxval, int type ){
+    if(src.channels()!=1){
+        throw("threshold channels num must be 1\n");
+    }
+    dst.resize(src.width(),src.height(),src.channels());
 
+    switch (type){
+        case THRESH_BINARY:
+            for(int y=0;y<src.rows();y++) {
+                T *dst_ptr = dst.ptr(y);
+                const T *src_ptr = src.ptr(y);
+                for (int x = 0; x < src.cols(); x++) {
+                    if (src_ptr[x] > thresh)
+                        dst_ptr[x] = maxval;
+                    else
+                        dst_ptr[x] = 0;
+                }
+            }
+            break;
+        case THRESH_BINARY_INV:
+            for(int y=0;y<src.rows();y++) {
+                T *dst_ptr = dst.ptr(y);
+                const T *src_ptr = src.ptr(y);
+                for (int x = 0; x < src.cols(); x++) {
+                    if (src_ptr[x] > thresh)
+                        dst_ptr[x] = 0;
+                    else
+                        dst_ptr[x] = maxval;
+                }
+            }
+            break;
+        case THRESH_TRUNC:
+            for(int y=0;y<src.rows();y++) {
+                T *dst_ptr = dst.ptr(y);
+                const T *src_ptr = src.ptr(y);
+                for (int x = 0; x < src.cols(); x++) {
+                    if (src_ptr[x] > thresh)
+                        dst_ptr[x] = thresh;
+                    else
+                        dst_ptr[x] = src_ptr[x];
+                }
+            }
+            break;
+        case THRESH_TOZERO:
+            for(int y=0;y<src.rows();y++) {
+                T *dst_ptr = dst.ptr(y);
+                const T *src_ptr = src.ptr(y);
+                for (int x = 0; x < src.cols(); x++) {
+                    if (src_ptr[x] > thresh)
+                        dst_ptr[x] = src_ptr[x];
+                    else
+                        dst_ptr[x] = 0;
+                }
+            }
+            break;
+        case THRESH_TOZERO_INV:
+            for(int y=0;y<src.rows();y++) {
+                T *dst_ptr = dst.ptr(y);
+                const T *src_ptr = src.ptr(y);
+                for (int x = 0; x < src.cols(); x++) {
+                    if (src_ptr[x] > thresh)
+                        dst_ptr[x] = 0;
+                    else
+                        dst_ptr[x] = src_ptr[x];
+                }
+            }
+            break;
+    }
+}
+template <typename T>
+void Image_threshold(Image<T>& src,Image<T>&dst,double thresh, double maxval, int type ){
+    if(src.channels()!=1){
+        throw("threshold channels num must be 1\n");
+    }
+    if(&src!=&dst)
+        dst.resize(src.width(),src.height(),src.channels());
+
+    switch (type){
+        case THRESH_BINARY:
+            for(int y=0;y<src.rows();y++) {
+                T *dst_ptr = dst.ptr(y);
+                const T *src_ptr = src.ptr(y);
+                for (int x = 0; x < src.cols(); x++) {
+                    if (src_ptr[x] > thresh)
+                        dst_ptr[x] = maxval;
+                    else
+                        dst_ptr[x] = 0;
+                }
+            }
+            break;
+        case THRESH_BINARY_INV:
+            for(int y=0;y<src.rows();y++) {
+                T *dst_ptr = dst.ptr(y);
+                const T *src_ptr = src.ptr(y);
+                for (int x = 0; x < src.cols(); x++) {
+                    if (src_ptr[x] > thresh)
+                        dst_ptr[x] = 0;
+                    else
+                        dst_ptr[x] = maxval;
+                }
+            }
+            break;
+        case THRESH_TRUNC:
+            for(int y=0;y<src.rows();y++) {
+                T *dst_ptr = dst.ptr(y);
+                const T *src_ptr = src.ptr(y);
+                for (int x = 0; x < src.cols(); x++) {
+                    if (src_ptr[x] > thresh)
+                        dst_ptr[x] = thresh;
+                    else
+                        dst_ptr[x] = src_ptr[x];
+                }
+            }
+            break;
+        case THRESH_TOZERO:
+            for(int y=0;y<src.rows();y++) {
+                T *dst_ptr = dst.ptr(y);
+                const T *src_ptr = src.ptr(y);
+                for (int x = 0; x < src.cols(); x++) {
+                    if (src_ptr[x] > thresh)
+                        dst_ptr[x] = src_ptr[x];
+                    else
+                        dst_ptr[x] = 0;
+                }
+            }
+            break;
+        case THRESH_TOZERO_INV:
+            for(int y=0;y<src.rows();y++) {
+                T *dst_ptr = dst.ptr(y);
+                const T *src_ptr = src.ptr(y);
+                for (int x = 0; x < src.cols(); x++) {
+                    if (src_ptr[x] > thresh)
+                        dst_ptr[x] = 0;
+                    else
+                        dst_ptr[x] = src_ptr[x];
+                }
+            }
+            break;
+    }
+}
+enum makeborder_type{
+     BORDER_REPLICATE ,     //重复：对边界像素进行复制
+     BORDER_REFLECT   ,     //反射：对感兴趣的图像中的像素在两边进行复制例如：fedcba|abcdefgh|hgfedcb
+     BORDER_REFLECT_101 ,   //反射101：例子：gfedcb|abcdefgh|gfedcba
+     BORDER_CONSTANT        //常量复制：例子：iiiiii|abcdefgh|iiiiiii
+                    };
+template <typename T>
+void CopyMakeBorder(const Image<T>& src,Image<T>& dst,int top,int bottom,int left,int right,int type,const T* _val= nullptr){
+    dst.resize(src.width()+left+right,src.height()+top+bottom,src.channels());
+    int width=src.width();
+    int height=src.height();
+    int channels=src.channels();
+    switch (type){
+        case BORDER_CONSTANT:
+            T* val;
+            if(_val== nullptr)
+                val=new T[channels]{0};
+            else
+                val=_val;
+            dst.fill_color(val,channels);
+            for(int y=0;y<height;y++){
+                const T* src_ptr=src.ptr(y);
+                T* dst_ptr=dst.ptr(y+top);
+                for(int x=0;x<width*channels;x++){
+                    dst_ptr[left*channels+x]=src_ptr[x];
+                }
+            }
+            break;
+        case BORDER_REPLICATE:
+            for(int y=0;y<top+bottom+height;y++){
+                int y2=std::min(height-1,std::max(0,y-top));
+                const T* src_ptr=src.ptr(y2);
+                T* dst_ptr=dst.ptr(y);
+                for(int x=0;x<left*channels;x++){
+                    dst_ptr[x]=src[x%channels];
+                }
+                for(int x=left*channels,x2=0;x<(left+width)*channels;x++,x2++){
+                    dst_ptr[x]=src_ptr[x2];
+                }
+                for(int x=(left+width)*channels;x<(left+right+width)*channels;x++){
+                    dst_ptr[x]=src_ptr[(width-1)*channels+x%channels];
+                }
+            }
+            break;
+        case BORDER_REFLECT_101:
+        case BORDER_REFLECT:
+            if(top>=height||bottom>=height||left>=width||right>=width)
+                throw("border width too big\n");
+            for(int y=top,y2=0;y<top+height;y++,y2++){
+                const T* src_ptr=src.ptr(y2);
+                T* dst_ptr=dst.ptr(y);
+                for(int x=0,x2=left;x<left;x++,x2--){
+                    for(int c=0;c<channels;c++){
+                     dst_ptr[x*channels+c]=src_ptr[x2*channels+c];
+                    }
+                }
+                for(int x=left*channels,x2=0;x<(left+width)*channels;x++,x2++){
+                    dst_ptr[x]=src_ptr[x2];
+                }
+                for(int x=left+width,x2=width-2;x<left+width+right;x++,x2--){
+                    for(int c=0;c<channels;c++){
+                        dst_ptr[x*channels+c]=src_ptr[x2*channels+c];
+                    }
+                }
+            }
+            for(int y=0,y2=top*2;y<top;y++,y2--){
+                T* src_ptr=dst.ptr(y2);
+                T* dst_ptr=dst.ptr(y);
+                for(int x=0;x<(left+width+right)*channels;x++)
+                    dst_ptr[x]=src_ptr[x];
+            }
+            for(int y=top+height,y2=top+height-2;y<top+height+bottom;y++,y2--){
+                T* src_ptr=dst.ptr(y2);
+                T* dst_ptr=dst.ptr(y);
+                for(int x=0;x<(left+width+right)*channels;x++)
+                    dst_ptr[x]=src_ptr[x];
+            }
+            break;
+    }
+}
 /*
 *  @property   图像转换
 *  @func       RGB->HSL          L = max(R,G,B)
@@ -201,44 +420,6 @@ template <typename T>
 typename Image<T>::Ptr
 desaturate(typename Image<T>::ConstPtr image,DesaturateType type);
 
-/*
-*  @property   图像缩放
-*  @func       将图像放大为原图两倍　均匀插值，最后一行后最后一列与倒数第二行与倒数第二列相同
-*  @param_in   image          　  待放大图像
-*  @typename   防止歧义，显示声明Image<T>::Ptr是类型而非变量
-*  @return     Image<T>::Ptr
-*/
-template <typename T>
-typename Image<T>::Ptr
-rescale_double_size_supersample(typename Image<T>::ConstPtr img);
-
-/*
-*  @property   图像缩放
-*  @func       将图像缩小为原图两倍　均匀插值，
-*              偶数行与偶数列时：取四个像素的平均值；
-*              奇数行列时：
-*              奇数列(x)，取相邻上下像素的平均值；
-*              奇数行(y)，取相邻左右像素的平均值．
-*  @param_in   image            　待缩小图像
-*  @typename   防止歧义，显示声明Image<T>::Ptr是类型而非变量
-*  @return     Image<T>::Ptr
-*/
-template <typename T>
-typename Image<T>::Ptr
-rescale_half_size(typename Image<T>::ConstPtr img);
-
-/*
-*  @property   图像缩放
-*  @func       将图像缩小为原图两倍　高斯权值插值，　核尺寸为４x4像素
-*              边缘需要进行像素拓展．
-*              该高斯核为高斯函数f(x)=1/[sqrt(2pi)*sigma] * e^-(x^2/2sigma2)
-*              其中，x为中心像素点到核的各像素的像素距离，有三个值：sqrt(2)/2,sqrt(10)/2,3sqrt(2)/2
-*              第一个数接近sigma=sqrt(3)/2
-*  @param_in   image            　待缩小图像
-*  @param_in   sigma2             高斯尺度平方值　　也就是方差　默认3/4
-*  @typename   防止歧义，显示声明Image<T>::Ptr是类型而非变量
-*  @return     Image<T>::Ptr
-*/
 //TODO: 这里的sigma2=1/2完全满足３倍sigma，抖动没那么明显，可以用这个尺度
 template <typename T>
 typename Image<T>::Ptr
@@ -268,15 +449,6 @@ void blur_gaussian(const Image<T>* in,Image<T>* out,  float sigma);
 *              等同于对图像进行二维卷积
 *              该高斯核为高斯函数f(x,y)=1/[(2pi)*sigma^2] * e^-((x^2 + y^2)/2sigma2)
 *
-*
-*  @param_in   in            　    待模糊图像
-*  @param_in   sigma2             目标高斯尺度平方值　　也就是方差　
-*  @typename   防止歧义，显示声明Image<T>::Ptr是类型而非变量
-*  @return     Image<T>::Ptr
-*/
-template <typename T>
-typename Image<T>::Ptr
-blur_gaussian2(typename Image<T>::ConstPtr in, float sigma2);
 
 /*
 *  @property   求图像差
@@ -299,7 +471,7 @@ void subtract(const Image<T>& image_1, const Image<T>& image_2,Image<T>& dst);
 */
 template <typename T>
 typename Image<T>::Ptr
-difference(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2);
+subtract_abs(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2);
 
 /*
 *  @property   扩展图像通道
@@ -425,87 +597,6 @@ typename Image<T>::Ptr desaturate(typename Image<T>::ConstPtr image, DesaturateT
 
 
 //TODO::to be CUDA@YANG
-//opencv 4000*2250*3 图像处理时间: 94.8ms
-template <typename T>
-typename Image<T>::Ptr
-rescale_double_size_supersample(typename Image<T>::ConstPtr img)
-{
-    int const iw = img->width();
-    int const ih = img->height();
-    int const ic = img->channels();
-    int const ow = iw << 1;
-    int const oh = ih << 1;
-
-    typename Image<T>::Ptr out(Image<T>::create());
-    out->allocate(ow,oh,ic);
-    int witer = 0;
-    for (int y = 0; y < oh; ++y)
-    {
-        bool nexty = (y + 1) < oh;
-        int yoff[2] = {iw * (y >> 1), iw * ((y + nexty) >> 1)};
-        for (int x = 0; x < ow; ++x)
-        {
-            bool nextx = (x + 1) < ow;
-            int xoff[2] = {x >> 1,(x + nextx) >> 1};
-            T const* val[4] =
-            {
-                &img->at(yoff[0] + xoff[0],0),
-                &img->at(yoff[0] + xoff[1],0),
-                &img->at(yoff[1] + xoff[0],0),
-                &img->at(yoff[1] + xoff[1],0)
-            };
-
-            for (int c = 0; c < ic; ++c)
-            {
-                out->at(x,y,c) = 0.25f * (val[0][c] + val[1][c] + val[2][c] + val[3][c]);
-            }
-        }
-    }
-    return out;
-}
-//TODO::to be CUDA@YANG
-//opencv 4000*2250*3 图像处理时间: 16.6ms
-template <typename T>
-typename Image<T>::Ptr
-rescale_half_size(typename Image<T>::ConstPtr img)
-{
-    int const iw = img->width();
-    int const ih = img->height();
-    int const ic = img->channels();
-    int ow = (iw + 1) >> 1;//缩小原来两倍，小数向上取整
-    int oh = (ih + 1) >> 1;
-
-    if(iw < 2 || ih < 2)
-    {
-        throw std::invalid_argument("输入图像太小，不可进行降采样！\n");
-    }
-
-    typename Image<T>::Ptr out(Image<T>::create());
-    out->allocate(ow,oh,ic);
-
-    int out_pos = 0;
-    int rowstride = iw * ic;
-    for (int y = 0; y < oh; ++y)
-    {
-        int irow1 = y * 2 * rowstride;
-        int irow2 = irow1 + rowstride * (y * 2 + 1 < ih);
-
-        for (int x = 0; x < ow; ++x)
-        {
-            int ipix1 = irow1 + x * 2 * ic;
-            int ipix2 = irow2 + x * 2 * ic;
-            int has_next = (x * 2 + 1 < iw);
-
-            for (int c = 0; c < ic; ++c)
-            {
-                out->at(out_pos++) = 0.25f * (img->at(ipix1 + c)+img->at(ipix1 + has_next * ic + c)+
-                                              img->at(ipix2 + c)+img->at(ipix2 + has_next * ic + c));
-            }
-        }
-    }
-    return out;
-}
-//TODO::to be CUDA@YANG
 template <typename T>
 typename Image<T>::Ptr
 rescale_half_size_gaussian(typename Image<T>::ConstPtr image, float sigma2)
@@ -584,85 +675,31 @@ template <typename T>
 typename Image<T>::Ptr
 blur_gaussian(typename Image<T>::ConstPtr in, float sigma)
 {
-    if (in == nullptr)
+    if (in == nullptr||in->empty())
     {
         throw std::invalid_argument("没有输入图像!\n");
     }
-
-    if(MATH_EPSILON_EQ(sigma,0.0f,0.1f))
-    {
-        return in->duplicate();
-    }
-
-    int const w = in->width();
-    int const h = in->height();
-    int const c = in->channels();
-    int const ks = std::ceil(sigma * 2.884f);
-    std::vector<float> kernel(ks + 1);
-    float weight = 0;
-
-    for (int i = 0; i < ks + 1; ++i)
-    {
-        kernel[i] = math::func::gaussian((float)i, sigma);
-        weight += kernel[i]*2;
-    }
-    weight-=kernel[0];
-    //可分离高斯核实现
-    //x方向对对象进行卷积
-    Image<float>::Ptr sep(Image<float>::create(w,h,c));
-    int px = 0;
-    for (int y = 0; y < h; ++y)
-    {
-        for (int x = 0; x < w; ++x,++px)
-        {
-            for (int cc = 0; cc < c; ++cc)
-            {
-                float accum=0;
-                for (int i = -ks; i <=ks; ++i)
-                {
-                    int idx = math::func::clamp(x + i,0,w - 1);
-                    accum += in->at(y * w + idx, cc) * kernel[abs(i)];
-                    //printf("%f\n",kernel[abs(i)]);
-                }
-                sep->at(px,cc) = accum / weight;
-            }
-        }
-    }
-    //y方向对图像进行卷积
-    px=0;
-    typename Image<T>::Ptr out(Image<T>::create(w,h,c));
-    for (int y = 0; y < h; ++y)
-    {
-        for (int x = 0; x < w; ++x,++px)
-        {
-            for (int cc = 0; cc < c; ++cc)
-            {
-                float accum =0;
-                for (int i = -ks; i <= ks; ++i)
-                {
-                    int idx = math::func::clamp(y+i,0,(int)h - 1);
-                    accum += sep->at(idx * w + x, cc)* kernel[abs(i)];
-                }
-                //printf("%f\n",accum / weight);
-                out->at(px,cc) = (T)(accum / weight);
-            }
-        }
-    }
+    typename Image<T>::Ptr out=make_shared(in->width(),in->height(),in->channels());
+    blur_gaussian(in.get(),out.get(),sigma);
     return out;
 }
 
 template <typename T>
 void blur_gaussian(const Image<T>* in,Image<T>* out, float sigma)
 {
-    if(out->width()!=in->width()||out->height()!=in->height()||out->channels()!=in->channels())
-    {
-        //throw std::invalid_argument("输出图像尺寸应等于输入图像!\n");
-        out->resize(in->width(),in->height(),in->channels());
-    }
-    if (in == nullptr)
+    if (in == nullptr||in->empty())
     {
         throw std::invalid_argument("没有输入图像!\n");
     }
+    if(out->empty())
+    {
+        out->resize(in->width(),in->height(),in->channels());
+    }
+    else if(out->width()!=in->width()||out->height()!=in->height()||out->channels()!=in->channels())
+    {
+        throw std::invalid_argument("输出图像尺寸应等于输入图像!\n");
+    }
+
 
     if(MATH_EPSILON_EQ(sigma,0.0f,0.1f))
     {
@@ -731,78 +768,6 @@ void blur_gaussian(const Image<T>* in,Image<T>* out, float sigma)
 }
 
 
-template <typename T>
-typename Image<T>::Ptr
-blur_gaussian2(typename Image<T>::ConstPtr in, float sigma2)
-{
-    if (in == nullptr)
-    {
-        throw std::invalid_argument("没有输入图像!\n");
-    }
-
-    if(sigma2 < 0.01f)
-    {
-        return in->duplicate();
-    }
-    float sigma=sqrt(sigma2);
-    typename Image<T>::Ptr out = blur_gaussian<T>(in,sigma);
-    return out;
-
-//
-//    int const w = in->width();
-//    int const h = in->height();
-//    int const c = in->channels();
-//    int const ks = std::ceil(std::sqrt(sigma2) * 2.884f);
-//    std::vector<float> kernel(ks + 1);
-//    T weight = 0;
-//
-//    for (int i = 0; i < ks + 1; ++i)
-//    {
-//        kernel[i] = func::gaussian2((float)i, sigma2);
-//        weight += kernel[i];
-//    }
-//
-//    //可分离高斯核实现
-//    //x方向对对象进行卷积
-//    typename Image<T>::Ptr sep(Image<T>::create(w,h,c));
-//    int px = 0;
-//    for (int y = 0; y < h; ++y)
-//    {
-//        for (int x = 0; x < w; ++x,++px)
-//        {
-//            for (int cc = 0; cc < c; ++cc)
-//            {
-//                T accum(T(0));
-//                for (int i = -ks; i <=ks; ++i)
-//                {
-//                    int idx = func::clamp(x + i,0,w - 1);
-//                    accum += in->at(y * w + idx, cc) * kernel[i];
-//                }
-//                sep->at(px,cc) = accum / weight;
-//            }
-//        }
-//    }
-//    //y方向对图像进行卷积
-//    typename Image<T>::Ptr out(Image<T>::create(w,h,c));
-//    for (int y = 0; y < h; ++y)
-//    {
-//        for (int x = 0; x < w; ++x,++px)
-//        {
-//            for (int cc = 0; cc < c; ++cc)
-//            {
-//                T accum(T(0));
-//                for (int i = -ks; i <= ks; ++i)
-//                {
-//                    int idx = func::clamp(y+i,0,(int)h - 1);
-//                    accum += sep->at(idx * w + x, cc);
-//                }
-//                out->at(px,cc) = (T)accum / weight;
-//            }
-//        }
-//    }
-//    return out;
-}
-
 //TODO::to be CUDA@YANG
 //opencv 4000*2250*3 图像处理时间：4.76ms
 template <typename T>
@@ -830,10 +795,12 @@ subtract(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_
 
     typename Image<T>::Ptr out(Image<T>::create());
     out->allocate(w1,h1,c1);
-
+    const T* image_1_ptr=image_1->get_data_pointer();
+    const T* image_2_ptr=image_2->get_data_pointer();
+    T* out_ptr=out->get_data_pointer();
     for (int i = 0; i < image_1->get_value_amount(); ++i)
     {
-        out->at(i) = image_1->at(i) - image_2->at(i);
+        out_ptr[i]=image_1_ptr[i]-image_2_ptr[2];
     }
 
     return out;
@@ -863,10 +830,13 @@ void subtract(const Image<T>& image_1,const Image<T>& image_2,Image<T>& dst)
 
 
     dst.resize(w1,h1,c1);
-
+    const T* image_1_ptr=image_1.get_data_pointer();
+    const T* image_2_ptr=image_2.get_data_pointer();
+    T* out_ptr=dst.get_data_pointer();
     for (int i = 0; i < image_1.get_value_amount(); ++i)
     {
-        dst.at(i) = image_1.at(i) - image_2.at(i);
+        //dst.at(i) = image_1.at(i) - image_2.at(i);
+        out_ptr[i]=image_1_ptr[i]-image_2_ptr[i];
     }
 }
 
@@ -874,7 +844,7 @@ void subtract(const Image<T>& image_1,const Image<T>& image_2,Image<T>& dst)
 //opencv 4000*2250*3 图像处理时间：3.34ms
 template <typename T>
 typename Image<T>::Ptr
-difference(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2)
+subtract_abs(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2)
 {
 
     if (image_1 == nullptr || image_2 == nullptr)
@@ -892,16 +862,12 @@ difference(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr imag
 
     typename Image<T>::Ptr out(Image<T>::create());
     out->allocate(w1,h1,c1);
-
+    const T* image_1_ptr=image_1->get_data_pointer();
+    const T* image_2_ptr=image_2->get_data_pointer();
+    T* out_ptr=out->get_data_pointer();
     for (int i = 0; i < image_1->get_value_amount(); ++i)
     {
-        if (image_1->at(i) > image_2->at(i) )
-        {
-            out->at(i) = image_1->at(i) - image_2->at(i);
-        } else
-        {
-            out->at(i) = image_2->at(i) - image_1->at(i);
-        }
+       out_ptr[i]=abs(image_1_ptr[i]-image_2_ptr[i]);
     }
 
     return out;

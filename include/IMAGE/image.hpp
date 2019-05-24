@@ -10,7 +10,7 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
-
+#include "types.hpp"
 #ifndef IMAGE_IMAGE_HPP
 #define IMAGE_IMAGE_HPP
 
@@ -220,6 +220,7 @@ public:
     *  @return     复制后图像引用
     */
     TypedImageBase<T>& operator= (TypedImageBase<T> const& image);
+
 
     /*
     *  @property   图像复制
@@ -480,7 +481,12 @@ public:
   /*******************************************************************
   *~~~~~~~~~~~~~~~~~~~~~~~~~Image管理函数~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   *******************************************************************/
-
+     /*  @property   重载运算符()
+     *  @func       图像ROI提取
+     *  @param_in   待提取图像
+     *  @return     提取后图像
+     */
+     Image<T> operator() (Rect roi) const;
     /*
     *  @property   复制图先锋
     *  @func       复制图像
@@ -835,6 +841,7 @@ IMAGE_NAMESPACE_BEGIN
         this->data.assign(image.data.begin(),image.data.end());
         return *this;
     };
+
     template <typename T>
     inline typename TypedImageBase<T>::TypedPtr
     TypedImageBase<T>::duplicate() const
@@ -909,7 +916,7 @@ IMAGE_NAMESPACE_BEGIN
         {
             return nullptr;
         }
-        return &this->data[0];
+        return (T const*)data.data();
     }
 
     template <typename T>
@@ -920,7 +927,7 @@ IMAGE_NAMESPACE_BEGIN
         {
             return nullptr;
         }
-        return &this->data[0];
+        return (T*)data.data();
     }
 
     template <typename T>
@@ -1183,21 +1190,21 @@ IMAGE_NAMESPACE_BEGIN
     inline typename Image<T>::Ptr
     Image<T>::create()
     {
-        return Ptr(new Image<T>());
+        return std::make_shared<Image<T>>();
     }
 
     template <typename T>
     inline typename Image<T>::Ptr
     Image<T>::create(int width, int height, int channels)
     {
-        return Ptr(new Image<T>(width,height,channels));
+        return std::make_shared<Image<T>>(width,height,channels);
     }
 
     template <typename T>
     inline typename Image<T>::Ptr
     Image<T>::create(Image<T> const&image1)
     {
-        return Ptr(new Image<T>(image1));
+        return std::make_shared<Image<T>>(image1);
     }
 
 //    template <typename T>
@@ -1206,7 +1213,22 @@ IMAGE_NAMESPACE_BEGIN
 //    {
 //        return Ptr(new Image<T>(*this));
 //    }
+    template <typename T>
+    Image<T> Image<T>::operator()(Rect roi) const{
 
+        if(roi.height<=0||roi.width<=0||
+        roi.x+roi.width>=this->w||roi.y+roi.height>=this->h)
+        {
+            throw("error roi\n");
+        }
+        Image<T> img_roi(roi.width,roi.height,this->c);
+        for(int i=roi.y;i<roi.y+roi.height;i++){
+           const T* src_data=this->ptr(i);
+           T* roi_data=img_roi.ptr(i);
+           memcpy(roi_data,src_data,roi.width*this->c*sizeof(T));
+        }
+
+    }
     template <typename T>
     inline void
     Image<T>::fill_color(const T* const _color,int _c)
