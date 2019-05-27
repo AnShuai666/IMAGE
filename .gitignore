@@ -4,3 +4,4 @@ lib/
 examples_bin/
 .idea/
 cmakemodule/
+include/IMAGE/*Config.h
