@@ -83,7 +83,7 @@
 //    return 0;
 //}
 //
-#include <flann/flann.hpp>
+#include <MATH/Flann/flann.hpp>
 #include "features2d/features2d.h"
 #include "IMAGE/image_io.h"
 #include "timer.h"
@@ -93,6 +93,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/xfeatures2d.hpp>
 using namespace features2d;
+using namespace std;
 void unpack(const int kptoctave, int& octave, int& layer, float& scale)
 {
     octave = kptoctave & 255;
@@ -103,12 +104,13 @@ void unpack(const int kptoctave, int& octave, int& layer, float& scale)
 int main()
 {
     image::ByteImage::Ptr test=image::ByteImage::create(2,2,3);
-    image::ByteImage::Ptr image=make_shared<ByteImage>();
-    image::ByteImage::Ptr image2=make_shared<ByteImage>();
-    std::string image_filename2 = "/home/doing/lena.jpg";
-    std::string image_filename = "/home/doing/lena2.jpg";
+    image::ByteImage::Ptr image=std::make_shared<ByteImage>();
+    image::ByteImage::Ptr image2=std::make_shared<ByteImage>();
+    std::string image_filename = "/home/doing/lena.jpg";
+    std::string image_filename2 = "/home/doing/lenawarp.jpg";
 #define USECV 0
 #if USECV
+    cv::Ptr<cv::Feature2D> cvorb=cv::ORB::create();
     cv::Ptr<cv::Feature2D> cvsift = cv::xfeatures2d::SIFT::create();
     vector<cv::KeyPoint> cvkeyPoint, cvkeyPoint2;
     cv::Mat cvdescriptors, cvdescriptors2;
@@ -132,8 +134,11 @@ int main()
     image::FloatImage::Ptr img_gray_ptr=make_shared<image::Image<float>>(image->width(),image->height(),1);
     converTo(*image_gray,*img_gray_ptr);
     Mat* img_gray=(Mat*)(img_gray_ptr.get());
-
+    double start,end;
+    start=clock();
     image::ByteImage::Ptr image_gray2=image::desaturate<unsigned char>(image2,DESATURATE_LUMINANCE);
+    end=clock();
+    cout<<"time: "<<(end-start)/CLOCKS_PER_SEC*1000.0<<" ms"<<endl;
     image::FloatImage::Ptr img_gray_ptr2=make_shared<image::Image<float>>(image2->width(),image2->height(),1);
     converTo(*image_gray2,*img_gray_ptr2);
     //for(int i=0;i<image_gray2->get_value_amount();i++)
@@ -148,12 +153,12 @@ int main()
     UCMat mask;
     //orb->detect(*image_gray,keyPoint,mask);
     //orb->compute(*image_gray,keyPoint,descriptors);
-    orb->detectAndCompute(*image_gray,mask,keyPoint,descriptors);
+
     //sift->detectAndCompute(*img_gray,mask,keyPoint,descriptors);
-    //orb->detect(*image_gray2,keyPoint2,mask);
-    //orb->compute(*image_gray,keyPoint2,descriptors2);
-    orb->detectAndCompute(*image_gray2,mask,keyPoint2,descriptors2);
+    orb->detectAndCompute(*image_gray,mask,keyPoint,descriptors);
+
     //sift->detectAndCompute(*img_gray2,mask,keyPoint2,descriptors2);
+    orb->detectAndCompute(*image_gray2,mask,keyPoint2,descriptors2);
     cout<<keyPoint.size()<<endl;
     cout<<keyPoint2.size()<<endl;
     image::Visualizer<uint8_t> sift_vis;
@@ -175,6 +180,8 @@ int main()
     image_out = sift_vis.draw_keypoints(image,keypoints,image::RADIUS_CIRCLE_ORIENTATION);
     std::string image_out_name = "result_sift1.png";
     image::save_image(image,image_out_name);
+
+    int nn=1;
 #if USECV
 
     float *data=new float[keyPoint.size()*2];
@@ -191,25 +198,23 @@ int main()
     }
     flann::Features<float> dataset=flann::Features<float>(data,keyPoint.size(),2);
     flann::Features<float> query=flann::Features<float>(cvdata,cvkeyPoint.size(),2);
-#endif
-    int nn=1;
+#else
     flann::Features<float> dataset=flann::Features<float>(descriptors.get_data().data(),descriptors.rows(),descriptors.cols());
     flann::Features<float> query=flann::Features<float>(descriptors2.get_data().data(),descriptors2.rows(),descriptors2.cols());
+#endif
     flann::Features<int> indices(new int[query.rows*nn], query.rows, nn);
     flann::Features<float> dists(new float[query.rows*nn], query.rows, nn);
     flann::Index<flann::L2<float> > index(dataset, flann::KDTreeIndexParams());
     index.buildIndex();
     index.knnSearch(query, indices, dists, nn, flann::SearchParams(128));
-#if 0
+#if USECV
     for(int i=0;i<cvkeyPoint.size();i++)
     {
-        int octave, layer;
-        float scale;
-        unpack(cvkeyPoint[i].octave, octave, layer, scale);
-        cout<<(int)cvkeyPoint[i].pt.x<<" "<<(int)cvkeyPoint[i].pt.y<<" "<<(int)cvkeyPoint[i].angle<<" "<<octave<<" "<<layer<<" "<<scale<<" "<<cvkeyPoint[i].response<<" "<<cvkeyPoint[i].size<<endl;
+        int octave =cvkeyPoint[i].octave;
+        cout<<(int)cvkeyPoint[i].pt.x<<" "<<(int)cvkeyPoint[i].pt.y<<" "<<(int)cvkeyPoint[i].angle<<" "<<octave<<" "<<cvkeyPoint[i].response<<" "<<cvkeyPoint[i].size<<endl;
         int k=indices[i][0];
-        unpack(keyPoint[k].octave, octave, layer, scale);
-        cout<<(int)keyPoint[k].pt.x<<" "<<(int)keyPoint[k].pt.y<<" "<<(int)keyPoint[k].angle<<" "<<octave<<" "<<layer<<" "<<scale<<" "<<keyPoint[k].response<<" "<<keyPoint[k].size<<endl;
+        octave =keyPoint[i].octave;
+        cout<<(int)keyPoint[k].pt.x<<" "<<(int)keyPoint[k].pt.y<<" "<<(int)keyPoint[k].angle<<" "<<octave<<" "<<keyPoint[k].response<<" "<<keyPoint[k].size<<endl;
         cout<<endl;
     }
     return 0;
@@ -232,7 +237,7 @@ int main()
     for(int i=0;i<keyPoint2.size();i++)
     {
         uint8_t color[3]={(uint8_t)(rand()%255),(uint8_t)(rand()%255),(uint8_t)(rand()%255)};
-        if(dists[i][0]<min_dist*0.5) {
+        if(dists[i][0]<min_dist*0.65) {
             sift_vis.draw_line(*res, keyPoint[indices[i][0]].pt.x, keyPoint[indices[i][0]].pt.y,
                                keyPoint2[i].pt.x + image->width(), keyPoint2[i].pt.y, color);
             num++;

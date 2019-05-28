@@ -10,7 +10,7 @@
 
 //#include "define.h"
 #include "IMAGE/image.hpp"
-#include "function/function.hpp"
+#include "MATH/Function/function.hpp"
 
 IMAGE_NAMESPACE_BEGIN
 /*******************************************************************
@@ -578,14 +578,18 @@ typename Image<T>::Ptr desaturate(typename Image<T>::ConstPtr image, DesaturateT
     int in_pos = 0;
     //TODO:: to be CUDA @Yang
     //opencv 4000*2250*3 图像处理时间: 14.4ms
+    T* dst_ptr=out_image->get_data_pointer();
+    T const* v = image->get_data_pointer();
     for (int i = 0; i < image->get_pixel_amount(); ++i)
     {
-        T const* v = &image->at(in_pos);
-        out_image->at(out_pos) = func(v);
+
+        //out_image->at(out_pos) = func(v);
+        dst_ptr[out_pos]=func(v+in_pos);
 
         if (has_alpha)
         {
-            out_image->at(out_pos + 1) = image->at(in_pos + 3);
+            //out_image->at(out_pos + 1) = image->at(in_pos + 3);
+            dst_ptr[out_pos+1]=v[in_pos+3];
         }
 
         out_pos += 1 + has_alpha;
@@ -730,25 +734,30 @@ void blur_gaussian(const Image<T>* in,Image<T>* out, float sigma)
     int px = 0;
     for (int y = 0; y < h; ++y)
     {
-        for (int x = 0; x < w; ++x,++px)
+        const T* src_ptr=in->ptr(y);
+        float* dst_ptr=sep->ptr(y);
+        for (int x = ks; x < w-ks; ++x,++px)
         {
             for (int cc = 0; cc < c; ++cc)
             {
                 float accum=0;
                 for (int i = -ks; i <=ks; ++i)
                 {
-                    int idx = math::func::clamp(x + i,0,w - 1);
-                    accum += in->at(y * w + idx, cc) * kernel[abs(i)];
-                    //printf("%f\n",kernel[abs(i)]);
+                    //int idx = math::func::clamp(x + i,0,w - 1);
+                    int idx=x+i;
+                    //accum += in->at(y * w + idx, cc) * kernel[abs(i)];
+                    accum+=src_ptr[idx*c+cc]*kernel[abs(i)];
                 }
-                sep->at(px,cc) = accum / weight;
+                //sep->at(px,cc) = accum / weight;
+                dst_ptr[x*c+cc]=accum/weight;
             }
         }
     }
     //y方向对图像进行卷积
     px=0;
-    for (int y = 0; y < h; ++y)
+    for (int y = ks; y < h-ks; ++y)
     {
+        T* dst_ptr=out->ptr(y);
         for (int x = 0; x < w; ++x,++px)
         {
             for (int cc = 0; cc < c; ++cc)
@@ -756,11 +765,13 @@ void blur_gaussian(const Image<T>* in,Image<T>* out, float sigma)
                 float accum =0;
                 for (int i = -ks; i <= ks; ++i)
                 {
-                    int idx = math::func::clamp(y+i,0,(int)h - 1);
-                    accum += sep->at(idx * w + x, cc)* kernel[abs(i)];
+                    //int idx = math::func::clamp(y+i,0,(int)h - 1);
+                    //accum += sep->at(idx * w + x, cc)* kernel[abs(i)];
+                    int idx=y+i;
+                    accum+=sep->ptr(idx)[x*c+cc]*kernel[abs(i)];
                 }
-                //printf("%f\n",accum / weight);
-                out->at(px,cc) = (T)(accum / weight);
+                //out->at(px,cc) = (T)(accum / weight);
+                dst_ptr[x*c+cc]=(T)(accum/weight);
             }
         }
     }
