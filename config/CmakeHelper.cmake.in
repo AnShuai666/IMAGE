@@ -73,7 +73,7 @@ endmacro(IMAGE_ADD_CUDA_SOURCES)
 macro(IMAGE_ADD_TEST TARGET_NAME)
     if(TESTS_ENABLED)
         add_executable(${TARGET_NAME} ${ARGN})
-        target_link_libraries(${TARGET_NAME} ${Boost_LIBRARIES})
+        target_link_libraries(${TARGET_NAME} ${Boost_LIBRARIES} image)
         set_target_properties(${TARGRT_NAME} PROPERTIES FOLDER
             ${IMAGE_SOURCE_DIR}/bin)
         add_test("${IMAGE_SOURCE_DIR}/bin/${TARGET_NAME}" ${TARGET_NAME})
