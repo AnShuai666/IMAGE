@@ -11,7 +11,7 @@ set(IMAGE_VERSION_PATCH 0)
 set(IMAGE_VERSION
         ${IMAGE_VERSION_MAJOR}.${IMAGE_VERSION_MINOR}.${IMAGE_VERSION_PATCH})
 
-message("当前MATH版本为:${IMAGE_VERSION}")
+message("当前IMAGE版本为:${IMAGE_VERSION}")
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmakemodule)
 
 configure_file(
@@ -41,7 +41,7 @@ option(TESTS_ENABLED "是否编译测试二进制文件" OFF)
 ####################################################
 ######################TEST##########################
 ####################################################
-
+set(TESTS_ENABLED ON)
 if (TESTS_ENABLED)
     message(STATUS "允许编译测试文件")
     enable_testing()
@@ -121,14 +121,17 @@ endif ()
 ####################################################
 
 #find_package(MATH REQUIRED)
-if (MATH_FOUND)
-    message(STATUS "  找到MATH，版本为${MATH_VERSION}")
-    message(STATUS "  头文件：${MATH_INCLUDE_DIR}")
-    message(STATUS "  库文件：${MATH_LIBS}")
-else()
-    message(STATUS "  未找到MATH")
-    message(STATUS "  请安装MATH")
-endif ()
+#if (MATH_FOUND)
+#    message(STATUS "  找到MATH，版本为${MATH_VERSION}")
+#    message(STATUS "  头文件：${MATH_INCLUDE_DIR}")
+#    message(STATUS "  库目录：${MATH_LIBRARY_DIR}")
+#    message(STATUS "  库文件：MATH_LIBS ${MATH_LIBS}")
+#    message(STATUS "  库文件：MATH_LIBRARY ${MATH_LIBRARY}")
+#    message(STATUS "  库文件：MATH_LIBRARIES ${MATH_LIBRARIES}")
+#else()
+#    message(STATUS "  未找到MATH")
+#    message(STATUS "  请安装MATH")
+#endif ()
 configure_file(
         "${PROJECT_SOURCE_DIR}/config/IMAGEConfig.h.in"
         "${PROJECT_SOURCE_DIR}/include/IMAGEConfig.h"
@@ -142,7 +145,7 @@ set_property(TARGET ${IMAGEConfig.cmake} PROPERTY FOLDER cmakemodule)
 
 configure_file(
         "${PROJECT_SOURCE_DIR}/config/IMAGEConfigVersion.cmake.in"
-        "${PROJECT_SOURCE_DIR}/cmakemodule/IMAGEConfigVeision.cmake" @ONLY
+        "${PROJECT_SOURCE_DIR}/cmakemodule/IMAGEConfigVersion.cmake" @ONLY
 )
 
 set(MATH_DIR /home/as/MATH/cmakemodule)
@@ -159,11 +162,25 @@ install(FILES IMAGEConfigVersion.cmake
 add_subdirectory(examples)
 add_subdirectory(src)
 add_subdirectory(src_bin)
+add_subdirectory(TestCase)
 
 install(FILES cmakemodule/IMAGEConfig.cmake
         DESTINATION share/IMAGE)
-install(FILES cmakemodule/IMAGEConfigVeision.cmake
+install(FILES cmakemodule/IMAGEConfigVersion.cmake
         DESTINATION share/IMAGE)
 install(DIRECTORY include/IMAGE/
         DESTINATION include/IMAGE)
 
+find_library (
+        MATHLIB
+        NAMES math function util # what to look for
+        HINTS "/usr/local/lib/MATH/" # where to look
+        NO_DEFAULT_PATH # do not search system default paths
+)
+
+# check if we found the library
+message(STATUS "MATHLIB: [${MATHLIB}]")
+#
+#if (NOT MATHLIB)
+#    message(SEND_ERROR "Did not find lib MATH")
+#endif()

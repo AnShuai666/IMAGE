@@ -3,7 +3,10 @@ echo -e "\033[44;33m\$\$\$\$\$\$\$\$\$\$\$\$$\$\$--发财线--\$\$\$\$\$\$\$\$\$
 echo -e "\033[40;32m\$\$\$\$\$\$\$\$\$\$配置并编译IMAGE库...\$\$\$\$\$\$\$\$\$\$\$\$\$\$\$\$\$\033[0m"
 echo -e "\033[44;33m\$\$\$\$\$\$\$\$\$\$\$\$$\$\$--发财线--\$\$\$\$\$\$\$\$\$\$\$\$\$\$\$\$\$\$\$\$\$\$\033[0m\n"
 
+rm -rf build/*
+
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/home/as/MATH/cmakemodule"
+cmake clean
+cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j4
