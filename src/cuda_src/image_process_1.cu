@@ -7,125 +7,13 @@
 #include <cuda_runtime.h>
 #include <cstdio>
 #include <iostream>
-#include "MATH/function/function.hpp"
-
-#include "cuda_include/sharedmem.cuh"
+#include "MATH/Function/function.hpp"
+#include "cuda_include/sharemem.cuh"
 
 #include <vector>
+
 /***********************************************************************************/
-///调试用函数
-void gpu_cpu2zero(float *cpu,float *gpu,size_t bytes)
-{
-    memset(cpu, 0, bytes);
-    cudaMemset(gpu,0,bytes);
-}
-template <typename T>
-void compare(T *const out_image, T const *const out, int const w, int const h, int const c)
-{
-    int success = 1;
-    float diff=0.000001;
-    int key=0;
-    for (int j = 0; j < h; ++j)
-    {
-        for (int i = 0; i < w; ++i)
-        {
-            for (int k = 0; k < c; ++k)
-            {
-                T a = out[j * w * c + i * c + k];
-                T b = out_image[j * w * c + i * c + k];
-                if(a!=b)
-                {
-                    if(key<=10)
-                    {
-                        printf("idx:%d\t", j * w * c + i * c + k);
-                        printf("cpu:\t%1.10lf\tgpu:\t%1.10lf\tdiff:%1.10lf\n", a, b,a-b);
-                        key++;
-                    }
-                    success = 0;
-                    if (std::abs(a - b) < diff)
-                    {
-                        success = 2;
-                    }
-                }
-            }
-        }
-    }
-    switch(success)
-    {
-        case 1:
-            std::cout << "gpu加速后的计算结果与cpu计算的结果一致!" << std::endl;
-            break;
-        case 2:
-            std::cout << "gpu加速后的计算结果与cpu计算的结果存在误差!(约为"<<diff<<")" << std::endl;
-            break;
-        default:
-            std::cout << "gpu函数运行失败!" << std::endl;
-            break;
-    }
-}
 
-void compare_split(float const *const in_image, float *out_1, float *out_2, float *out_3, int const width,
-                   int const height) {
-    bool success = 1;
-    for (int j = 0; j < height; ++j) {
-        for (int i = 0; i < width; ++i) {
-            float a_0 = in_image[j * width * 3 + i * 3];
-            float a_1 = in_image[j * width * 3 + i * 3 + 1];
-            float a_2 = in_image[j * width * 3 + i * 3 + 2];
-
-            float b_0 = out_1[j * width + i];
-            float b_1 = out_2[j * width + i];
-            float b_2 = out_3[j * width + i];
-            if (a_0 != b_0) {
-                printf("idx:%d\t%f\t%f\n", j * width + i, a_0, b_0);
-                success = 0;
-            }
-            if (!success) {
-                std::cout << "第一通道分离失败" << std::endl;
-                exit(1);
-            }
-            if (a_1 != b_1) {
-                printf("idx:%d\t%f\t%f\n", j * width + i, a_1, b_1);
-                success = 0;
-            }
-            if (!success) {
-                std::cout << "第二通道分离失败" << std::endl;
-                exit(1);
-            }
-            if (a_2 != b_2) {
-                printf("idx:%d\t%f\t%f\n", j * width + i, a_2, b_2);
-                success = 0;
-            }
-            if (!success) {
-                std::cout << "第三通道分离失败" << std::endl;
-                exit(1);
-            }
-        }
-    }
-    if (success)std::cout << "分离通道成功" << std::endl;
-}
-
-void gpuzero(float *a, float *b, float *c, size_t const bytes) {
-    cudaMemset(a, 0, bytes);
-    cudaMemset(b, 0, bytes);
-    cudaMemset(c, 0, bytes);
-}
-
-void cpuzero(float *a, float *b, float *c, size_t const bytes) {
-    memset(a, 0, bytes);
-    memset(b, 0, bytes);
-    memset(c, 0, bytes);
-}
-
-void gpu2cpu3(float *h_in1, float *d_in1, float *h_in2, float *d_in2, float *h_in3, float *d_in3,
-              size_t const bytes_channels) {
-    cudaMemcpy(h_in1, d_in1, bytes_channels, cudaMemcpyDeviceToHost);
-    cudaMemcpy(h_in2, d_in2, bytes_channels, cudaMemcpyDeviceToHost);
-    cudaMemcpy(h_in3, d_in3, bytes_channels, cudaMemcpyDeviceToHost);
-}
-
-__global__ void warmup(void)
-{}
 __global__ void kernel_desaturate_alpha(float *out,float const *in, const int size,const int type)
 {
     extern __shared__   float s[];
@@ -948,7 +836,7 @@ __global__ void kernel_split2(float *out_channels_0,float *out_channels_1,float 
  * dim3 block(x, y, 1);
  * dim3 grid((ow - 1 + x) / (x), (oh - 1 + y) / y, 1);
  * kernel_halfsize_guass << < grid, block >> > (d_out, d_in, ow, oh, width, height, channels, d_w);
- */
+ *
 __global__ void kernel_halfsize_guass(float *out,float *in,int const ow,int const oh,int const iw,int const ih,int const ic,float const *w)
 {
     //多余时间损耗原因为printf("%1.10f\t%1.10f\n",sum,in[row[2] + col[2]] * dw[0]);中又访问了in数组
@@ -1025,7 +913,7 @@ __global__ void kernel_halfsize_guass(float *out,float *in,int const ow,int cons
         }
     }
 }
-
+*/
 /* 调用示例
  * dim3 block(x, y, 1);
  * dim3 grid((ow - 1 + x) / (x), (oh - 1 + y) / y, 1);
@@ -1391,7 +1279,7 @@ __global__ void kernel_gaussBlur_y2(T *const out,T const *const in,T const * con
 }
 
 /******************************************************************************************/
-///功能：y维高斯模糊
+///功能：求图像差
 /*  函数名                            线程块大小       耗费时间
  *  kernel_subtract	                  1.554ms	    [32,4,1]
  *  kernel_subtract1	              1.541ms	    [32,8,1]
@@ -1458,7 +1346,7 @@ __global__ void kernel_subtract2(float *const out,float const * const in1,float 
 }
 
 /******************************************************************************************/
-///功能：y维高斯模糊
+///功能：图像差分
 /*  函数名                            线程块大小       耗费时间
  *  kernel_difference	             1.601ms	    [32,16,1]
  *  kernel_difference1	             1.538ms	    [32,8,1]
@@ -1527,11 +1415,7 @@ __global__ void kernel_difference2(T *const out,T const * const in1,T const * co
 /******************************************************************************************/
 ///调用核函数实现加速功能
 /******************************************************************************************/
-void warm(void)
-{
-    warmup<<<1,1>>>();
-}
-void desaturate_by_cuda(float  * const out_image,float const *in_image,const int pixel_amount, const int type,const bool alpha)
+void desaturateByCuda(float  * const out_image,float const *in_image,const int pixel_amount, const int type,const bool alpha)
 {
     float *d_in=NULL;
     float *d_out=NULL;
@@ -1557,7 +1441,7 @@ void desaturate_by_cuda(float  * const out_image,float const *in_image,const int
     cudaFree(d_out);
 }
 
-void double_size_by_cuda(float * const out_image,float const  * const in_image,int const width,int const height,int const channels,float const * const out)
+void doubleSizeByCuda(float * const out_image,float const  * const in_image,int const width,int const height,int const channels)
 {
     int const ow=width<<1;
     int const oh=height<<1;
@@ -1584,7 +1468,7 @@ void double_size_by_cuda(float * const out_image,float const  * const in_image,i
     cudaFree(d_out);
 }
 
-void halfsize_by_cuda(float * const out_image,float const  * const in_image,int const width,int const height,int const channels,float const  * const out)
+void halfSizeByCuda(float * const out_image,float const  * const in_image,int const width,int const height,int const channels)
 {
     int ow=(width+1)>>1;
     int oh=(height+1)>>1;
@@ -1611,7 +1495,7 @@ void halfsize_by_cuda(float * const out_image,float const  * const in_image,int 
     cudaFree(d_out);
 }
 
-void halfsize_guassian_by_cuda(float * const out_image,float const  * const in_image, int const width,int const height,int const channels,float sigma2,float const  * const out)
+void halfSizeGuassianByCuda(float * const out_image,float const  * const in_image, int const width,int const height,int const channels,float sigma2)
 {
     int ow=(width+1)>>1;
     int oh=(height+1)>>1;
@@ -1656,7 +1540,7 @@ void halfsize_guassian_by_cuda(float * const out_image,float const  * const in_i
     cudaFree(d_out);
 }
 
-int blur_gaussian_by_cuda(float * const out_image,float const  * const in_image, int const w,int const h,int const c,float sigma,float const  * const out )
+int blurGaussianByCuda(float * const out_image,float const  * const in_image, int const w,int const h,int const c,float sigma)
 {
     //声明+定义输入输出图片大小及字节数
     int const fact_w=w*c;
@@ -1716,15 +1600,15 @@ int blur_gaussian_by_cuda(float * const out_image,float const  * const in_image,
     return  0;
 }
 
-int blur_gaussian2_by_cuda(float * const out_image,float const  * const in_image, int const w,int const h,int const c,float sigma2,float const  * const out)
+int blurGaussian2ByCuda(float * const out_image,float const  * const in_image, int const w,int const h,int const c,float sigma2)
 {
     float sigma = sqrt(sigma2);
-    blur_gaussian_by_cuda(out_image,in_image,w,h,c,sigma,out);
+    blurGaussianByCuda(out_image,in_image,w,h,c,sigma);
     //compare(out_image,out,w,h,c);//对比gpu与cpu计算结果
     return 0;
 }
 
-int subtract_by_cuda(float * const out_image,float const  * const in_image1,float const  * const in_image2, int const w,int const h,int const c,float const  * const out)
+int subtractByCuda(float * const out_image,float const  * const in_image1,float const  * const in_image2, int const w,int const h,int const c)
 {
     int const size=w*h;
     size_t const bytes=size*c*sizeof(float);
@@ -1746,8 +1630,6 @@ int subtract_by_cuda(float * const out_image,float const  * const in_image1,floa
     kernel_subtract2<<<grid,block>>>(d_out,d_in1,d_in2,w*c,h);
 //传递数据(gpu2cpu)
     cudaMemcpy(out_image,d_out,bytes,cudaMemcpyDeviceToHost);
-    //比较运算结果
-    compare(out_image,out,w,h,c);
 //释放显存
     cudaFree(d_in1);
     cudaFree(d_in2);
@@ -1756,7 +1638,7 @@ int subtract_by_cuda(float * const out_image,float const  * const in_image1,floa
 }
 
 template <class T>
-int difference_by_cu(T * const out_image,T const  * const in_image1,T const  * const in_image2, int const w,int const h,int const c,T const  * const out)
+int differenceByCu(T * const out_image,T const  * const in_image1,T const  * const in_image2, int const w,int const h,int const c)
 {
     int const size=w*h;
     size_t const bytes=size*c*sizeof(T);
@@ -1778,8 +1660,6 @@ int difference_by_cu(T * const out_image,T const  * const in_image1,T const  * c
     kernel_difference2<T><<<grid,block>>>(d_out,d_in1,d_in2,w*c,h);
 //传递数据(gpu2cpu)
     cudaMemcpy(out_image,d_out,bytes,cudaMemcpyDeviceToHost);
-    //比较运算结果
-    //compare<T>(out_image,out,w,h,c);
 //释放显存
     cudaFree(d_in1);
     cudaFree(d_in2);
@@ -1788,21 +1668,21 @@ int difference_by_cu(T * const out_image,T const  * const in_image1,T const  * c
 }
 
 template <typename T>
-int difference_by_cuda(T * const out_image,T const  * const in_image1,T const  * const in_image2,int const w,int const h,int const c,T const  * const out)
+int differenceByCuda(T * const out_image,T const  * const in_image1,T const  * const in_image2,int const w,int const h,int const c)
 {
-    difference_by_cu<T>(out_image,in_image1,in_image2,w,h,c,out);
+    differenceByCu<T>(out_image,in_image1,in_image2,w,h,c);
     return 0;
 }
 template<>
-int difference_by_cuda<float>(float * const out_image,float const  * const in_image1,float const  * const in_image2,int const w,int const h,int const c,float const  * const out)
+int differenceByCuda<float>(float * const out_image,float const  * const in_image1,float const  * const in_image2,int const w,int const h,int const c)
 {
-    difference_by_cu<float>(out_image,in_image1,in_image2,w,h,c,out);
+    differenceByCu<float>(out_image,in_image1,in_image2,w,h,c);
     return 0;
 }
 template<>
-int difference_by_cuda<char>(char * const out_image,char const  * const in_image1,char const  * const in_image2,int const w,int const h,int const c,char const  * const out)
+int differenceByCuda<char>(char * const out_image,char const  * const in_image1,char const  * const in_image2,int const w,int const h,int const c)
 {
-    difference_by_cu<char>(out_image,in_image1,in_image2,w,h,c,out);
+    differenceByCu<char>(out_image,in_image1,in_image2,w,h,c);
     return 0;
 }
 

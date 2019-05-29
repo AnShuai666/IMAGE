@@ -69,7 +69,7 @@ void compare1(T *image,T *contrast,int const wc,int const h,bool has_point)
             break;
     }
 }
-
+int warmUp();
 #define CHECK_CUBLAS(call)                                                     \
 {                                                                              \
     cublasStatus_t err;                                                        \

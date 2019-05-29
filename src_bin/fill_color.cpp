@@ -12,7 +12,7 @@
 #include <iostream>
 
 #include "cuda_include/image_1.cuh"
-
+#include "cuda_include/common.cuh"
 using namespace std;
 int main(int argc, char ** argv)
 {
@@ -26,8 +26,17 @@ int main(int argc, char ** argv)
 
 
     cout<<"///////////gpu实现////////////"<<endl;
+
+    warmUp();
     Image<char> src1(4000,2250,3);
-    fill_color_by_cuda(&src1.at(0),color,src1.width(),src1.height(),src1.channels(),3,&src.at(0));
+
+    util::TimerHigh time1;
+    fill_color_by_cuda(&src1.at(0),color,src1.width(),src1.height(),src1.channels(),3);
+    cout<<"gpu:"<<time1.get_elapsed()<<"ms"<<endl;
+
+    int wc=(src1.width())*(src1.channels());
+    compare1(&src1.at(0),&src.at(0),wc,src.height(),false);
+
     cout<<"*************调试结束*************"<<endl;
 
     return  0;

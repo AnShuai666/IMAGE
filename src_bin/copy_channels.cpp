@@ -12,7 +12,7 @@
 #include <iostream>
 #include <vector>
 #include "cuda_include/image_1.cuh"
-
+#include "cuda_include/common.cuh"
 using namespace std;
 int main(int argc, char ** argv)
 {
@@ -32,7 +32,13 @@ int main(int argc, char ** argv)
     cout<<time.get_elapsed()<<"ms"<<endl;
 
     cout<<"*********************gpu实现*********************"<<endl;
-    src_gpu.fill_color(color,c);
-    copy_channels_by_cuda(&src_gpu.at(0),src_gpu.width(),src_gpu.height(),src_gpu.channels(),copy_c,paste_c,&src_cpu.at(0));
+    warmUp();
 
+    src_gpu.fill_color(color,c);
+    util::TimerHigh time1;
+    copy_channels_by_cuda(&src_gpu.at(0),src_gpu.width(),src_gpu.height(),src_gpu.channels(),copy_c,paste_c);
+    cout<<time1.get_elapsed()<<"ms"<<endl;
+
+    int wc=(src_gpu.width())*(src_cpu.channels());
+    compare1(&src_gpu.at(0),&src_cpu.at(0),wc,src_cpu.height(),false);
 }

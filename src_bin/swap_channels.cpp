@@ -12,7 +12,7 @@
 #include <iostream>
 #include <vector>
 #include "cuda_include/image_1.cuh"
-
+#include "cuda_include/common.cuh"
 using namespace std;
 int main(int argc, char ** argv)
 {
@@ -34,13 +34,15 @@ int main(int argc, char ** argv)
 
     cout<<"///////////gpu实现////////////"<<endl;
 
+    warmUp();
+
     util::TimerHigh time1;
-    swap_channels_by_cuda(&src_gpu.at(0),src_gpu.width(),src_gpu.height(),src_gpu.channels(),0,2,&src_cpu.at(0));
-    cout<<time1.get_elapsed()<<"ms"<<endl;
+    swap_channels_by_cuda(&src_gpu.at(0),src_gpu.width(),src_gpu.height(),src_gpu.channels(),0,2);
+    cout<<"gpu:"<<time1.get_elapsed()<<"ms"<<endl;
 
+    int wc=(src_cpu.width())*(src_cpu.channels());
+    compare1(&src_gpu.at(0),&src_cpu.at(0),wc,src_cpu.height(),false);
     cout<<"*************调试结束*************"<<endl;
-
-
     return  0;
 }
 

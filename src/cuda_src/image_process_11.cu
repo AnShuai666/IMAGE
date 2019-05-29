@@ -79,7 +79,7 @@ __global__ void kernel_byte2float8(float * dst,unsigned char *src,int const w,in
     }
 }
 
-int byte_to_float_image_by_cuda(float * dstImage,unsigned char *srcImage,int const width,int const height,int const channels,float * contrast)
+int byteToFloatImageByCuda(float * dstImage,unsigned char *srcImage,int const width,int const height,int const channels)
 {
     //计算存储空间字节数
     size_t const bytes_uchar=width*height*channels* sizeof(unsigned char);
@@ -99,7 +99,6 @@ int byte_to_float_image_by_cuda(float * dstImage,unsigned char *srcImage,int con
     dim3 grid((width*channels-1+x*8)/(x*8),(height-1+y)/y,1);
     kernel_byte2float8 <<< grid, block >>> (d_out, d_in, width, height, channels);
     cudaMemcpy(dstImage, d_out, bytes_float, cudaMemcpyDeviceToHost);
-    //compare1(dstImage, contrast, width * channels, height, true);
     //释放显存指针
     cudaFree(d_in);
     cudaFree(d_out);

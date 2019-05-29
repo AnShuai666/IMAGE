@@ -7,6 +7,7 @@
 #ifndef IMAGE_PROCESS_1_CUH
 #define IMAGE_PROCESS_1_CUH
 
+
 //opencv 4000*2250*3 图像处理时间: 14.4ms
 //调用desaturate_by_cuda函数处理时间：36ms,其中H2D 27ms, D2H 8ms,kernel 0.7ms
 //串行实现时间：约200ms
@@ -19,8 +20,8 @@
  * @param_in    type               亮度类型
  * @param_in    alpha              是否有alpha通道
  */
-void desaturate_by_cuda(float * const out_image,float const  *in_image,const int pixel_amount, const int type,const bool alpha);
-void warm(void);
+void desaturateByCuda(float * const out_image,float const  *in_image,const int pixel_amount, const int type,const bool alpha);
+
 
 /**
  * @property    图像缩放
@@ -36,10 +37,9 @@ void warm(void);
  * @param_in    channels           输入图像的颜色通道数
  * @param_in    out                cpu计算结果，用于对比数据
  * 调用示例：
- * double_size_by_cuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels(),&out->at(0));
+ * doubleSizeByCuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels());
  */
-void double_size_by_cuda(float * const out_image,float const  * const in_image,int const width,int const height,int const channels,float const * const out);
-
+void doubleSizeByCuda(float * const out_image,float const  * const in_image,int const width,int const height,int const channels);
 /**
  * @property    图像缩放
  * @func        将图像缩小为原图1/2倍　 像素点为(2*y,2*x)(2*y,2*x+1)(2*y+1,2*x)(2*y+1,2*x+1)的平均值
@@ -51,9 +51,9 @@ void double_size_by_cuda(float * const out_image,float const  * const in_image,i
  * @param_in    channels           输入图像的颜色通道数
  * @param_in    out                cpu计算结果，用于对比数据
  * 调用示例：
- * halfsize_by_cuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels(),&out->at(0));
+ * halfSizeByCuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels());
  */
-void halfsize_by_cuda(float * const out_image,float const  * const in_image,int const width,int const height,int const channels,float const  * const out);
+void halfSizeByCuda(float * const out_image,float const  * const in_image,int const width,int const height,int const channels);
 
 /**
  * @property    图像缩放
@@ -81,9 +81,9 @@ void halfsize_by_cuda(float * const out_image,float const  * const in_image,int 
  * @param_in    sigma2             目标高斯尺度平方值　　也就是方差
  * @param_in    out                cpu计算结果，用于对比数据
  * 调用示例：
- * halfsize_guassian_by_cuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels(),sigma2,&out->at(0));
+ * halfsizeGuassianByCuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels(),sigma2);
  */
-void halfsize_guassian_by_cuda(float * const out_image,float const  * const in_image, int const width,int const height,int const channels,float sigma2,float const  * const out);
+void halfSizeGuassianByCuda(float * const out_image,float const  * const in_image, int const width,int const height,int const channels,float sigma2);
 /**
  * @property    分离式高斯模糊函数
  * @func        对图像进行高斯模糊    高斯核为高斯函数f(x,y)=1/[(2pi)*sigma^2] * e^-((x^2 + y^2)/2sigma2)
@@ -104,9 +104,9 @@ void halfsize_guassian_by_cuda(float * const out_image,float const  * const in_i
  * @param_in    out                cpu计算结果，用于对比数据
  * @return
  * 调用示例：
- * blur_gaussian_by_cuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels(),sigma,&out->at(0));
+ * blurGaussianByCuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels(),sigma);
  */
-int blur_gaussian_by_cuda(float * const out_image,float const  * const in_image, int const w,int const h,int const c,float sigma,float const  * const out);
+int blurGaussianByCuda(float * const out_image,float const  * const in_image, int const w,int const h,int const c,float sigma);
 
 /**
  * @property    分离式高斯模糊函数
@@ -123,9 +123,9 @@ int blur_gaussian_by_cuda(float * const out_image,float const  * const in_image,
  * @param_in    out                cpu计算结果，用于对比数据
  * @return
  * 调用示例：
- * blur_gaussian2_by_cuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels(),sigma2,&out->at(0));
+ * blurGaussian2ByCuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels(),sigma2);
  */
-int blur_gaussian2_by_cuda(float * const out_image,float const  * const in_image, int const w,int const h,int const c,float sigma2,float const  * const out);
+int blurGaussian2ByCuda(float * const out_image,float const  * const in_image, int const w,int const h,int const c,float sigma2);
 
 /***
  * @property    求图像差函数
@@ -139,9 +139,9 @@ int blur_gaussian2_by_cuda(float * const out_image,float const  * const in_image
  * @param_in    out           cpu计算结果，用于对比数据
  * @return
  * 调用示例：
- * subtract_by_cuda(&out_image->at(0),&img1->at(0),&img2->at(0),img->width(),img->height(),img->channels(),&out->at(0));
+ * subtractByCuda(&out_image->at(0),&img1->at(0),&img2->at(0),img->width(),img->height(),img->channels());
  */
-int subtract_by_cuda(float * const out_image,float const  * const in_image1,float const  * const in_image2, int const w,int const h,int const c,float const  * const out);
+int subtractByCuda(float * const out_image,float const  * const in_image1,float const  * const in_image2, int const w,int const h,int const c);
 /***
  * @property    求图像差函数
  * @func        求差异图像的无符号图像,|in_image1-in_image2|
@@ -154,14 +154,14 @@ int subtract_by_cuda(float * const out_image,float const  * const in_image1,floa
  * @paramin     out           cpu计算结果，用于对比数据
  * @return
  * 调用示例：
- * difference_by_cuda(&out_image->at(0),&img1->at(0),&img2->at(0),img->width(),img->height(),img->channels(),&out->at(0));
+ * differenceByCuda(&out_image->at(0),&img1->at(0),&img2->at(0),img->width(),img->height(),img->channels());
  */
 template <typename T>
-int difference_by_cuda(T * const out_image,T const  * const in_image1,T const  * const in_image2,int const w,int const h,int const c,T const  * const out);
+int differenceByCuda(T * const out_image,T const  * const in_image1,T const  * const in_image2,int const w,int const h,int const c);
 template <>
-int difference_by_cuda<float>(float * const out_image,float const  * const in_image1,float const  * const in_image2, int const w,int const h,int const c,float const  * const out);
+int differenceByCuda<float>(float * const out_image,float const  * const in_image1,float const  * const in_image2, int const w,int const h,int const c);
 template <>
-int difference_by_cuda<char>(char * const out_image,char const  * const in_image1,char const  * const in_image2, int const w,int const h,int const c,char const  * const out);
+int differenceByCuda<char>(char * const out_image,char const  * const in_image1,char const  * const in_image2, int const w,int const h,int const c);
 
 /**
  * @property    图像变换
@@ -174,5 +174,5 @@ int difference_by_cuda<char>(char * const out_image,char const  * const in_image
  * @param_in    contrast    cpu计算结果，用于对比数据
  * @return
  */
-int byte_to_float_image_by_cuda(float * dstImage,unsigned char *srcImage,int const width,int const height,int const channels,float * contrast);
+int byteToFloatImageByCuda(float * dstImage,unsigned char *srcImage,int const width,int const height,int const channels);
 #endif //IMAGE_PROCESS_1_CUH

@@ -9,9 +9,8 @@
 #include "MATH/Util/timer.h"
 #include "IMAGE/image_process.hpp"
 #include <iostream>
-#include "cuda_include/process_cuda_1.h"
-#include "cuda_include/image_1.cuh"
 #include <cuda_include/image_process_1.cuh>
+#include "cuda_include/common.cuh"
 using namespace std;
 int main(int argc, char ** argv) {
     if (argc < 2)
@@ -37,11 +36,16 @@ int main(int argc, char ** argv) {
 
     util::TimerHigh time;
     dst_cpu=image::byte_to_float_image(image);//执行cpu功能
-    cout<<time.get_elapsed()<<"ms"<<endl;
+    cout<<"cpu:"<<time.get_elapsed()<<"ms"<<endl;
 
     //GPU实现
-
+    warmUp();//无NVVP检测核函数时间时需调用此函数,防止检测显卡启动的时间
+    
     FloatImage dst_gpu(image->width(),image->height(),image->channels());
-    byte_to_float_image_by_cuda(&dst_gpu.at(0),&image->at(0),image->width(),image->height(),image->channels(),&dst_cpu->at(0));
-
+    util::TimerHigh time1;
+    byteToFloatImageByCuda(&dst_gpu.at(0),&image->at(0),image->width(),image->height(),image->channels());
+    cout<<"gpu:"<<time1.get_elapsed()<<"ms"<<endl;
+    
+    int wc=(image->width())*(image->channels());
+    compare1(&dst_gpu.at(0),&dst_cpu->at(0),wc,image->height(),true);
 }

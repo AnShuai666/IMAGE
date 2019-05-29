@@ -12,7 +12,7 @@
 #include <iostream>
 #include <vector>
 #include "cuda_include/image_1.cuh"
-
+#include "cuda_include/common.cuh"
 using namespace std;
 int main(int argc, char ** argv)
 {
@@ -35,10 +35,16 @@ int main(int argc, char ** argv)
     }*/
     util::TimerHigh time;
     src_cpu.delete_channel(del_c);//执行cpu删除功能
-    cout<<time.get_elapsed()<<"ms"<<endl;
+    cout<<"cpu:"<<time.get_elapsed()<<"ms"<<endl;
 
     cout<<"*********************gpu实现*********************"<<endl;
+    warmUp();
     Image<char> dst_gpu(w,h,c-1);//创建gpu处理图像
-    delete_channel_by_cuda(&dst_gpu.at(0),&src_gpu.at(0),src_gpu.width(),src_gpu.height(),src_gpu.channels(),del_c,&src_cpu.at(0));
 
+    util::TimerHigh time1;
+    delete_channel_by_cuda(&dst_gpu.at(0),&src_gpu.at(0),src_gpu.width(),src_gpu.height(),src_gpu.channels(),del_c);
+    cout<<"gpu:"<<time1.get_elapsed()<<"ms"<<endl;
+
+    int wc=(src_gpu.width())*(src_cpu.channels());
+    compare1(&dst_gpu.at(0),&src_cpu.at(0),wc,src_cpu.height(),false);
 }

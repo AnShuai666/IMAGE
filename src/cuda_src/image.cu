@@ -9,7 +9,7 @@
 #include <iostream>
 #include <vector>
 #include "cuda_include/common.cuh"
-#include "cuda_include/sharedmem.cuh"
+#include "cuda_include/sharemem.cuh"
 #include <cstdio>
 template <typename T>
 void gpu_cpu2zero1(T *cpu,T *gpu,size_t bytes)
@@ -713,20 +713,20 @@ int delete_channel_by_cu(T *dstImage,T *srcImage,int const src_w,int const src_h
 /******************************************************************************************/
 ///填充颜色通道函数
 template <typename T>
-int fill_color_by_cuda(T *image,T *color,int const w,int const h,int const c,int const color_size,T *contrast)
+int fill_color_by_cuda(T *image,T *color,int const w,int const h,int const c,int const color_size)
 {
     fill_color_cu<T>(image,color,w,h,c, color_size);
     return 0;
 }
 template <>
-int fill_color_by_cuda(char *image,char *color,int const w,int const h,int const c,int const color_size,char *contrast)
+int fill_color_by_cuda(char *image,char *color,int const w,int const h,int const c,int const color_size)
 {
     fill_color_cu<char>(image,color,w,h,c, color_size);
     //compare1<char>(image,contrast,w*c,h, false);
     return 0;
 }
 template <>
-int fill_color_by_cuda(float  *image,float *color,int const w,int const h,int const c,int const color_size,float *contrast)
+int fill_color_by_cuda(float  *image,float *color,int const w,int const h,int const c,int const color_size)
 {
     fill_color_cu<float>(image,color,w,h,c, color_size);
     //compare1<float>(image,contrast,w*c,h, true);
@@ -735,20 +735,19 @@ int fill_color_by_cuda(float  *image,float *color,int const w,int const h,int co
 
 ///增加颜色通道函数(后)
 template <typename T>
-int add_channels_by_cuda(T *dst_image,T  * src_image,int const w,int const h, int const c, int const num_channels,T  value,T *contrast)
+int add_channels_by_cuda(T *dst_image,T  * src_image,int const w,int const h, int const c, int const num_channels,T  value)
 {
     add_Channel_cu(dst_image,src_image, w, h, c,num_channels,value);
     return  0;
 }
 template <>
-int add_channels_by_cuda(char *dst_image,char  * src_image,int const w,int const h, int const c, int const num_channels,char  value,char *contrast)
+int add_channels_by_cuda(char *dst_image,char  * src_image,int const w,int const h, int const c, int const num_channels,char  value)
 {
     add_Channel_cu<char>(dst_image,src_image, w, h, c,num_channels,value);
-    compare1<char>(dst_image,contrast,w*c,h, false);
     return  0;
 }
 template <>
-int add_channels_by_cuda(float *dst_image,float  * src_image,int const w,int const h, int const c, int const num_channels,float  value,float *contrast)
+int add_channels_by_cuda(float *dst_image,float  * src_image,int const w,int const h, int const c, int const num_channels,float  value)
 {
     add_Channel_cu<float>(dst_image,src_image, w, h, c,num_channels,value);
     //compare1<float>(dst_image,contrast,w*c,h, true);
@@ -757,43 +756,41 @@ int add_channels_by_cuda(float *dst_image,float  * src_image,int const w,int con
 
 ///增加颜色通道函数(前/后)
 template <typename T>
-int add_channels_front_by_cuda(T *dst_image,T  * src_image,int const w,int const h, int const c, vector<T> value,bool _front_back,T *contrast)
+int add_channels_front_by_cuda(T *dst_image,T  * src_image,int const w,int const h, int const c, vector<T> value,bool _front_back)
 {
     add_channels_cu(dst_image,src_image, w, h, c,(int)value.size(),&value.at(0),_front_back);
     //compare1(dst_image,contrast,w*c,h, false);
     return 0;
 }
 template <>
-int add_channels_front_by_cuda(char *dst_image,char  * src_image,int const w,int const h, int const c, vector<char> value,bool _front_back,char *contrast)
+int add_channels_front_by_cuda(char *dst_image,char  * src_image,int const w,int const h, int const c, vector<char> value,bool _front_back)
 {
     add_channels_cu<char>(dst_image,src_image, w, h, c,(int)value.size(),&value.at(0),_front_back);
-    compare1<char>(dst_image,contrast,w*c,h, false);
     return 0;
 }
 template <>
-int add_channels_front_by_cuda(float *dst_image,float  * src_image,int const w,int const h, int const c, vector<float> value,bool _front_back,float *contrast)
+int add_channels_front_by_cuda(float *dst_image,float  * src_image,int const w,int const h, int const c, vector<float> value,bool _front_back)
 {
     add_channels_cu<float>(dst_image,src_image, w, h, c,(int)value.size(),&value.at(0),_front_back);
-    compare1<float>(dst_image,contrast,w*c,h, false);
     return 0;
 }
 
 ///交换颜色通道
 template <typename T>
-int swap_channels_by_cuda(T *src,int const w,int const h,int c,int const swap_c1,int swap_c2,T *contrast)
+int swap_channels_by_cuda(T *src,int const w,int const h,int c,int const swap_c1,int swap_c2)
 {
     swap_channels_by_cu(src,w,h,c,swap_c1,swap_c2);
     return 0;
 }
 template <>
-int swap_channels_by_cuda(char *src,int const w,int const h,int c,int const swap_c1,int swap_c2,char *contrast)
+int swap_channels_by_cuda(char *src,int const w,int const h,int c,int const swap_c1,int swap_c2)
 {
     swap_channels_by_cu<char>(src,w,h,c,swap_c1,swap_c2);
     //compare1<char>(src,contrast,w*c,h, false);
     return 0;
 }
 template <>
-int swap_channels_by_cuda(float *src,int const w,int const h,int c,int const swap_c1,int swap_c2,float *contrast)
+int swap_channels_by_cuda(float *src,int const w,int const h,int c,int const swap_c1,int swap_c2)
 {
     swap_channels_by_cu<float>(src,w,h,c,swap_c1,swap_c2);
     //compare1<float>(src,contrast,w*c,h, true);
@@ -802,42 +799,38 @@ int swap_channels_by_cuda(float *src,int const w,int const h,int c,int const swa
 
 ///复制颜色通道
 template <typename T>
-int copy_channels_by_cuda(T *image,int const w,int const h,int const c,int const copy_c,int const paste_c,T *contrast)
+int copy_channels_by_cuda(T *image,int const w,int const h,int const c,int const copy_c,int const paste_c)
 {
     return 0;
 }
 template <>
-int copy_channels_by_cuda(char *image,int const w,int const h,int const c,int const copy_c,int const paste_c,char *contrast)
+int copy_channels_by_cuda(char *image,int const w,int const h,int const c,int const copy_c,int const paste_c)
 {
     copy_channels_by_cu<char>(image,w,h,c,copy_c,paste_c);
-    compare1<char>(image,contrast,w*c,h, false);
     return 0;
 }
 template <>
-int copy_channels_by_cuda(float *image,int const w,int const h,int const c,int const copy_c,int const paste_c,float *contrast)
+int copy_channels_by_cuda(float *image,int const w,int const h,int const c,int const copy_c,int const paste_c)
 {
     copy_channels_by_cu<float>(image,w,h,c,copy_c,paste_c);
-    compare1<float>(image,contrast,w*c,h, true);
     return 0;
 }
 
 ///删除颜色通道
 template <typename T>
-int delete_channel_by_cuda(T *dstImage,T *srcImage,int const src_w,int const src_h,int const src_c,int const del_c,T *contrast)
+int delete_channel_by_cuda(T *dstImage,T *srcImage,int const src_w,int const src_h,int const src_c,int const del_c)
 {
     return 0;
 }
 template <>
-int delete_channel_by_cuda(char *dstImage,char *srcImage,int const src_w,int const src_h,int const src_c,int const del_c,char *contrast)
+int delete_channel_by_cuda(char *dstImage,char *srcImage,int const src_w,int const src_h,int const src_c,int const del_c)
 {
     delete_channel_by_cu<char>(dstImage,srcImage,src_w,src_h,src_c,del_c);
-    compare1<char>(dstImage,contrast,src_w*(src_c-1),src_h,false);
     return 0;
 }
 template <>
-int delete_channel_by_cuda(float *dstImage,float *srcImage,int const src_w,int const src_h,int const src_c,int const del_c,float *contrast)
+int delete_channel_by_cuda(float *dstImage,float *srcImage,int const src_w,int const src_h,int const src_c,int const del_c)
 {
     delete_channel_by_cu<float>(dstImage,srcImage,src_w,src_h,src_c,del_c);
-    compare1<float>(dstImage,contrast,src_w*(src_c-1),src_h,true);
     return 0;
 }
