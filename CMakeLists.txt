@@ -120,7 +120,7 @@ endif ()
 ######################MATH##########################
 ####################################################
 
-find_package(MATH REQUIRED)
+#find_package(MATH REQUIRED)
 if (MATH_FOUND)
     message(STATUS "  找到MATH，版本为${MATH_VERSION}")
     message(STATUS "  头文件：${MATH_INCLUDE_DIR}")
@@ -146,10 +146,10 @@ configure_file(
 )
 
 set(MATH_DIR /home/as/MATH/cmakemodule)
-find_package(MATH REQUIRED)
-message(${MATH_FOUND})
-message(${MATH_INCLUDE_DIR})
-message(${MATH_LIBRARIES})
+#find_package(MATH REQUIRED)
+#message(${MATH_FOUND})
+#message(${MATH_INCLUDE_DIR})
+#message(${MATH_LIBRARIES})
 
 install(FILES IMAGEConfig.cmake
         DESTINATION share/IMAGE)

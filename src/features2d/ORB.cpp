@@ -37,8 +37,8 @@
 #include "features2d/features2d.h"
 #include <iostream>
 #include <stdarg.h>
-#include <Matrix/matrix.hpp>
-#include <Matrix/matrix_LU.hpp>
+#include <MATH/Matrix/matrix.hpp>
+#include <MATH/Matrix/matrix_lu.hpp>
 #include "IMAGE/image_process.hpp"
 #include <math.h>
 #ifndef CV_IMPL_ADD
@@ -466,32 +466,32 @@ class ORB_Impl : public ORB
         wta_k=2;
     }
 
-//    void setMaxFeatures(int maxFeatures) override { nfeatures = maxFeatures; }
-//    int getMaxFeatures() const override { return nfeatures; }
-//
-//    void setScaleFactor(double scaleFactor_) override { scaleFactor = scaleFactor_; }
-//    double getScaleFactor() const override { return scaleFactor; }
-//
-//    void setNLevels(int nlevels_) override { nlevels = nlevels_; }
-//    int getNLevels() const override { return nlevels; }
-//
-//    void setEdgeThreshold(int edgeThreshold_) override { edgeThreshold = edgeThreshold_; }
-//    int getEdgeThreshold() const override { return edgeThreshold; }
-//
-//    void setFirstLevel(int firstLevel_) override { CV_Assert(firstLevel_ >= 0);  firstLevel = firstLevel_; }
-//    int getFirstLevel() const override { return firstLevel; }
-//
-//    void setWTA_K(int wta_k_) override { wta_k = wta_k_; }
-//    int getWTA_K() const override { return wta_k; }
-//
-//    void setScoreType(int scoreType_) override { scoreType = scoreType_; }
-//    int getScoreType() const override { return scoreType; }
-//
-//    void setPatchSize(int patchSize_) override { patchSize = patchSize_; }
-//    int getPatchSize() const override { return patchSize; }
-//
-//    void setFastThreshold(int fastThreshold_) override { fastThreshold = fastThreshold_; }
-//    int getFastThreshold() const override { return fastThreshold; }
+    void setMaxFeatures(int maxFeatures) override { nfeatures = maxFeatures; }
+    int getMaxFeatures() const override { return nfeatures; }
+
+    void setScaleFactor(double scaleFactor_) override { scaleFactor = scaleFactor_; }
+    double getScaleFactor() const override { return scaleFactor; }
+
+    void setNLevels(int nlevels_) override { nlevels = nlevels_; }
+    int getNLevels() const override { return nlevels; }
+
+    void setEdgeThreshold(int edgeThreshold_) override { edgeThreshold = edgeThreshold_; }
+    int getEdgeThreshold() const override { return edgeThreshold; }
+
+    void setFirstLevel(int firstLevel_) override {  firstLevel = std::max(firstLevel_,0); }
+    int getFirstLevel() const override { return firstLevel; }
+
+    void setWTA_K(int wta_k_) override { wta_k = wta_k_; }
+    int getWTA_K() const override { return wta_k; }
+
+    void setScoreType(int scoreType_) override { scoreType = scoreType_; }
+    int getScoreType() const override { return scoreType; }
+
+    void setPatchSize(int patchSize_) override { patchSize = patchSize_; }
+    int getPatchSize() const override { return patchSize; }
+
+    void setFastThreshold(int fastThreshold_) override { fastThreshold = fastThreshold_; }
+    int getFastThreshold() const override { return fastThreshold; }
 
     // returns the descriptor size in bytes
     int descriptorSize() const override;
@@ -536,16 +536,7 @@ int ORB_Impl::descriptorType() const
 
 int ORB_Impl::defaultNorm() const
 {
-    switch (wta_k)
-    {
-        case 2:
-            return NORM_HAMMING;
-        case 3:
-        case 4:
-            return NORM_HAMMING2;
-        default:
-            return -1;
-    }
+    return NORM_HAMMING;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -563,7 +554,7 @@ computeOrbDescriptors( const vector<UCMat>& imagePyramid, std::vector<KeyPoint>&
         angle *= (float)(PI/180.f);
         float a = (float)cos(angle), b = (float)sin(angle);
 
-        const unsigned char* center = imagePyramid[kpt.octave].ptr(kpt.pt.y*scale)+Round(kpt.pt.x*scale);
+        const unsigned char* center = imagePyramid[kpt.octave].ptr(Round(kpt.pt.y*scale))+Round(kpt.pt.x*scale);
         float x, y;
         int ix, iy;
         const Point* pattern = &_pattern[0];
@@ -576,7 +567,7 @@ computeOrbDescriptors( const vector<UCMat>& imagePyramid, std::vector<KeyPoint>&
         iy = Round(y), \
         *(center + iy*step + ix) )
 
-
+        //256个点对，对比结果保存在32*8个bit中
         if( wta_k == 2 )
         {
             for (i = 0; i < dsize; ++i, pattern += 16)
@@ -811,7 +802,7 @@ void ORB_Impl::detectOrCompute( UCInputArray& image, UCInputArray& mask,
         const Point* pattern0 = (const Point*)bit_pattern_31_;
 
         std::copy(pattern0, pattern0 + npoints, std::back_inserter(pattern));
-
+        cout<<pattern.size()<<endl;
         for( level = 0; level < nLevels; level++ )
         {
             // preprocess the resized image
@@ -819,7 +810,9 @@ void ORB_Impl::detectOrCompute( UCInputArray& image, UCInputArray& mask,
 
             //boxFilter(working_mat, working_mat, working_mat.depth(), Size(5,5), Point(-1,-1), true, BORDER_REFLECT_101);
             //GaussianBlur(workingMat, imagePyramid[level], Size(7, 7), 2, 2, BORDER_REFLECT_101);
+            //double t=clock();
             image::blur_gaussian<unsigned char>(&workingMat,&imagePyramid[level],2);
+            //cout<<"gauss time: "<<(clock()-t)/CLOCKS_PER_SEC*1000.0<<" ms"<<endl;
         }
 
         computeOrbDescriptors(imagePyramid,keypoints, _descriptors, pattern, dsize);

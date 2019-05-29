@@ -532,6 +532,7 @@ class FastFeatureDetector_Impl : public FastFeatureDetector
         return 0;
     }
 
+
     void setThreshold(int threshold_) override { threshold = threshold_; }
     int getThreshold() const override { return threshold; }
 

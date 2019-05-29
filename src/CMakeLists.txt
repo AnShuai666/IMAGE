@@ -50,7 +50,7 @@ link_directories(/home/doing/gitHub/MATH/lib)
 add_library(image SHARED ${HEADERS} ${SOURCE_FILES})
 
 target_link_libraries(image ${PNG_LIBRARIES} ${JPEG_LIBRARIES} )
-target_link_libraries(image matrix_LU)
+target_link_libraries(image matrix)
 
 install(TARGETS image
         LIBRARY DESTINATION lib/IMAGE

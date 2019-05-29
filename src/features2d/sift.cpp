@@ -105,8 +105,8 @@
 #include "features2d/features2d.h"
 #include <iostream>
 #include <stdarg.h>
-#include <Matrix/matrix.hpp>
-#include <Matrix/matrix_LU.hpp>
+#include <MATH/Matrix/matrix.hpp>
+#include <MATH/Matrix/matrix_lu.hpp>
 #include "IMAGE/image_process.hpp"
 #include <math.h>
 namespace features2d
@@ -462,7 +462,7 @@ static bool adjustLocalExtrema( const std::vector<Mat>& dog_pyr, KeyPoint& kpt, 
                     dxy, dyy, dys,
                     dxs, dys, dss};
         float X[3];
-        LUPSolve(H,dD,X,3);
+        lupSolve(H,dD,X,3);
         xi = -X[2];
         xr = -X[1];
         xc = -X[0];
