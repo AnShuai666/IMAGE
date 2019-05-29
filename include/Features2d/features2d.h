@@ -59,10 +59,10 @@ typedef image::Image<unsigned char>        UCOutputArray;
 static const float EPSILON =1.192093e-007;
 
 
-float  Atan(float y,float x);//输入一个2维向量，计算这个向量的方向，以度为单位（范围是0度---360度）。
-int  Round(double x);//返回跟参数最接近的整数值；
-int  Floor(double x);//返回不大于参数的最大整数值；
-int  Ceil(double x);//返回不小于参数的最小整数值。
+float  atan(float y,float x);//输入一个2维向量，计算这个向量的方向，以度为单位（范围是0度---360度）。
+int  round(double x);//返回跟参数最接近的整数值；
+int  floor(double x);//返回不大于参数的最大整数值；
+int  ceil(double x);//返回不小于参数的最小整数值。
 
 class  KeyPoint
 {
@@ -90,14 +90,14 @@ class  KeyPoint
         KeyPoint(float x, float y, float _size, float _angle=-1, float _response=0, int _octave=0, int _class_id=-1);
 
 
-        Point2f pt; //!< coordinates of the keypoints
-        float size; //!< diameter of the meaningful keypoint neighborhood//GSS中尺度值,sig*K^o*2,缩放到原图尺寸。
-        float angle; //!< computed orientation of the keypoint (-1 if not applicable);
+        Point2f m_pt; //!< coordinates of the keypoints
+        float m_size; //!< diameter of the meaningful keypoint neighborhood//GSS中尺度值,sig*K^o*2,缩放到原图尺寸。
+        float m_angle; //!< computed orientation of the keypoint (-1 if not applicable);
         //!< it's in [0,360) degrees and measured relative to
         //!< image coordinate system, ie in clockwise.
-        float response; //!< the response by which the most strong keypoints have been selected. Can be used for the further sorting or subsampling
-        int octave; //!< octave (pyramid layer) from which the keypoint has been extracted
-        int class_id; //!< object class (if the keypoints need to be clustered by an object they belong to)
+        float m_response; //!< the response by which the most strong keypoints have been selected. Can be used for the further sorting or subsampling
+        int m_octave; //!< octave (pyramid layer) from which the keypoint has been extracted
+        int m_class_id; //!< object class (if the keypoints need to be clustered by an object they belong to)
 };
 
 

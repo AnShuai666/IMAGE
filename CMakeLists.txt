@@ -161,7 +161,6 @@ install(FILES IMAGEConfigVersion.cmake
 
 add_subdirectory(examples)
 add_subdirectory(src)
-add_subdirectory(src_bin)
 add_subdirectory(TestCase)
 
 install(FILES cmakemodule/IMAGEConfig.cmake

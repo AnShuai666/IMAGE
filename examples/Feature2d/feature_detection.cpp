@@ -21,13 +21,13 @@
 //{
 //
 //
-//    image::ByteImage::Ptr image;
+//    image::ByteImage::ImagePtr image;
 //    std::string image_filename = "/home/doing/lena.jpg";
 //
 //    try
 //    {
 //        std::cout<<"加载 "<<image_filename<<"中..."<<std::endl;
-//        image = image::load_image(image_filename);
+//        image = image::loadImage(image_filename);
 //    }
 //    catch (std::exception& e)
 //    {
@@ -73,18 +73,18 @@
 //        pt.orientation=sift_keypoints[i].octave;
 //        keypoints.push_back(pt);
 //    }
-//    image::ByteImage::Ptr image_out;
-//    image_out = sift_vis.draw_keypoints(image,keypoints,image::RADIUS_CIRCLE_ORIENTATION);
+//    image::ByteImage::ImagePtr image_out;
+//    image_out = sift_vis.drawKeypoints(image,keypoints,image::RADIUS_CIRCLE_ORIENTATION);
 //
 //    //保存图像 还需要重载
 //    std::string image_out_name = "result_sift.png";
 //    std::cout<<"保存图像: "<<std::endl;
-//    image::save_image(image_out,image_out_name);
+//    image::saveImage(image_out,image_out_name);
 //    return 0;
 //}
 //
 #include <MATH/Flann/flann.hpp>
-#include "features2d/features2d.h"
+#include "Features2d/features2d.h"
 #include "IMAGE/image_io.h"
 #include "timer.h"
 #include <iostream>
@@ -103,15 +103,15 @@ void unpack(const int kptoctave, int& octave, int& layer, float& scale)
 }
 int main()
 {
-    image::ByteImage::Ptr test=image::ByteImage::create(2,2,3);
-    image::ByteImage::Ptr image=std::make_shared<ByteImage>();
-    image::ByteImage::Ptr image2=std::make_shared<ByteImage>();
-    std::string image_filename = "/home/doing/lena.jpg";
-    std::string image_filename2 = "/home/doing/lenawarp.jpg";
+    image::ByteImage::ImagePtr test=image::ByteImage::create(2,2,3);
+    image::ByteImage::ImagePtr image=std::make_shared<ByteImage>();
+    image::ByteImage::ImagePtr image2=std::make_shared<ByteImage>();
+    std::string image_filename = "/home/doing/box2.jpg";
+    std::string image_filename2 = "/home/doing/box.jpg";
 #define USECV 0
 #if USECV
-    cv::Ptr<cv::Feature2D> cvorb=cv::ORB::create();
-    cv::Ptr<cv::Feature2D> cvsift = cv::xfeatures2d::SIFT::create();
+    cv::ImagePtr<cv::Feature2D> cvorb=cv::ORB::create();
+    cv::ImagePtr<cv::Feature2D> cvsift = cv::xfeatures2d::SIFT::create();
     vector<cv::KeyPoint> cvkeyPoint, cvkeyPoint2;
     cv::Mat cvdescriptors, cvdescriptors2;
     cv::Mat img = cv::imread(image_filename);
@@ -127,22 +127,22 @@ int main()
     cv::Mat cvimg_gray=cv::imread(image_filename,0);
     cv::Mat cvimg_gray2=cv::imread(image_filename2,0);
 
-    image = image::load_image(image_filename);
-    image2 = image::load_image(image_filename2);
+    image = image::loadImage(image_filename);
+    image2 = image::loadImage(image_filename2);
 
-    image::ByteImage::Ptr image_gray=image::desaturate<unsigned char>(image,DESATURATE_LUMINANCE);
-    image::FloatImage::Ptr img_gray_ptr=make_shared<image::Image<float>>(image->width(),image->height(),1);
+    image::ByteImage::ImagePtr image_gray=image::desaturate<unsigned char>(image,DESATURATE_LUMINANCE);
+    image::FloatImage::ImagePtr img_gray_ptr=make_shared<image::Image<float>>(image->width(),image->height(),1);
     converTo(*image_gray,*img_gray_ptr);
     Mat* img_gray=(Mat*)(img_gray_ptr.get());
     double start,end;
     start=clock();
-    image::ByteImage::Ptr image_gray2=image::desaturate<unsigned char>(image2,DESATURATE_LUMINANCE);
+    image::ByteImage::ImagePtr image_gray2=image::desaturate<unsigned char>(image2,DESATURATE_LUMINANCE);
     end=clock();
     cout<<"time: "<<(end-start)/CLOCKS_PER_SEC*1000.0<<" ms"<<endl;
-    image::FloatImage::Ptr img_gray_ptr2=make_shared<image::Image<float>>(image2->width(),image2->height(),1);
+    image::FloatImage::ImagePtr img_gray_ptr2=make_shared<image::Image<float>>(image2->width(),image2->height(),1);
     converTo(*image_gray2,*img_gray_ptr2);
     //for(int i=0;i<image_gray2->get_value_amount();i++)
-     //   img_gray_ptr2->get_data()[i]=(float)image_gray2->get_data()[i];
+     //   img_gray_ptr2->getData()[i]=(float)image_gray2->getData()[i];
     Mat* img_gray2=(Mat*)(img_gray_ptr2.get());
 
 
@@ -154,11 +154,11 @@ int main()
     //orb->detect(*image_gray,keyPoint,mask);
     //orb->compute(*image_gray,keyPoint,descriptors);
 
-    //sift->detectAndCompute(*img_gray,mask,keyPoint,descriptors);
-    orb->detectAndCompute(*image_gray,mask,keyPoint,descriptors);
+    sift->detectAndCompute(*img_gray,mask,keyPoint,descriptors);
+    //orb->detectAndCompute(*image_gray,mask,keyPoint,descriptors);
 
-    //sift->detectAndCompute(*img_gray2,mask,keyPoint2,descriptors2);
-    orb->detectAndCompute(*image_gray2,mask,keyPoint2,descriptors2);
+    sift->detectAndCompute(*img_gray2,mask,keyPoint2,descriptors2);
+    //orb->detectAndCompute(*image_gray2,mask,keyPoint2,descriptors2);
     cout<<keyPoint.size()<<endl;
     cout<<keyPoint2.size()<<endl;
     image::Visualizer<uint8_t> sift_vis;
@@ -167,19 +167,19 @@ int main()
     for(int i=0;i<keyPoint.size();i++)
     {
         image::KeypointVis pt;
-        pt.x=keyPoint[i].pt.x;
-        pt.y=keyPoint[i].pt.y;
-        pt.orientation=keyPoint[i].angle;
+        pt.x=keyPoint[i].m_pt.x;
+        pt.y=keyPoint[i].m_pt.y;
+        pt.orientation=keyPoint[i].m_angle;
         //cout<<pt.orientation<<endl;
         angle+=pt.orientation;
-        pt.radius=keyPoint[i].response*3000;
+        pt.radius=keyPoint[i].m_response*300;
         keypoints.push_back(pt);
     }
     cout<<angle/keyPoint.size()<<endl;
-    image::ByteImage::Ptr image_out;
-    image_out = sift_vis.draw_keypoints(image,keypoints,image::RADIUS_CIRCLE_ORIENTATION);
+    image::ByteImage::ImagePtr image_out;
+    image_out = sift_vis.drawKeypoints(image,keypoints,image::RADIUS_CIRCLE_ORIENTATION);
     std::string image_out_name = "result_sift1.png";
-    image::save_image(image,image_out_name);
+    image::saveImage(image,image_out_name);
 
     int nn=1;
 #if USECV
@@ -199,8 +199,8 @@ int main()
     flann::Features<float> dataset=flann::Features<float>(data,keyPoint.size(),2);
     flann::Features<float> query=flann::Features<float>(cvdata,cvkeyPoint.size(),2);
 #else
-    flann::Features<float> dataset=flann::Features<float>(descriptors.get_data().data(),descriptors.rows(),descriptors.cols());
-    flann::Features<float> query=flann::Features<float>(descriptors2.get_data().data(),descriptors2.rows(),descriptors2.cols());
+    flann::Features<float> dataset=flann::Features<float>(descriptors.getData().data(),descriptors.rows(),descriptors.cols());
+    flann::Features<float> query=flann::Features<float>(descriptors2.getData().data(),descriptors2.rows(),descriptors2.cols());
 #endif
     flann::Features<int> indices(new int[query.rows*nn], query.rows, nn);
     flann::Features<float> dists(new float[query.rows*nn], query.rows, nn);
@@ -223,7 +223,7 @@ int main()
     for(int i=0;i<dists.rows;i++)
         min_dist+=dists[i][0];
     min_dist/=dists.rows;
-    image::ByteImage::Ptr res=make_shared<image::ByteImage>(image::ByteImage(image->width()*2,image->height(),3));
+    image::ByteImage::ImagePtr res=make_shared<image::ByteImage>(image::ByteImage(image->width()*2,image->height(),3));
     for(int i=0;i<image->height();i++){
         int offset=i*image->width()*image->channels();
         int offset2=i*res->width()*res->channels();
@@ -238,8 +238,8 @@ int main()
     {
         uint8_t color[3]={(uint8_t)(rand()%255),(uint8_t)(rand()%255),(uint8_t)(rand()%255)};
         if(dists[i][0]<min_dist*0.65) {
-            sift_vis.draw_line(*res, keyPoint[indices[i][0]].pt.x, keyPoint[indices[i][0]].pt.y,
-                               keyPoint2[i].pt.x + image->width(), keyPoint2[i].pt.y, color);
+            sift_vis.drawLine(*res, keyPoint[indices[i][0]].m_pt.x, keyPoint[indices[i][0]].m_pt.y,
+                               keyPoint2[i].m_pt.x + image->width(), keyPoint2[i].m_pt.y, color);
             num++;
         }
     }
@@ -248,6 +248,6 @@ int main()
     //保存图像 还需要重载
     image_out_name = "result_sift3.png";
     std::cout<<"保存图像: "<<std::endl;
-    image::save_image(res,image_out_name);
+    image::saveImage(res,image_out_name);
     return 0;
 }

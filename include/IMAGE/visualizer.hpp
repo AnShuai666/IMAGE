@@ -46,7 +46,7 @@ public:
     *  @param_in   image        待特征提取图像
     *  @return     Keypoints    返回特征点向量引用
     */
-    Keypoints& save_keypoints(typename Image<T>::Ptr image);
+    Keypoints& saveKeypoints(typename Image<T>::ImagePtr image);
 
     /*
     *  @property   画特征点
@@ -58,7 +58,7 @@ public:
     *  @static     静态成员函数  属于类不属于对象的类成员函数
     *  @return     void
     */
-    void draw_keypoint(typename Image<T>::Ptr image, KeypointVis const& keypoint,KeypointStyle style,uint8_t const* color);
+    void drawKeypoint(typename Image<T>::ImagePtr image, KeypointVis const& keypoint,KeypointStyle style,uint8_t const* color);
 
     /*
     *  @property   画特征点
@@ -69,20 +69,20 @@ public:
     *  @static     静态成员函数  属于类不属于对象的类成员函数
     *  @return     void
     */
-    typename Image<T>::Ptr draw_keypoints(typename Image<T>::Ptr image, Keypoints const& keypoints, KeypointStyle style);
+    typename Image<T>::ImagePtr drawKeypoints(typename Image<T>::ImagePtr image, Keypoints const& keypoints, KeypointStyle style);
 
-    typename Image<T>::Ptr draw_matches(Image<T> &image1,Image<T>& image2);
+    typename Image<T>::ImagePtr drawMatches(Image<T> &image1,Image<T>& image2);
 
-    void draw_line(Image<T>& image, int x1,int y1,int x2,int y2,T const* color);
+    void drawLine(Image<T>& image, int x1,int y1,int x2,int y2,T const* color);
 
-    void draw_circle(Image<T>& image, int x, int y, int radius,T const* color);
+    void drawCircle(Image<T>& image, int x, int y, int radius,T const* color);
 
-    void draw_rectangle(Image<T>& image, int x1,int y1,int x2,int y2,T const* color);
+    void drawRectangle(Image<T>& image, int x1,int y1,int x2,int y2,T const* color);
 
-    void draw_box(Image<T>& image, float x, float y,float size, float orientation, uint8_t const* color);
+    void drawBox(Image<T>& image, float x, float y,float size, float orientation, uint8_t const* color);
 
 private:
-    unsigned char color_table[12][3] =
+    unsigned char _color_table[12][3] =
             {
                     { 255, 0,   0 }, { 0, 255,   0 }, { 0, 0, 255   },
                     { 255, 255, 0 }, { 255, 0, 255 }, { 0, 255, 255 },
@@ -93,13 +93,13 @@ private:
 
 template <typename T>
 Keypoints&
-Visualizer<T>::save_keypoints(typename Image<T>::Ptr image)
+Visualizer<T>::saveKeypoints(typename Image<T>::ImagePtr image)
 {
 
 }
 template <typename T>
 void
-Visualizer<T>::draw_keypoint(typename Image<T>::Ptr image, const KeypointVis &keypoint, KeypointStyle style, uint8_t const *color)
+Visualizer<T>::drawKeypoint(typename Image<T>::ImagePtr image, const KeypointVis &keypoint, KeypointStyle style, uint8_t const *color)
 {
     int const x = static_cast<int>(keypoint.x + 0.5);
     int const y = static_cast<int>(keypoint.y + 0.5);
@@ -149,14 +149,14 @@ Visualizer<T>::draw_keypoint(typename Image<T>::Ptr image, const KeypointVis &ke
             std::copy(color, color + channels, &image->at(x, y, 0));
             break;
         case SMALL_CIRCLE_STATIC:
-            draw_circle(*image, x, y, 3, color);
+            drawCircle(*image, x, y, 3, color);
             break;
         case RADIUS_BOX_ORIENTATION:
-            draw_box(*image, keypoint.x, keypoint.y,
+            drawBox(*image, keypoint.x, keypoint.y,
                      keypoint.radius, keypoint.orientation, color);
             break;
         case RADIUS_CIRCLE_ORIENTATION:
-            draw_circle(*image, x, y, required_space, color);
+            drawCircle(*image, x, y, required_space, color);
             break;
     }
 
@@ -166,17 +166,17 @@ Visualizer<T>::draw_keypoint(typename Image<T>::Ptr image, const KeypointVis &ke
         float const cos_ori = std::cos(keypoint.orientation);
         float const x1 = (cos_ori * keypoint.radius);
         float const y1 = (sin_ori * keypoint.radius);
-        draw_line(*image, static_cast<int>(keypoint.x + 0.5f),
+        drawLine(*image, static_cast<int>(keypoint.x + 0.5f),
                          static_cast<int>(keypoint.y + 0.5f),
                          static_cast<int>(keypoint.x + x1 + 0.5f),
                          static_cast<int>(keypoint.y + y1 + 0.5f), color);
     }
 }
 template <typename T>
-typename Image<T>::Ptr
-Visualizer<T>::draw_keypoints(typename Image<T>::Ptr image,const std::vector<KeypointVis> &keypoints, KeypointStyle style)
+typename Image<T>::ImagePtr
+Visualizer<T>::drawKeypoints(typename Image<T>::ImagePtr image,const std::vector<KeypointVis> &keypoints, KeypointStyle style)
 {
-    typename Image<T>::Ptr ret =image;
+    typename Image<T>::ImagePtr ret =image;
 //    if (image->channels() == 3)
 //    {
 //        ret = image::desaturate<T>(image, image::DESATURATE_AVERAGE);
@@ -187,11 +187,11 @@ Visualizer<T>::draw_keypoints(typename Image<T>::Ptr image,const std::vector<Key
 //        ret = image::expand_grayscale<T>(image);
 //    }
 
-    uint8_t* color = color_table[3];
+    uint8_t* color = _color_table[3];
     //TODO::to be CUDA @YANG
     for (std::size_t i = 0; i < keypoints.size(); ++i)
     {
-        Visualizer::draw_keypoint(ret, keypoints[i], style, color);
+        Visualizer::drawKeypoint(ret, keypoints[i], style, color);
     }
 
     return ret;
@@ -199,7 +199,7 @@ Visualizer<T>::draw_keypoints(typename Image<T>::Ptr image,const std::vector<Key
 //TODO::to be CUDA @YANG
 template <typename T>
 void
-Visualizer<T>::draw_line(image::Image<T> &image, int x1, int y1, int x2, int y2, T const *color)
+Visualizer<T>::drawLine(image::Image<T> &image, int x1, int y1, int x2, int y2, T const *color)
 {
 //    if(x1<0||y1<0||x2<0||y2<0||
 //    x1>=image.width()||x2>=image.width()||y1>=image.height()||y2>=image.height()) {
@@ -279,7 +279,7 @@ Visualizer<T>::draw_line(image::Image<T> &image, int x1, int y1, int x2, int y2,
 //TODO::to be CUDA @YANG
 template <typename T>
 void
-image::Visualizer<T>::draw_circle(image::Image<T>& image, int center_x, int center_y, int radius, T const *color)
+image::Visualizer<T>::drawCircle(image::Image<T>& image, int center_x, int center_y, int radius, T const *color)
 {
     if(center_x<0||center_y<0||center_x>=image.width()||center_y>=image.height()) {
         throw std::invalid_argument("圆心不在图像内\n");
@@ -359,17 +359,17 @@ image::Visualizer<T>::draw_circle(image::Image<T>& image, int center_x, int cent
 //TODO::to be CUDA @YANG
 template <typename T>
 void
-image::Visualizer<T>::draw_rectangle(image::Image<T> &image, int x1, int y1, int x2, int y2, T const *color)
+image::Visualizer<T>::drawRectangle(image::Image<T> &image, int x1, int y1, int x2, int y2, T const *color)
 {
-    draw_line(image,x1,y1,x2,y1,color);
-    draw_line(image,x2,y1,x2,y2,color);
-    draw_line(image,x2,y2,x1,y2,color);
-    draw_line(image,x1,y2,x1,x1,color);
+    drawLine(image,x1,y1,x2,y1,color);
+    drawLine(image,x2,y1,x2,y2,color);
+    drawLine(image,x2,y2,x1,y2,color);
+    drawLine(image,x1,y2,x1,x1,color);
 }
 //TODO::to be CUDA @YANG
 template <typename T>
 void
-image::Visualizer<T>::draw_box(image::Image<T> &image, float x, float y, float size, float orientation,uint8_t const *color)
+image::Visualizer<T>::drawBox(image::Image<T> &image, float x, float y, float size, float orientation,uint8_t const *color)
 {
     float const sin_ori = std::sin(orientation);
     float const cos_ori = std::cos(orientation);
@@ -384,16 +384,16 @@ image::Visualizer<T>::draw_box(image::Image<T> &image, float x, float y, float s
     float const y3 = (sin_ori * -size + cos_ori * +size);
 
 
-    draw_line(image, static_cast<int>(x + x0 + 0.5f),
+    drawLine(image, static_cast<int>(x + x0 + 0.5f),
                      static_cast<int>(y + y0 + 0.5f), static_cast<int>(x + x1 + 0.5f),
                      static_cast<int>(y + y1 + 0.5f), color);
-    draw_line(image, static_cast<int>(x + x1 + 0.5f),
+    drawLine(image, static_cast<int>(x + x1 + 0.5f),
                      static_cast<int>(y + y1 + 0.5f), static_cast<int>(x + x2 + 0.5f),
                      static_cast<int>(y + y2 + 0.5f), color);
-    draw_line(image, static_cast<int>(x + x2 + 0.5f),
+    drawLine(image, static_cast<int>(x + x2 + 0.5f),
                      static_cast<int>(y + y2 + 0.5f), static_cast<int>(x + x3 + 0.5f),
                      static_cast<int>(y + y3 + 0.5f), color);
-    draw_line(image, static_cast<int>(x + x3 + 0.5f),
+    drawLine(image, static_cast<int>(x + x3 + 0.5f),
                      static_cast<int>(y + y3 + 0.5f), static_cast<int>(x + x0 + 0.5f),
                      static_cast<int>(y + y0 + 0.5f), color);
 }

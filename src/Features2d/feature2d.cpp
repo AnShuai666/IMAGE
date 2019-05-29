@@ -41,12 +41,12 @@
 //M*/
 
 
-#include "features2d/features2d.h"
+#include "Features2d/features2d.h"
 #include <vector>
 using namespace std;
 namespace features2d
 {
-float  Atan(float y,float x){
+float  atan(float y,float x){
     const float PI=3.1415926535897932384626433832795;
     //反正切的角度等于X轴与通过原点和给定坐标点(x, y)的直线之间的夹角。
     // 结果为正表示从X轴逆时针旋转的角度，结果为负表示从X轴顺时针旋转的角度
@@ -56,37 +56,37 @@ float  Atan(float y,float x){
         angle=360+angle;
     return angle;
 }
-int  Round(double x){
+int  round(double x){
     if(x<0)
         x-=0.5;
     if(x>0)
         x+=0.5;
     return (int)x;
 }
-int  Floor(double x){
-    if((x-Round(x))<EPSILON)
-        return Round(x);
+int  floor(double x){
+    if((x-round(x))<EPSILON)
+        return round(x);
     if(x<0)
         x-=1;
     return (int)x;
 }
-int  Ceil(double x){
-    if((x-Round(x))<EPSILON)
-        return Round(x);
+int  ceil(double x){
+    if((x-round(x))<EPSILON)
+        return round(x);
     if(x>0)
         x+=1;
     return (int)x;
 }
 KeyPoint::KeyPoint()
-        : pt(0,0), size(0), angle(-1), response(0), octave(0), class_id(-1) {}
+        : m_pt(0,0), m_size(0), m_angle(-1), m_response(0), m_octave(0), m_class_id(-1) {}
 
 
 KeyPoint::KeyPoint(Point2f _pt, float _size, float _angle, float _response, int _octave, int _class_id)
-        : pt(_pt), size(_size), angle(_angle), response(_response), octave(_octave), class_id(_class_id) {}
+        : m_pt(_pt), m_size(_size), m_angle(_angle), m_response(_response), m_octave(_octave), m_class_id(_class_id) {}
 
 
 KeyPoint::KeyPoint(float x, float y, float _size, float _angle, float _response, int _octave, int _class_id)
-        : pt(x, y), size(_size), angle(_angle), response(_response), octave(_octave), class_id(_class_id) {}
+        : m_pt(x, y), m_size(_size), m_angle(_angle), m_response(_response), m_octave(_octave), m_class_id(_class_id) {}
 
 
 
@@ -266,7 +266,7 @@ struct KeypointResponseGreaterThanThreshold
     }
     inline bool operator()(const KeyPoint& kpt) const
     {
-        return kpt.response >= value;
+        return kpt.m_response >= value;
     }
     float value;
 };
@@ -275,7 +275,7 @@ struct KeypointResponseGreater
 {
     inline bool operator()(const KeyPoint& kp1, const KeyPoint& kp2) const
     {
-        return kp1.response > kp2.response;
+        return kp1.m_response > kp2.m_response;
     }
 };
 
@@ -294,7 +294,7 @@ void KeyPointsFilter::retainBest(std::vector<KeyPoint>& keypoints, int n_points)
         //first use nth element to partition the keypoints into the best and worst.
         std::nth_element(keypoints.begin(), keypoints.begin() + n_points - 1, keypoints.end(), KeypointResponseGreater());
         //this is the boundary response, and in the case of FAST may be ambiguous
-        float ambiguous_response = keypoints[n_points - 1].response;
+        float ambiguous_response = keypoints[n_points - 1].m_response;
         //use std::partition to grab all of the keypoints with the boundary response.
         std::vector<KeyPoint>::const_iterator new_end =
                 std::partition(keypoints.begin() + n_points, keypoints.end(),
@@ -311,7 +311,7 @@ struct RoiPredicate
 
     bool operator()( const KeyPoint& keyPt ) const
     {
-        return !r.contains( keyPt.pt );
+        return !r.contains( keyPt.m_pt );
     }
 
     Rect r;
@@ -338,7 +338,7 @@ struct SizePredicate
 
     bool operator()( const KeyPoint& keyPt ) const
     {
-        float size = keyPt.size;
+        float size = keyPt.m_size;
         return (size < minSize) || (size > maxSize);
     }
 
@@ -360,7 +360,7 @@ public:
     MaskPredicate( const UCMat& _mask ) : mask(_mask) {}
     bool operator() (const KeyPoint& key_pt) const
     {
-        return mask.at( (int)(key_pt.pt.x + 0.5f), (int)(key_pt.pt.y + 0.5f),0 ) == 0;
+        return mask.at( (int)(key_pt.m_pt.x + 0.5f), (int)(key_pt.m_pt.y + 0.5f),0 ) == 0;
     }
 
 private:
@@ -384,20 +384,20 @@ struct KeyPoint_LessThan
     {
         const KeyPoint& kp1 = (*kp)[i];
         const KeyPoint& kp2 = (*kp)[j];
-        if( kp1.pt.x != kp2.pt.x )
-            return kp1.pt.x < kp2.pt.x;
-        if( kp1.pt.y != kp2.pt.y )
-            return kp1.pt.y < kp2.pt.y;
-        if( kp1.size != kp2.size )
-            return kp1.size > kp2.size;
-        if( kp1.angle != kp2.angle )
-            return kp1.angle < kp2.angle;
-        if( kp1.response != kp2.response )
-            return kp1.response > kp2.response;
-        if( kp1.octave != kp2.octave )
-            return kp1.octave > kp2.octave;
-        if( kp1.class_id != kp2.class_id )
-            return kp1.class_id > kp2.class_id;
+        if( kp1.m_pt.x != kp2.m_pt.x )
+            return kp1.m_pt.x < kp2.m_pt.x;
+        if( kp1.m_pt.y != kp2.m_pt.y )
+            return kp1.m_pt.y < kp2.m_pt.y;
+        if( kp1.m_size != kp2.m_size )
+            return kp1.m_size > kp2.m_size;
+        if( kp1.m_angle != kp2.m_angle )
+            return kp1.m_angle < kp2.m_angle;
+        if( kp1.m_response != kp2.m_response )
+            return kp1.m_response > kp2.m_response;
+        if( kp1.m_octave != kp2.m_octave )
+            return kp1.m_octave > kp2.m_octave;
+        if( kp1.m_class_id != kp2.m_class_id )
+            return kp1.m_class_id > kp2.m_class_id;
 
         return i < j;
     }
@@ -417,8 +417,8 @@ void KeyPointsFilter::removeDuplicated( std::vector<KeyPoint>& keypoints )
     {
         KeyPoint& kp1 = keypoints[kpidx[i]];
         KeyPoint& kp2 = keypoints[kpidx[j]];
-        if( kp1.pt.x != kp2.pt.x || kp1.pt.y != kp2.pt.y ||
-            kp1.size != kp2.size || kp1.angle != kp2.angle )
+        if( kp1.m_pt.x != kp2.m_pt.x || kp1.m_pt.y != kp2.m_pt.y ||
+            kp1.m_size != kp2.m_size || kp1.m_angle != kp2.m_angle )
             j = i;
         else
             mask[kpidx[i]] = 0;
@@ -439,19 +439,19 @@ struct KeyPoint12_LessThan
 {
     bool operator()(const KeyPoint &kp1, const KeyPoint &kp2) const
     {
-        if( kp1.pt.x != kp2.pt.x )
-            return kp1.pt.x < kp2.pt.x;
-        if( kp1.pt.y != kp2.pt.y )
-            return kp1.pt.y < kp2.pt.y;
-        if( kp1.size != kp2.size )
-            return kp1.size > kp2.size;
-        if( kp1.angle != kp2.angle )
-            return kp1.angle < kp2.angle;
-        if( kp1.response != kp2.response )
-            return kp1.response > kp2.response;
-        if( kp1.octave != kp2.octave )
-            return kp1.octave > kp2.octave;
-        return kp1.class_id > kp2.class_id;
+        if( kp1.m_pt.x != kp2.m_pt.x )
+            return kp1.m_pt.x < kp2.m_pt.x;
+        if( kp1.m_pt.y != kp2.m_pt.y )
+            return kp1.m_pt.y < kp2.m_pt.y;
+        if( kp1.m_size != kp2.m_size )
+            return kp1.m_size > kp2.m_size;
+        if( kp1.m_angle != kp2.m_angle )
+            return kp1.m_angle < kp2.m_angle;
+        if( kp1.m_response != kp2.m_response )
+            return kp1.m_response > kp2.m_response;
+        if( kp1.m_octave != kp2.m_octave )
+            return kp1.m_octave > kp2.m_octave;
+        return kp1.m_class_id > kp2.m_class_id;
     }
 };
 
@@ -467,8 +467,8 @@ void KeyPointsFilter::removeDuplicatedSorted( std::vector<KeyPoint>& keypoints )
     {
         const KeyPoint& kp1 = keypoints[i];
         const KeyPoint& kp2 = keypoints[j];
-        if( kp1.pt.x != kp2.pt.x || kp1.pt.y != kp2.pt.y ||
-            kp1.size != kp2.size || kp1.angle != kp2.angle ) {
+        if( kp1.m_pt.x != kp2.m_pt.x || kp1.m_pt.y != kp2.m_pt.y ||
+            kp1.m_size != kp2.m_size || kp1.m_angle != kp2.m_angle ) {
             keypoints[++i] = keypoints[j];
         }
     }

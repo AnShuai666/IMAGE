@@ -102,7 +102,7 @@
 //    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \**********************************************************************************************/
 
-#include "features2d/features2d.h"
+#include "Features2d/features2d.h"
 #include <iostream>
 #include <stdarg.h>
 #include <MATH/Matrix/matrix.hpp>
@@ -118,11 +118,11 @@ namespace features2d
  The class implements SIFT algorithm by D. Lowe.
  */
 
-class SIFT_Impl : public SIFT
+class SiftImpl : public SIFT
 {
 public:
-    explicit SIFT_Impl( int nfeatures = 0, int nOctaveLayers = 3,
-                          double contrastThreshold = 0.04, double edgeThreshold = 10,
+    explicit SiftImpl( int features_num = 0, int octave_layers = 3,
+                          double contrast_threshold = 0.04, double edge_threshold = 10,
                           double sigma = 1.6);
 
     //! returns the descriptor size in floats (128)
@@ -136,28 +136,28 @@ public:
 
 
 private:
-    void buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyr, int nOctaves ) const;
-    void buildDoGPyramid( const std::vector<Mat>& pyr, std::vector<Mat>& dogpyr ) const;
-    void findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const std::vector<Mat>& dog_pyr,
+    void buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyramid, int octaves_num ) const;
+    void buildDoGPyramid( const std::vector<Mat>& pyramid, std::vector<Mat>& dogpyramid ) const;
+    void findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyramid, const std::vector<Mat>& dog_pyramid,
                                 std::vector<KeyPoint>& keypoints ) const;
     //! finds the keypoints and computes descriptors for them using SIFT algorithm.
     //! Optionally it can compute descriptors for the user-provided keypoints
     void detectOrCompute(InputArray& img, UCInputArray& mask,
                           std::vector<KeyPoint>& keypoints,
                           OutputArray& descriptors,
-                          bool useProvidedKeypoints = false) ;
+                          bool use_provided_keypoints = false) ;
 protected:
-     int nfeatures;
-     int nOctaveLayers;
-     double contrastThreshold;
-     double edgeThreshold;
-     double sigma;
+     int m_features_num;
+     int m_octave_layers;
+     double m_contrast_threshold;
+     double m_edge_threshold;
+     double m_sigma;
 };
 
-shared_ptr<SIFT> SIFT::create( int _nfeatures, int _nOctaveLayers,
-                     double _contrastThreshold, double _edgeThreshold, double _sigma )
+shared_ptr<SIFT> SIFT::create( int features_num, int octave_num,
+                     double contrast_threshold, double edge_threshold, double sigma )
 {
-    SIFT* sift = new SIFT_Impl(_nfeatures, _nOctaveLayers, _contrastThreshold, _edgeThreshold, _sigma);
+    SIFT* sift = new SiftImpl(features_num, octave_num, contrast_threshold, edge_threshold, sigma);
     return shared_ptr<SIFT>(sift);
 }
 
@@ -213,27 +213,27 @@ static const int SIFT_FIXPT_SCALE = 1;
 static inline void
 unpackOctave(const KeyPoint& kpt, int& octave, int& layer, float& scale)
 {
-    octave = kpt.octave & 255;
-    layer = (kpt.octave >> 8) & 255;
+    octave = kpt.m_octave & 255;
+    layer = (kpt.m_octave >> 8) & 255;
     octave = octave < 128 ? octave : (-128 | octave);
     scale = octave >= 0 ? 1.f/(1 << octave) : (float)(1 << -octave);
 }
 
-static Mat createInitialImage(const Mat& gray_fpt, bool doubleImageSize, float sigma )
+static Mat createInitialImage(const Mat& gray_fpt, bool double_image_size, float sigma )
 {
     float sig_diff;
 
-    if( doubleImageSize )
+    if( double_image_size )
     {
         sig_diff = sqrtf( std::max(sigma * sigma - SIFT_INIT_SIGMA * SIFT_INIT_SIGMA * 4, 0.01f) );
         Mat dbl;
         //resize(gray_fpt, dbl, gray_fpt.cols*2, gray_fpt.rows*2);
-        image::Image_resize(gray_fpt,dbl,gray_fpt.cols()*2, gray_fpt.rows()*2);
+        image::imageResize(gray_fpt,dbl,gray_fpt.cols()*2, gray_fpt.rows()*2);
         //Resize(gray_fpt,dbl,gray_fpt.cols()*2, gray_fpt.rows()*2);
 
         //GaussianBlur(dbl, dbl, Size(), sig_diff, sig_diff);
         Mat blur_dbl;
-        image::blur_gaussian<float>(&dbl,&blur_dbl,sig_diff);
+        image::blurGaussian<float>(&dbl,&blur_dbl,sig_diff);
         //GaussBulr(dbl,blur_dbl,sig_diff);
         return blur_dbl;
     }
@@ -242,49 +242,49 @@ static Mat createInitialImage(const Mat& gray_fpt, bool doubleImageSize, float s
         sig_diff = sqrtf( std::max(sigma * sigma - SIFT_INIT_SIGMA * SIFT_INIT_SIGMA, 0.01f) );
         //GaussianBlur(gray_fpt, gray_fpt, Size(), sig_diff, sig_diff);
         Mat blur_gray;
-        image::blur_gaussian<float>(&gray_fpt,&blur_gray,sig_diff);
+        image::blurGaussian<float>(&gray_fpt,&blur_gray,sig_diff);
         return blur_gray;
     }
 }
 
 
-void SIFT_Impl::buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyr, int nOctaves ) const
+void SiftImpl::buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyramid, int octaves_num ) const
 {
-    std::vector<double> sig(nOctaveLayers + 3);
-    pyr.resize(nOctaves*(nOctaveLayers + 3));
+    std::vector<double> sig(m_octave_layers + 3);
+    pyramid.resize(octaves_num*(m_octave_layers + 3));
 
     // precompute Gaussian sigmas using the following formula:
     //  \sigma_{total}^2 = \sigma_{i}^2 + \sigma_{i-1}^2
     //sig[i] = k^(i-1)*sig*sqrt(k^2-1)
-    sig[0] = sigma;
-    double k = std::pow( 2., 1. / nOctaveLayers );
-    for( int i = 1; i < nOctaveLayers + 3; i++ )
+    sig[0] = m_sigma;
+    double k = std::pow( 2., 1. / m_octave_layers );
+    for( int i = 1; i < m_octave_layers + 3; i++ )
     {
-        double sig_prev = std::pow(k, (double)(i-1))*sigma;
+        double sig_prev = std::pow(k, (double)(i-1))*m_sigma;
         double sig_total = sig_prev*k;
         sig[i] = std::sqrt(sig_total*sig_total - sig_prev*sig_prev);
     }
 
-    for( int o = 0; o < nOctaves; o++ )
+    for( int o = 0; o < octaves_num; o++ )
     {
-        for( int i = 0; i < nOctaveLayers + 3; i++ )
+        for( int i = 0; i < m_octave_layers + 3; i++ )
         {
-            Mat& dst = pyr[o*(nOctaveLayers + 3) + i];
+            Mat& dst = pyramid[o*(m_octave_layers + 3) + i];
             if( o == 0  &&  i == 0 )
                 dst = base;
             // base of new octave is halved image from end of previous octave
             else if( i == 0 )
             {
-                const Mat& src = pyr[(o-1)*(nOctaveLayers + 3) + nOctaveLayers];
+                const Mat& src = pyramid[(o-1)*(m_octave_layers + 3) + m_octave_layers];
                 //resize(src, dst, Size(src.cols/2, src.rows/2),0, 0, INTER_NEAREST);
-                image::Image_resize(src,dst,src.cols()/2, src.rows()/2);
+                image::imageResize(src,dst,src.cols()/2, src.rows()/2);
                 //Resize(src,dst,src.cols()/2, src.rows()/2);
             }
             else
             {
-                const Mat& src = pyr[o*(nOctaveLayers + 3) + i-1];
+                const Mat& src = pyramid[o*(m_octave_layers + 3) + i-1];
                 //GaussianBlur(src, dst, Size(), sig[i], sig[i]);
-                image::blur_gaussian<float>(&src,&dst,sig[i]);
+                image::blurGaussian<float>(&src,&dst,sig[i]);
                 //GaussBulr(src,dst,sig[i]);
             }
         }
@@ -296,42 +296,42 @@ class buildDoGPyramidComputer
 {
 public:
     buildDoGPyramidComputer(
-        int _nOctaveLayers,
-        const std::vector<Mat>& _gpyr,
-        std::vector<Mat>& _dogpyr)
-        : nOctaveLayers(_nOctaveLayers),
-          gpyr(_gpyr),
-          dogpyr(_dogpyr) { }
+        int octave_layers,
+        const std::vector<Mat>& pyramid,
+        std::vector<Mat>& dogpyramid)
+        : m_octave_layers(octave_layers),
+          m_pyramid(pyramid),
+          m_dogpyr(dogpyramid) { }
 
     void operator()( const int begin,const int end) const
     {
         for( int a = begin; a < end; a++ )
         {
-            const int o = a / (nOctaveLayers + 2);
-            const int i = a % (nOctaveLayers + 2);
+            const int o = a / (m_octave_layers + 2);
+            const int i = a % (m_octave_layers + 2);
 
-            const Mat& src1 = gpyr[o*(nOctaveLayers + 3) + i];
-            const Mat& src2 = gpyr[o*(nOctaveLayers + 3) + i + 1];
-            Mat& dst = dogpyr[o*(nOctaveLayers + 2) + i];
+            const Mat& src1 = m_pyramid[o*(m_octave_layers + 3) + i];
+            const Mat& src2 = m_pyramid[o*(m_octave_layers + 3) + i + 1];
+            Mat& dst = m_dogpyr[o*(m_octave_layers + 2) + i];
             //subtract(src2, src1, dst, noArray(), DataType<sift_wt>::type);
             image::subtract<float>(src2,src1,dst);
         }
     }
 
 private:
-    int nOctaveLayers;
-    const std::vector<Mat>& gpyr;
-    std::vector<Mat>& dogpyr;
+    int m_octave_layers;
+    const std::vector<Mat>& m_pyramid;
+    std::vector<Mat>& m_dogpyr;
 };
 
-void SIFT_Impl::buildDoGPyramid( const std::vector<Mat>& gpyr, std::vector<Mat>& dogpyr ) const
+void SiftImpl::buildDoGPyramid( const std::vector<Mat>& pyramid, std::vector<Mat>& dogpyramid ) const
 {
-    int nOctaves = (int)gpyr.size()/(nOctaveLayers + 3);
-    dogpyr.resize( nOctaves*(nOctaveLayers + 2) );
+    int octaves_num = (int)pyramid.size()/(m_octave_layers + 3);
+    dogpyramid.resize( octaves_num*(m_octave_layers + 2) );
 
-    //parallel_for_(Range(0, nOctaves * (nOctaveLayers + 2)), buildDoGPyramidComputer(nOctaveLayers, gpyr, dogpyr));
-    buildDoGPyramidComputer DoGComputer(nOctaveLayers, gpyr, dogpyr);
-    DoGComputer(0,nOctaves * (nOctaveLayers + 2));
+    //parallel_for_(Range(0, octaves_num * (m_octave_layers + 2)), buildDoGPyramidComputer(m_octave_layers, pyramid, dogpyramid));
+    buildDoGPyramidComputer dog_computer(m_octave_layers, pyramid, dogpyramid);
+    dog_computer(0,octaves_num * (m_octave_layers + 2));
 
 }
 
@@ -377,13 +377,13 @@ static float calcOrientationHist( const Mat& img, Point pt, int radius,
     k = 0;
     for(;k<len;k++){
         W[k]=exp(W[k]);
-        Ori[k]=features2d::Atan(Y[k],X[k]);
+        Ori[k]=features2d::atan(Y[k],X[k]);
         Mag[k]=sqrt(X[i]*X[i]+Y[i]*Y[i]);
     }
     k=0;
     for( ; k < len; k++ )
     {
-        int bin = Round((n/360.f)*Ori[k]);
+        int bin = round((n/360.f)*Ori[k]);
         if( bin >= n )
             bin -= n;
         if( bin < 0 )
@@ -419,9 +419,9 @@ static float calcOrientationHist( const Mat& img, Point pt, int radius,
 // Interpolates a scale-space extremum's location and scale to subpixel
 // accuracy to form an image feature. Rejects features with low contrast.
 // Based on Section 4 of Lowe's paper.
-static bool adjustLocalExtrema( const std::vector<Mat>& dog_pyr, KeyPoint& kpt, int octv,
+static bool adjustLocalExtrema( const std::vector<Mat>& dog_pyramid, KeyPoint& kpt, int octv,
                                 int& layer, int& r, int& c, int nOctaveLayers,
-                                float contrastThreshold, float edgeThreshold, float sigma )
+                                float contrast_threshold, float edge_threshold, float sigma )
 {
     const float img_scale = 1.f/(255*SIFT_FIXPT_SCALE);//float 图像归一化到[0-1]
     const float deriv_scale = img_scale*0.5f;
@@ -433,9 +433,9 @@ static bool adjustLocalExtrema( const std::vector<Mat>& dog_pyr, KeyPoint& kpt, 
     for( ; i < SIFT_MAX_INTERP_STEPS; i++ )
     {
         int idx = octv*(nOctaveLayers+2) + layer;
-        const Mat& img = dog_pyr[idx];
-        const Mat& prev = dog_pyr[idx-1];
-        const Mat& next = dog_pyr[idx+1];
+        const Mat& img = dog_pyramid[idx];
+        const Mat& prev = dog_pyramid[idx-1];
+        const Mat& next = dog_pyramid[idx+1];
 
         float dD[3]{(img.at(c+1,r,0) - img.at(c-1,r, 0))*deriv_scale,
                          (img.at(c,r+1, 0) - img.at(c,r-1, 0))*deriv_scale,
@@ -475,9 +475,9 @@ static bool adjustLocalExtrema( const std::vector<Mat>& dog_pyr, KeyPoint& kpt, 
             std::abs(xc) > th )
             return false;
 
-        c += Round(xc);
-        r += Round(xr);
-        layer += Round(xi);
+        c += round(xc);
+        r += round(xr);
+        layer += round(xi);
 
         if( layer < 1 || layer > nOctaveLayers ||
             c < SIFT_IMG_BORDER || c >= img.cols() - SIFT_IMG_BORDER  ||
@@ -490,9 +490,9 @@ static bool adjustLocalExtrema( const std::vector<Mat>& dog_pyr, KeyPoint& kpt, 
         return false;
     {
         int idx = octv*(nOctaveLayers+2) + layer;
-        const Mat& img = dog_pyr[idx];
-        const Mat& prev = dog_pyr[idx-1];
-        const Mat& next = dog_pyr[idx+1];
+        const Mat& img = dog_pyramid[idx];
+        const Mat& prev = dog_pyramid[idx-1];
+        const Mat& next = dog_pyramid[idx+1];
 
         /*
         * 极值点contr的求解公式contr = f(x0) + 0.5* delta.dot(D)
@@ -507,7 +507,7 @@ static bool adjustLocalExtrema( const std::vector<Mat>& dog_pyr, KeyPoint& kpt, 
         float t = dD[0]*xc+dD[1]*xr+dD[2]*xi;//dD.dot(Matx31f(xc, xr, xi));
 
         contr = img.at(c, r, 0)*img_scale + t * 0.5f;
-        if( std::abs( contr ) * nOctaveLayers < contrastThreshold )
+        if( std::abs( contr ) * nOctaveLayers < contrast_threshold )
             return false;
 
         // principal curvatures are computed using the trace and det of Hessian
@@ -520,14 +520,14 @@ static bool adjustLocalExtrema( const std::vector<Mat>& dog_pyr, KeyPoint& kpt, 
         float tr = dxx + dyy;
         float det = dxx * dyy - dxy * dxy;
 
-        if( det <= 0 || tr*tr*edgeThreshold >= (edgeThreshold + 1)*(edgeThreshold + 1)*det )
+        if( det <= 0 || tr*tr*edge_threshold >= (edge_threshold + 1)*(edge_threshold + 1)*det )
             return false;
     }
-    kpt.pt.x = (c + xc) * (1 << octv);
-    kpt.pt.y = (r + xr) * (1 << octv);
-    kpt.octave = octv + (layer << 8) + (Round((xi + 0.5)*255) << 16);
-    kpt.size = sigma*powf(2.f, (layer + xi) / nOctaveLayers)*(1 << octv)*2;
-    kpt.response = std::abs(contr);
+    kpt.m_pt.x = (c + xc) * (1 << octv);
+    kpt.m_pt.y = (r + xr) * (1 << octv);
+    kpt.m_octave = octv + (layer << 8) + (round((xi + 0.5)*255) << 16);
+    kpt.m_size = sigma*powf(2.f, (layer + xi) / nOctaveLayers)*(1 << octv)*2;
+    kpt.m_response = std::abs(contr);
 
     return true;
 }
@@ -537,30 +537,30 @@ class findScaleSpaceExtremaComputer
 {
 public:
     findScaleSpaceExtremaComputer(
-        int _threshold,
-        int _nOctaveLayers,
-        double _contrastThreshold,
-        double _edgeThreshold,
-        double _sigma,
-        const std::vector<Mat>& _gauss_pyr,
-        const std::vector<Mat>& _dog_pyr,
-        std::vector<KeyPoint> & _tls_kpts_struct):
-          threshold(_threshold),
-          nOctaveLayers(_nOctaveLayers),
-          contrastThreshold(_contrastThreshold),
-          edgeThreshold(_edgeThreshold),
-          sigma(_sigma),
-          gauss_pyr(_gauss_pyr),
-          dog_pyr(_dog_pyr),
-          tls_kpts(_tls_kpts_struct) { }
+        int threshold,
+        int octave_num,
+        double contrast_threshold,
+        double edge_threshold,
+        double sigma,
+        const std::vector<Mat>& gauss_pyr,
+        const std::vector<Mat>& dog_pyr,
+        std::vector<KeyPoint> & tls_kpts_struct):
+          m_threshold(threshold),
+          m_octave_layers(octave_num),
+          m_contrast_threshold(contrast_threshold),
+          m_edge_threshold(edge_threshold),
+          m_sigma(sigma),
+          m_gauss_pyramid(gauss_pyr),
+          m_dogpyramid(dog_pyr),
+          m_tls_kpts(tls_kpts_struct) { }
     void operator()(int o,int i) const
     {
         static const int n = SIFT_ORI_HIST_BINS;
         float hist[n];
-        int idx = o*(nOctaveLayers+2)+i;
-        const Mat& img = dog_pyr[idx];
-        const Mat& prev = dog_pyr[idx-1];
-        const Mat& next = dog_pyr[idx+1];
+        int idx = o*(m_octave_layers+2)+i;
+        const Mat& img = m_dogpyramid[idx];
+        const Mat& prev = m_dogpyramid[idx-1];
+        const Mat& next = m_dogpyramid[idx+1];
         int step=img.cols()*img.channels();
 
         KeyPoint kpt;
@@ -575,7 +575,7 @@ public:
                 sift_wt val = currptr[c];
                 // find local extrema with pixel accuracy
                 // 相邻层3×3邻域内最大或最小
-                if( std::abs(val) > threshold &&
+                if( std::abs(val) > m_threshold &&
                    ((val > 0 && val >= currptr[c-1] && val >= currptr[c+1] &&
                      val >= currptr[c-step-1] && val >= currptr[c-step] && val >= currptr[c-step+1] &&
                      val >= currptr[c+step-1] && val >= currptr[c+step] && val >= currptr[c+step+1] &&
@@ -597,15 +597,15 @@ public:
                 {
 
                     int r1 = r, c1 = c, layer = i;
-                    if( !adjustLocalExtrema(dog_pyr, kpt, o, layer, r1, c1,
-                                            nOctaveLayers, (float)contrastThreshold,
-                                            (float)edgeThreshold, (float)sigma) )
+                    if( !adjustLocalExtrema(m_dogpyramid, kpt, o, layer, r1, c1,
+                                            m_octave_layers, (float)m_contrast_threshold,
+                                            (float)m_edge_threshold, (float)m_sigma) )
                         continue;
 
-                    float scl_octv = kpt.size*0.5f/(1 << o);
-                    float omax = calcOrientationHist(gauss_pyr[o*(nOctaveLayers+3) + layer],
+                    float scl_octv = kpt.m_size*0.5f/(1 << o);
+                    float omax = calcOrientationHist(m_gauss_pyramid[o*(m_octave_layers+3) + layer],
                                                      Point(c1, r1),
-                                                     Round(SIFT_ORI_RADIUS * scl_octv),
+                                                     round(SIFT_ORI_RADIUS * scl_octv),
                                                      SIFT_ORI_SIG_FCTR * scl_octv,
                                                      hist, n);
                     float mag_thr = (float)(omax * SIFT_ORI_PEAK_RATIO);
@@ -619,11 +619,11 @@ public:
                         {
                             float bin = j + 0.5f * (hist[l]-hist[r2]) / (hist[l] - 2*hist[j] + hist[r2]);
                             bin = bin < 0 ? n + bin : bin >= n ? bin - n : bin;
-                            kpt.angle = 360.f - (float)((360.f/n) * bin);
-                            if(std::abs(kpt.angle - 360.f) < EPSILON)
-                                kpt.angle = 0.f;
+                            kpt.m_angle = 360.f - (float)((360.f/n) * bin);
+                            if(std::abs(kpt.m_angle - 360.f) < EPSILON)
+                                kpt.m_angle = 0.f;
                             {
-                                tls_kpts.push_back(kpt);
+                                m_tls_kpts.push_back(kpt);
                             }
                         }
                     }
@@ -632,46 +632,38 @@ public:
         }
     }
 private:
-    int threshold;
-    int nOctaveLayers;
-    double contrastThreshold;
-    double edgeThreshold;
-    double sigma;
-    const std::vector<Mat>& gauss_pyr;
-    const std::vector<Mat>& dog_pyr;
-    std::vector<KeyPoint>&  tls_kpts;
+    int m_threshold;
+    int m_octave_layers;
+    double m_contrast_threshold;
+    double m_edge_threshold;
+    double m_sigma;
+    const std::vector<Mat>& m_gauss_pyramid;
+    const std::vector<Mat>& m_dogpyramid;
+    std::vector<KeyPoint>&  m_tls_kpts;
 };
 
 //
 // Detects features at extrema in DoG scale space.  Bad features are discarded
 // based on contrast and ratio of principal curvatures.
-void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const std::vector<Mat>& dog_pyr,
+void SiftImpl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyramid, const std::vector<Mat>& dog_pyramid,
                                   std::vector<KeyPoint>& keypoints ) const
 {
-    const int nOctaves = (int)gauss_pyr.size()/(nOctaveLayers + 3);
-    const int threshold = Floor(0.5 * contrastThreshold / nOctaveLayers * 255 * SIFT_FIXPT_SCALE);
+    const int octaves_num = (int)gauss_pyramid.size()/(m_octave_layers + 3);
+    const int threshold = floor(0.5 * m_contrast_threshold / m_octave_layers * 255 * SIFT_FIXPT_SCALE);
 
     keypoints.clear();
     std::vector<KeyPoint>  tls_kpts_struct;
     findScaleSpaceExtremaComputer computer(
             threshold,
-            nOctaveLayers,
-            contrastThreshold,
-            edgeThreshold,
-            sigma,
-            gauss_pyr, dog_pyr, tls_kpts_struct);
+            m_octave_layers,
+            m_contrast_threshold,
+            m_edge_threshold,
+            m_sigma,
+            gauss_pyramid, dog_pyramid, tls_kpts_struct);
 
-    for( int o = 0; o < nOctaves; o++ )
-        for( int i = 1; i <= nOctaveLayers; i++ )
+    for( int o = 0; o < octaves_num; o++ )
+        for( int i = 1; i <= m_octave_layers; i++ )
         {
-//            parallel_for_(Range(SIFT_IMG_BORDER, rows-SIFT_IMG_BORDER),
-//                          findScaleSpaceExtremaComputer(
-//                                  o, i, threshold, idx, step, cols,
-//                                  nOctaveLayers,
-//                                  contrastThreshold,
-//                                  edgeThreshold,
-//                                  sigma,
-//                                  gauss_pyr, dog_pyr, tls_kpts_struct));
             computer(o,i);
         }
 
@@ -679,17 +671,17 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
 }
 
 
-static void calcSIFTDescriptor( const Mat& img, Point2f ptf, float ori, float scl,
+static void calcSIFTDescriptor( const Mat& img, Point2f ptf, float ori, float scale,
                                int d, int n, float* dst )
 {
     const float PI=3.141592653;
-    Point pt(Round(ptf.x), Round(ptf.y));
+    Point pt(round(ptf.x), round(ptf.y));
     float cos_t = cosf(ori*(float)(PI/180));
     float sin_t = sinf(ori*(float)(PI/180));
     float bins_per_rad = n / 360.f;
     float exp_scale = -1.f/(d * d * 0.5f);
-    float hist_width = SIFT_DESCR_SCL_FCTR * scl;
-    int radius = Round(hist_width * 1.4142135623730951f * (d + 1) * 0.5f);
+    float hist_width = SIFT_DESCR_SCL_FCTR * scale;
+    int radius = round(hist_width * 1.4142135623730951f * (d + 1) * 0.5f);
     // Clip the radius to the diagonal of the image to avoid autobuffer too large exception
     radius = std::min(radius, (int) sqrt(((double) img.cols())*img.cols() + ((double) img.rows())*img.rows()));
     cos_t /= hist_width;
@@ -748,7 +740,7 @@ static void calcSIFTDescriptor( const Mat& img, Point2f ptf, float ori, float sc
     k = 0;
     for(;k<len;k++){
         Mag[k]=sqrt(X[i]*X[i]+Y[i]*Y[i]);
-        Ori[k]=features2d::Atan(Y[k],X[k]);
+        Ori[k]=features2d::atan(Y[k],X[k]);
         W[k]=exp(W[k]);
     }
 
@@ -848,9 +840,9 @@ static void calcSIFTDescriptor( const Mat& img, Point2f ptf, float ori, float sc
         float obin = (Ori[k] - ori)*bins_per_rad;
         float mag = Mag[k]*W[k];
 
-        int r0 = Floor( rbin );
-        int c0 = Floor( cbin );
-        int o0 = Floor( obin );
+        int r0 = floor( rbin );
+        int c0 = floor( cbin );
+        int o0 = floor( obin );
         rbin -= r0;
         cbin -= c0;
         obin -= o0;
@@ -924,16 +916,16 @@ static void calcSIFTDescriptor( const Mat& img, Point2f ptf, float ori, float sc
 class calcDescriptorsComputer
 {
 public:
-    calcDescriptorsComputer(const std::vector<Mat>& _gpyr,
-                            const std::vector<KeyPoint>& _keypoints,
-                            Mat& _descriptors,
-                            int _nOctaveLayers,
-                            int _firstOctave)
-        : gpyr(_gpyr),
-          keypoints(_keypoints),
-          descriptors(_descriptors),
-          nOctaveLayers(_nOctaveLayers),
-          firstOctave(_firstOctave) { }
+    calcDescriptorsComputer(const std::vector<Mat>& pyramid,
+                            const std::vector<KeyPoint>& keypoints,
+                            Mat& descriptors,
+                            int octave_num,
+                            int firstOctave)
+        : m_pyramid(pyramid),
+          m_keypoints(keypoints),
+          m_descriptors(descriptors),
+          m_octave_layers(octave_num),
+          m_firstOctave(firstOctave) { }
 
     void operator()( const int begin,const int end ) const
     {
@@ -942,68 +934,68 @@ public:
         //const float FLT_EPSILON =1.192093e-007;
         for ( int i = begin; i<end; i++ )
         {
-            KeyPoint kpt = keypoints[i];
+            KeyPoint kpt = m_keypoints[i];
             int octave, layer;
             float scale;
             unpackOctave(kpt, octave, layer, scale);
-            if(!(octave >= firstOctave && layer <= nOctaveLayers+2))
+            if(!(octave >= m_firstOctave && layer <= m_octave_layers+2))
                 throw("octave or layer index error\n");
-            float size=kpt.size*scale;
-            Point2f ptf(kpt.pt.x*scale, kpt.pt.y*scale);
-            const Mat& img = gpyr[(octave - firstOctave)*(nOctaveLayers + 3) + layer];
+            float size=kpt.m_size*scale;
+            Point2f ptf(kpt.m_pt.x*scale, kpt.m_pt.y*scale);
+            const Mat& img = m_pyramid[(octave - m_firstOctave)*(m_octave_layers + 3) + layer];
 
-            float angle = 360.f - kpt.angle;
+            float angle = 360.f - kpt.m_angle;
             if(std::abs(angle - 360.f) < EPSILON)
                 angle = 0.f;
-            calcSIFTDescriptor(img, ptf, angle, size*0.5f, d, n, descriptors.ptr((int)i));
+            calcSIFTDescriptor(img, ptf, angle, size*0.5f, d, n, m_descriptors.ptr((int)i));
         }
     }
 private:
-    const std::vector<Mat>& gpyr;
-    const std::vector<KeyPoint>& keypoints;
-    Mat& descriptors;
-    int nOctaveLayers;
-    int firstOctave;
+    const std::vector<Mat>& m_pyramid;
+    const std::vector<KeyPoint>& m_keypoints;
+    Mat& m_descriptors;
+    int m_octave_layers;
+    int m_firstOctave;
 };
 
-static void calcDescriptors(const std::vector<Mat>& gpyr, const std::vector<KeyPoint>& keypoints,
+static void calcDescriptors(const std::vector<Mat>& pyramid, const std::vector<KeyPoint>& keypoints,
                             Mat& descriptors, int nOctaveLayers, int firstOctave )
 {
-    //parallel_for_(Range(0, static_cast<int>(keypoints.size())), calcDescriptorsComputer(gpyr, keypoints, descriptors, nOctaveLayers, firstOctave));
-    calcDescriptorsComputer descriptorsComputer(gpyr, keypoints, descriptors, nOctaveLayers, firstOctave);
+    //parallel_for_(Range(0, static_cast<int>(keypoints.size())), calcDescriptorsComputer(pyramid, keypoints, descriptors, nOctaveLayers, firstOctave));
+    calcDescriptorsComputer descriptorsComputer(pyramid, keypoints, descriptors, nOctaveLayers, firstOctave);
     descriptorsComputer(0,keypoints.size());
 
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
-SIFT_Impl::SIFT_Impl( int _nfeatures, int _nOctaveLayers,
-           double _contrastThreshold, double _edgeThreshold, double _sigma )
-    : nfeatures(_nfeatures), nOctaveLayers(_nOctaveLayers),
-    contrastThreshold(_contrastThreshold), edgeThreshold(_edgeThreshold), sigma(_sigma)
+SiftImpl::SiftImpl( int features_num, int octave_num,
+           double contrast_threshold, double edge_threshold, double sigma )
+    : m_features_num(features_num), m_octave_layers(octave_num),
+    m_contrast_threshold(contrast_threshold), m_edge_threshold(edge_threshold), m_sigma(sigma)
 {
 }
 
-int SIFT_Impl::descriptorSize() const
+int SiftImpl::descriptorSize() const
 {
     return SIFT_DESCR_WIDTH*SIFT_DESCR_WIDTH*SIFT_DESCR_HIST_BINS;
 }
 
-int SIFT_Impl::descriptorType() const
+int SiftImpl::descriptorType() const
 {
     return CV_32F;
 }
 
-int SIFT_Impl::defaultNorm() const
+int SiftImpl::defaultNorm() const
 {
     return NORM_L2;
 }
 
 
-void SIFT_Impl::detectOrCompute(InputArray& image, UCInputArray& mask,
+void SiftImpl::detectOrCompute(InputArray& image, UCInputArray& mask,
                       std::vector<KeyPoint>& keypoints,
-                      OutputArray& _descriptors,
-                      bool useProvidedKeypoints)
+                      OutputArray& descriptors,
+                      bool use_provided_keypoints)
 {
     int firstOctave = -1, actualNOctaves = 0, actualNLayers = 0;
 
@@ -1014,7 +1006,7 @@ void SIFT_Impl::detectOrCompute(InputArray& image, UCInputArray& mask,
     if( !mask.empty() && mask.channels() != 1 )
         throw("mask has incorrect depth" );
 
-    if( useProvidedKeypoints )
+    if( use_provided_keypoints )
     {
         firstOctave = 0;
         int maxOctave = -1;
@@ -1029,38 +1021,38 @@ void SIFT_Impl::detectOrCompute(InputArray& image, UCInputArray& mask,
         }
 
         firstOctave = std::min(firstOctave, 0);
-        if(!( firstOctave >= -1 && actualNLayers <= nOctaveLayers )){
-            throw("( firstOctave >= -1 && actualNLayers <= nOctaveLayers ) must be true\n");
+        if(!( firstOctave >= -1 && actualNLayers <= m_octave_layers )){
+            throw("( firstOctave >= -1 && actualNLayers <= m_octave_layers ) must be true\n");
         };
         actualNOctaves = maxOctave - firstOctave + 1;
     }
 
-    Mat base = createInitialImage(image, firstOctave < 0, (float)sigma);
-    std::vector<Mat> gpyr, dogpyr;
-    //nOctaves = log2(min(rows,cols))-a;采样后最小尺寸为2^(a+1);
+    Mat base = createInitialImage(image, firstOctave < 0, (float)m_sigma);
+    std::vector<Mat> pyramid, dogpyramid;
+    //octaves_num = log2(min(rows,cols))-a;采样后最小尺寸为2^(a+1);
     //firstOctave==-1时，图像下采样为两倍尺寸
-    int nOctaves = actualNOctaves > 0 ? actualNOctaves : Round(std::log( (double)std::min( base.cols(), base.rows() ) ) / std::log(2.) - 2) - firstOctave;
-    if(nOctaves<1)
+    int octaves_num = actualNOctaves > 0 ? actualNOctaves : round(std::log( (double)std::min( base.cols(), base.rows() ) ) / std::log(2.) - 2) - firstOctave;
+    if(octaves_num<1)
     {
         throw("image too small to SIFT\n");
     }
 
     double t, tf = CLOCKS_PER_SEC;
     t = (double)clock();
-    buildGaussianPyramid(base, gpyr, nOctaves);
-    buildDoGPyramid(gpyr, dogpyr);
+    buildGaussianPyramid(base, pyramid, octaves_num);
+    buildDoGPyramid(pyramid, dogpyramid);
 
     t = (double)clock() - t;
     printf("pyramid construction time: %g\n", t*1000./tf);
 
-    if( !useProvidedKeypoints )
+    if( !use_provided_keypoints )
     {
         t = (double)clock();
-        findScaleSpaceExtrema(gpyr, dogpyr, keypoints);
+        findScaleSpaceExtrema(pyramid, dogpyramid, keypoints);
         KeyPointsFilter::removeDuplicatedSorted( keypoints );
 
-        if( nfeatures > 0 )
-            KeyPointsFilter::retainBest(keypoints, nfeatures);
+        if( m_features_num > 0 )
+            KeyPointsFilter::retainBest(keypoints, m_features_num);
         t = (double)clock() - t;
         printf("keypoint detection time: %g\n", t*1000./tf);
 
@@ -1069,22 +1061,22 @@ void SIFT_Impl::detectOrCompute(InputArray& image, UCInputArray& mask,
             {
                 KeyPoint& kpt = keypoints[i];
                 float scale = 1.f/(float)(1 << -firstOctave);
-                kpt.octave = (kpt.octave & ~255) | ((kpt.octave + firstOctave) & 255);
-                kpt.pt *= scale;
-                kpt.size *= scale;
+                kpt.m_octave = (kpt.m_octave & ~255) | ((kpt.m_octave + firstOctave) & 255);
+                kpt.m_pt *= scale;
+                kpt.m_size *= scale;
             }
 
         if( !mask.empty() )
             KeyPointsFilter::runByPixelsMask( keypoints, mask );
     }
-    if( !_descriptors.empty())
+    if( !descriptors.empty())
     {
         t = (double)clock();
         int dsize = descriptorSize();
-        _descriptors.resize(dsize, (int)keypoints.size(), 1);
+        descriptors.resize(dsize, (int)keypoints.size(), 1);
 
 
-        calcDescriptors(gpyr, keypoints, _descriptors, nOctaveLayers, firstOctave);
+        calcDescriptors(pyramid, keypoints, descriptors, m_octave_layers, firstOctave);
         t = (double)clock() - t;
         printf("descriptor extraction time: %g\n", t*1000./tf);
     }

@@ -14,12 +14,12 @@
 #include <errno.h>
 IMAGE_NAMESPACE_BEGIN
 
-ByteImage::Ptr
-load_image(std::string& filename)
+ByteImage::ImagePtr
+loadImage(std::string& filename)
 {
     try
     {
-        return load_png_image(filename);
+        return loadPngImage(filename);
     }
     catch(image::FileException &e)
     {
@@ -28,7 +28,7 @@ load_image(std::string& filename)
 
     try
     {
-        return load_jpg_image(filename);
+        return loadJpgImage(filename);
     }
     catch(image::FileException &e)
     {
@@ -38,11 +38,11 @@ load_image(std::string& filename)
 }
 
 ImageHeaders
-load_image_headers(std::string const filename)
+loadImageHeaders(std::string const filename)
 {
     try
     {
-        return load_png_image_headers(filename);
+        return loadPngImageHeaders(filename);
     }
     catch (image::FileException &e)
     {
@@ -53,7 +53,7 @@ load_image_headers(std::string const filename)
 
     try
     {
-        return load_jpg_image_headers(filename);
+        return loadJpgImageHeaders(filename);
     }
     catch (image::FileException &e)
     {
@@ -67,19 +67,19 @@ load_image_headers(std::string const filename)
 }
 
 void
-save_image(ByteImage::ConstPtr image, std::string const& filename)
+saveImage(ByteImage::ConstImagePtr image, std::string const& filename)
 {
     std::string fext4 = image::lowercase(right(filename,4));
     std::string fext5 = image::lowercase(right(filename,5));
 
     if (fext4 == ".jpg" || fext5 == ".jpeg")
     {
-        save_jpg_image(image,filename,85);
+        saveJpgImage(image,filename,85);
         return;
     }
     else if(fext4 == ".png")
     {
-        save_png_image(image, filename);
+        savePngImage(image, filename);
         return;
     }
     else
@@ -88,24 +88,24 @@ save_image(ByteImage::ConstPtr image, std::string const& filename)
     }
 }
 
-void save_image(ByteImage::Ptr image, std::string const& filename)
+void saveImage(ByteImage::ImagePtr image, std::string const& filename)
 {
-   save_image(ByteImage::ConstPtr(image),filename);
+   saveImage(ByteImage::ConstImagePtr(image),filename);
 }
 
-void save_image(FloatImage::ConstPtr image, std::string const& filename)
+void saveImage(FloatImage::ConstImagePtr image, std::string const& filename)
 {
 
 }
 
-void save_image(FloatImage::Ptr image, std::string const& filename)
+void saveImage(FloatImage::ImagePtr image, std::string const& filename)
 {
 
 }
 
 //TODO::libpng error: PNG unsigned integer out of range.@anshuai
-ByteImage::Ptr
-load_png_image(std::string const& filename)
+ByteImage::ImagePtr
+loadPngImage(std::string const& filename)
 {
     FILE* fp = std::fopen(filename.c_str(),"rb");
 
@@ -203,9 +203,9 @@ load_png_image(std::string const& filename)
     png_read_update_info(png_ptr,png_info);
 
     //生成自定义图像
-    ByteImage::Ptr image = ByteImage::create();
+    ByteImage::ImagePtr image = ByteImage::create();
     image->allocate(imageHeaders.width,imageHeaders.height,imageHeaders.channels);
-    ByteImage::ImageData &data = image->get_data();
+    ByteImage::ImageData &data = image->getData();
 
     //创建行指针向量
     std::vector<png_bytep> row_pointers;
@@ -225,7 +225,7 @@ load_png_image(std::string const& filename)
 }
 
 ImageHeaders
-load_png_image_headers(std::string const& filename)
+loadPngImageHeaders(std::string const& filename)
 {
     FILE *fp = std::fopen(filename.c_str(),"rb");
     if(fp == NULL)
@@ -309,7 +309,7 @@ load_png_image_headers(std::string const& filename)
 
 //TODO::像保存后体积变大@anshuai
 void
-save_png_image(ByteImage::ConstPtr image, std::string const &filename, int compression_level)
+savePngImage(ByteImage::ConstImagePtr image, std::string const &filename, int compression_level)
 {
     if (image == nullptr)
     {
@@ -383,7 +383,7 @@ save_png_image(ByteImage::ConstPtr image, std::string const &filename, int compr
     //设置行指针
     std::vector<png_bytep> row_pointers;
     row_pointers.resize(image->width());
-    ByteImage::ImageData const &data = image->get_data();
+    ByteImage::ImageData const &data = image->getData();
     for (int i = 0; i < image->height(); ++i)
     {
         row_pointers[i] = const_cast<png_bytep >(&data[i * image->width() * image->channels()]);
@@ -401,8 +401,8 @@ save_png_image(ByteImage::ConstPtr image, std::string const &filename, int compr
     fp = NULL;
 }
 
-ByteImage::Ptr
-load_jpg_image(std::string const& filename,std::string* exif )
+ByteImage::ImagePtr
+loadJpgImage(std::string const& filename,std::string* exif )
 {
     FILE *fp = std::fopen(filename.c_str(),"rb");
     if(fp == NULL)
@@ -424,7 +424,7 @@ load_jpg_image(std::string const& filename,std::string* exif )
 
     jpeg_decompress_struct cinfo;
     jpeg_error_mgr jerr{};
-    ByteImage::Ptr image;
+    ByteImage::ImagePtr image;
 
     try
     {
@@ -465,7 +465,7 @@ load_jpg_image(std::string const& filename,std::string* exif )
         int const height = cinfo.image_height;
         int const channels = (cinfo.out_color_space == JCS_RGB ? 3 : 1);
         image = ByteImage::create(width,height,channels);
-        ByteImage::ImageData& data = image->get_data();
+        ByteImage::ImageData& data = image->getData();
         //开始解压
         jpeg_start_decompress(&cinfo);
 
@@ -495,13 +495,13 @@ load_jpg_image(std::string const& filename,std::string* exif )
 }
 
 ImageHeaders
-load_jpg_image_headers(std::string const &filename)
+loadJpgImageHeaders(std::string const &filename)
 {
 
 }
 //TODO::段错误@anshuai
 void
-save_jpg_image(ByteImage::ConstPtr image, std::string const &filename, int quality)
+saveJpgImage(ByteImage::ConstImagePtr image, std::string const &filename, int quality)
 {
     if (image == NULL)
     {
@@ -551,7 +551,7 @@ save_jpg_image(ByteImage::ConstPtr image, std::string const &filename, int quali
     jpeg_set_quality(cinfo_ptr,quality,TRUE);
     jpeg_start_compress(cinfo_ptr,TRUE);
 
-    ByteImage::ImageData const &data = image->get_data();
+    ByteImage::ImageData const &data = image->getData();
     int row_stride = image->width() * image->channels();
     while (cinfo_ptr->next_scanline < cinfo_ptr->image_height)
     {

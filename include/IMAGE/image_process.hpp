@@ -26,7 +26,7 @@ IMAGE_NAMESPACE_BEGIN
 //                        颜色中的灰色越少，颜色越鲜艳
 //L ：Lightness 明度       作用是控制色彩的明暗变化。它同样使用了0%至100%的取值范围。
 //                        数值越小，色彩越暗，越接近于黑色；数值越大，色彩越亮，越接近于白色。
-enum DesaturateType
+enum KDesaturateType
 {
     DESATURATE_MAXIMUM,     //Maximum = max(R,G,B)
     DESATURATE_LIGHTNESS,   //Lightness = 1/2 * (max(R,G,B) + min(R,G,B))
@@ -38,12 +38,12 @@ enum DesaturateType
 /*******************************************************************
 *~~~~~~~~~~~~~~~~~~~~~常用图像函数处理声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 *******************************************************************/
-enum resize_mode{
+enum kResizeMode{
     INTER_NEAREST=0,
     INTER_LINEAR=1
 };
 template <typename T>
-void Image_resize_nearest(const Image<T>& src,Image<T>& dst,int width, int height) {
+void imageResizeNearest(const Image<T>& src,Image<T>& dst,int width, int height) {
     //最邻近插值法
     if(width==src.width()&&height==src.height()) {
         dst=Image<T>(src);
@@ -74,7 +74,7 @@ void Image_resize_nearest(const Image<T>& src,Image<T>& dst,int width, int heigh
     }
 }
 template <typename T>
-void Image_resize_linear(const Image<T>& src,Image<T>& dst,int width, int height) {
+void imageResizeLinear(const Image<T>& src,Image<T>& dst,int width, int height) {
         //最邻近插值法
         if(width==src.width()&&height==src.height()) {
             dst=Image<T>(src);
@@ -87,9 +87,9 @@ void Image_resize_linear(const Image<T>& src,Image<T>& dst,int width, int height
         float scale_x=(float)src_w/width;
         float scale_y=(float)src_h/height;
 
-        T* dataDst=dst.get_data().data();
+        T* dataDst=dst.getData().data();
         int stepDst=width*channels;
-        const T* dataSrc=src.get_data().data();
+        const T* dataSrc=src.getData().data();
         int stepSrc=src_w*channels;
         for(int i=0;i<height;i++){
             int dst_offst=i*width*channels;
@@ -125,16 +125,16 @@ void Image_resize_linear(const Image<T>& src,Image<T>& dst,int width, int height
         }
     }
 template <typename T>
-void Image_resize(const Image<T>& src,Image<T>& dst,int width, int height,resize_mode mode=INTER_LINEAR){
+void imageResize(const Image<T>& src,Image<T>& dst,int width, int height,kResizeMode mode=INTER_LINEAR){
     if(mode==INTER_NEAREST)
     {
-        Image_resize_nearest<T>(src,dst,width,height);
+        imageResizeNearest<T>(src,dst,width,height);
     } else if(mode ==INTER_LINEAR )
     {
-        Image_resize_linear<T>(src,dst,width,height);
+        imageResizeLinear<T>(src,dst,width,height);
     }
 }
-enum threshold_type{
+enum kThresholdType{
             THRESH_BINARY=0,
             THRESH_BINARY_INV,
             THRESH_TRUNC,
@@ -142,7 +142,7 @@ enum threshold_type{
             THRESH_TOZERO_INV
         };
 template <typename T>
-void Image_threshold(const Image<T>& src,Image<T>&dst,double thresh, double maxval, int type ){
+void imageThreshold(const Image<T>& src,Image<T>&dst,double thresh, double maxval, int type ){
     if(src.channels()!=1){
         throw("threshold channels num must be 1\n");
     }
@@ -212,7 +212,7 @@ void Image_threshold(const Image<T>& src,Image<T>&dst,double thresh, double maxv
     }
 }
 template <typename T>
-void Image_threshold(Image<T>& src,Image<T>&dst,double thresh, double maxval, int type ){
+void imageThreshold(Image<T>& src,Image<T>&dst,double thresh, double maxval, int type ){
     if(src.channels()!=1){
         throw("threshold channels num must be 1\n");
     }
@@ -282,14 +282,14 @@ void Image_threshold(Image<T>& src,Image<T>&dst,double thresh, double maxval, in
             break;
     }
 }
-enum makeborder_type{
+enum kMakeborderType{
      BORDER_REPLICATE ,     //重复：对边界像素进行复制
      BORDER_REFLECT   ,     //反射：对感兴趣的图像中的像素在两边进行复制例如：fedcba|abcdefgh|hgfedcb
      BORDER_REFLECT_101 ,   //反射101：例子：gfedcb|abcdefgh|gfedcba
      BORDER_CONSTANT        //常量复制：例子：iiiiii|abcdefgh|iiiiiii
                     };
 template <typename T>
-void CopyMakeBorder(const Image<T>& src,Image<T>& dst,int top,int bottom,int left,int right,int type,const T* _val= nullptr){
+void copyMakeBorder(const Image<T>& src,Image<T>& dst,int top,int bottom,int left,int right,int type,const T* _val= nullptr){
     dst.resize(src.width()+left+right,src.height()+top+bottom,src.channels());
     int width=src.width();
     int height=src.height();
@@ -370,7 +370,7 @@ void CopyMakeBorder(const Image<T>& src,Image<T>& dst,int top,int bottom,int lef
 */
 //TODO:修改注释@anshuai
 template <typename T>
-T desaturate_maximum(T const* v);
+T desaturateMaximum(T const* v);
 
 /*
 *  @property   图像转换
@@ -379,7 +379,7 @@ T desaturate_maximum(T const* v);
 *  @return     T
 */
 template <typename T>
-T desaturate_lightness(T const* v);
+T desaturateLightness(T const* v);
 
 /*
 *  @property   图像转换
@@ -388,7 +388,7 @@ T desaturate_lightness(T const* v);
 *  @return     T
 */
 template <typename T>
-T desaturate_luminosity(T const* v);
+T desaturateLuminosity(T const* v);
 
 /*
 *  @property   图像转换
@@ -397,7 +397,7 @@ T desaturate_luminosity(T const* v);
 *  @return     T
 */
 template <typename T>
-T desaturate_luminance(T const* v);
+T desaturateLuminance(T const* v);
 
 /*
 *  @property   图像转换
@@ -406,7 +406,7 @@ T desaturate_luminance(T const* v);
 *  @return     T
 */
 template <typename T>
-T desaturate_average(T const* v);
+T desaturateLverage(T const* v);
 
 /*
 *  @property   图像饱和度降低
@@ -414,16 +414,16 @@ T desaturate_average(T const* v);
 *  @param_in   image            待转换图像
 *  @param_in   type             亮度类型
 *  @typename   防止歧义，显示声明Image<T>::Ptr是类型而非变量
-*  @return     Image<T>::Ptr
+*  @return     Image<T>::ImagePtr
 */
 template <typename T>
-typename Image<T>::Ptr
-desaturate(typename Image<T>::ConstPtr image,DesaturateType type);
+typename Image<T>::ImagePtr
+desaturate(typename Image<T>::ConstImagePtr image,KDesaturateType type);
 
 //TODO: 这里的sigma2=1/2完全满足３倍sigma，抖动没那么明显，可以用这个尺度
 template <typename T>
-typename Image<T>::Ptr
-rescale_half_size_gaussian(typename Image<T>::ConstPtr image, float sigma2 = 0.75f);
+typename Image<T>::ImagePtr
+rescaleHalfSizeGaussian(typename Image<T>::ConstImagePtr image, float sigma2 = 0.75f);
 
 
 /*
@@ -436,13 +436,13 @@ rescale_half_size_gaussian(typename Image<T>::ConstPtr image, float sigma2 = 0.7
 *  @param_in   in            　  待模糊图像
 *  @param_in   sigma             目标高斯尺度值　　也就是标准差　
 *  @typename   防止歧义，显示声明Image<T>::Ptr是类型而非变量
-*  @return     Image<T>::Ptr
+*  @return     Image<T>::ImagePtr
 */
 template <typename T>
-typename Image<T>::Ptr
-blur_gaussian(typename Image<T>::ConstPtr in, float sigma);
+typename Image<T>::ImagePtr
+blurGaussian(typename Image<T>::ConstImagePtr in, float sigma);
 template <typename T>
-void blur_gaussian(const Image<T>* in,Image<T>* out,  float sigma);
+void blurGaussian(const Image<T>* in,Image<T>* out,  float sigma);
 /*
 *  @property   图像模糊
 *  @func       将对图像进行高斯模糊,运用高斯卷积核,进行可分离卷积,先对x方向进行卷积,再在y方向进行卷积,
@@ -454,11 +454,11 @@ void blur_gaussian(const Image<T>* in,Image<T>* out,  float sigma);
 *  @property   求图像差
 *  @func       求差异图像的有符号图像,image_1 - image<T>
 *  @param_in   image_1  image_2  相减的两幅图像
-*  @return     Image<T>::Ptr
+*  @return     Image<T>::ImagePtr
 */
 template <typename T>
-typename Image<T>::Ptr
-subtract(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2);
+typename Image<T>::ImagePtr
+subtract(typename Image<T>::ConstImagePtr image_1, typename Image<T>::ConstImagePtr image_2);
 
 template <typename T>
 void subtract(const Image<T>& image_1, const Image<T>& image_2,Image<T>& dst);
@@ -467,21 +467,21 @@ void subtract(const Image<T>& image_1, const Image<T>& image_2,Image<T>& dst);
 *  @property   求图像差
 *  @func       求差异图像的无符号图像,image_1 - image<T>
 *  @param_in   image_1  image_2  相减的两幅图像
-*  @return     Image<T>::Ptr
+*  @return     Image<T>::ImagePtr
 */
 template <typename T>
-typename Image<T>::Ptr
-subtract_abs(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2);
+typename Image<T>::ImagePtr
+subtractAbs(typename Image<T>::ConstImagePtr image_1, typename Image<T>::ConstImagePtr image_2);
 
 /*
 *  @property   扩展图像通道
 *  @func       将灰度图拓展为RGB图或者RGBA图
 *  @param_in   image         待拓展图像
-*  @return     Image<T>::Ptr
+*  @return     Image<T>::ImagePtr
 */
 template <typename T>
-typename Image<T>::Ptr
-expand_grayscale(typename Image<T>::ConstPtr image);
+typename Image<T>::ImagePtr
+expandGrayscale(typename Image<T>::ConstImagePtr image);
 
 template <typename _Tp1,typename _Tp2>
 void converTo(const TypedImageBase<_Tp1>& src,TypedImageBase<_Tp2>& dst,float alpha=1.f,float offset=0.f);
@@ -495,14 +495,14 @@ IMAGE_NAMESPACE_BEGIN
 
 template <typename T>
 inline T
-desaturate_maximum(T const* v)
+desaturateMaximum(T const* v)
 {
     return *std::max_element(v, v + 3);
 }
 
 template <typename T>
 inline T
-desaturate_lightness(T const* v)
+desaturateLightness(T const* v)
 {
     T const max = *std::max_element(v, v + 3);
     T const min = *std::min_element(v, v + 3);
@@ -511,7 +511,7 @@ desaturate_lightness(T const* v)
 
 template <typename T>
 inline T
-desaturate_luminosity(T const* v)
+desaturateLuminosity(T const* v)
 {
     return 0.21f * v[0] + 0.72f * v[1] + 0.07f * v[2];
 }
@@ -519,21 +519,21 @@ desaturate_luminosity(T const* v)
 
 template <typename T>
 inline T
-desaturate_luminance(T const* v)
+desaturateLuminance(T const* v)
 {
     return 0.30 * v[0] + 0.59f * v[1] + 0.11f * v[2];
 }
 
 
 template <typename T>
-inline T desaturate_average(T const* v)
+inline T desaturateLverage(T const* v)
 {
     return ((float)(v[0] + v[1] + v[2])) / 3.0f;
 }
 
 
 template <typename T>
-typename Image<T>::Ptr desaturate(typename Image<T>::ConstPtr image, DesaturateType type)
+typename Image<T>::ImagePtr desaturate(typename Image<T>::ConstImagePtr image, KDesaturateType type)
 {
     if (image == NULL)
     {
@@ -547,7 +547,7 @@ typename Image<T>::Ptr desaturate(typename Image<T>::ConstPtr image, DesaturateT
 
     bool has_alpha = (image->channels() == 4);
 
-    typename Image<T>::Ptr out_image(Image<T>::create());
+    typename Image<T>::ImagePtr out_image(Image<T>::create());
     out_image->allocate(image->width(),image->height(),1 + has_alpha);
 
     typedef T (*DesaturateFunc)(T const*);
@@ -556,19 +556,19 @@ typename Image<T>::Ptr desaturate(typename Image<T>::ConstPtr image, DesaturateT
     switch (type)
     {
         case DESATURATE_MAXIMUM:
-            func = desaturate_maximum<T>;
+            func = desaturateMaximum<T>;
             break;
         case DESATURATE_LIGHTNESS:
-            func = desaturate_lightness<T>;
+            func = desaturateLightness<T>;
             break;
         case DESATURATE_LUMINOSITY:
-            func = desaturate_luminosity;
+            func = desaturateLuminosity;
             break;
         case DESATURATE_LUMINANCE:
-            func = desaturate_luminance;
+            func = desaturateLuminance;
             break;
         case DESATURATE_AVERAGE:
-            func = desaturate_average;
+            func = desaturateLverage;
             break;
         default:
             throw std::invalid_argument("非法desaturate类型");
@@ -578,9 +578,9 @@ typename Image<T>::Ptr desaturate(typename Image<T>::ConstPtr image, DesaturateT
     int in_pos = 0;
     //TODO:: to be CUDA @Yang
     //opencv 4000*2250*3 图像处理时间: 14.4ms
-    T* dst_ptr=out_image->get_data_pointer();
-    T const* v = image->get_data_pointer();
-    for (int i = 0; i < image->get_pixel_amount(); ++i)
+    T* dst_ptr=out_image->getDataPointer();
+    T const* v = image->getDataPointer();
+    for (int i = 0; i < image->getPixelAmount(); ++i)
     {
 
         //out_image->at(out_pos) = func(v);
@@ -602,8 +602,8 @@ typename Image<T>::Ptr desaturate(typename Image<T>::ConstPtr image, DesaturateT
 
 //TODO::to be CUDA@YANG
 template <typename T>
-typename Image<T>::Ptr
-rescale_half_size_gaussian(typename Image<T>::ConstPtr image, float sigma2)
+typename Image<T>::ImagePtr
+rescaleHalfSizeGaussian(typename Image<T>::ConstImagePtr image, float sigma2)
 {
     int const iw = image->width();
     int const ih = image->height();
@@ -616,7 +616,7 @@ rescale_half_size_gaussian(typename Image<T>::ConstPtr image, float sigma2)
         throw std::invalid_argument("图像尺寸过小，不可进行降采样!\n");
     }
 
-    typename Image<T>::Ptr out(Image<T>::create());
+    typename Image<T>::ImagePtr out(Image<T>::create());
     out->allocate(ow,oh,ic);
 
     float const w1 = std::exp(-0.5 / (2.0f * sigma2));//0.5*0.5*2
@@ -676,20 +676,20 @@ rescale_half_size_gaussian(typename Image<T>::ConstPtr image, float sigma2)
 //TODO::to be CUDA@YANG
 //opencv 4000*2250*3 图像处理时间：60.9ms
 template <typename T>
-typename Image<T>::Ptr
-blur_gaussian(typename Image<T>::ConstPtr in, float sigma)
+typename Image<T>::ImagePtr
+blurGaussian(typename Image<T>::ConstImagePtr in, float sigma)
 {
     if (in == nullptr||in->empty())
     {
         throw std::invalid_argument("没有输入图像!\n");
     }
-    typename Image<T>::Ptr out=make_shared(in->width(),in->height(),in->channels());
-    blur_gaussian(in.get(),out.get(),sigma);
+    typename Image<T>::ImagePtr out=make_shared(in->width(),in->height(),in->channels());
+    blurGaussian(in.get(),out.get(),sigma);
     return out;
 }
 
 template <typename T>
-void blur_gaussian(const Image<T>* in,Image<T>* out, float sigma)
+void blurGaussian(const Image<T>* in,Image<T>* out, float sigma)
 {
     if (in == nullptr||in->empty())
     {
@@ -707,11 +707,11 @@ void blur_gaussian(const Image<T>* in,Image<T>* out, float sigma)
 
     if(MATH_EPSILON_EQ(sigma,0.0f,0.1f))
     {
-        //out->get_data().assign(in->get_data().begain(),in->get_data().end());
+        //out->getData().assign(in->getData().begain(),in->getData().end());
         out->resize(in->width(),in->height(),in->channels());
-        int amount=in->get_value_amount();
+        int amount=in->getValueAmount();
         for(int i=0;i<amount;i++)
-            out->get_data()[i]=in->get_data()[i];
+            out->getData()[i]=in->getData()[i];
         return;
     }
 
@@ -730,7 +730,7 @@ void blur_gaussian(const Image<T>* in,Image<T>* out, float sigma)
     weight-=kernel[0];
     //可分离高斯核实现
     //x方向对对象进行卷积
-    Image<float>::Ptr sep(Image<float>::create(w,h,c));
+    Image<float>::ImagePtr sep(Image<float>::create(w,h,c));
     int px = 0;
     for (int y = 0; y < h; ++y)
     {
@@ -782,8 +782,8 @@ void blur_gaussian(const Image<T>* in,Image<T>* out, float sigma)
 //TODO::to be CUDA@YANG
 //opencv 4000*2250*3 图像处理时间：4.76ms
 template <typename T>
-typename Image<T>::Ptr
-subtract(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2)
+typename Image<T>::ImagePtr
+subtract(typename Image<T>::ConstImagePtr image_1, typename Image<T>::ConstImagePtr image_2)
 {
     if (image_1 == nullptr || image_2 == nullptr)
     {
@@ -804,12 +804,12 @@ subtract(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_
         throw std::invalid_argument("无符号图像不满足要求!\n");
     }
 
-    typename Image<T>::Ptr out(Image<T>::create());
+    typename Image<T>::ImagePtr out(Image<T>::create());
     out->allocate(w1,h1,c1);
-    const T* image_1_ptr=image_1->get_data_pointer();
-    const T* image_2_ptr=image_2->get_data_pointer();
-    T* out_ptr=out->get_data_pointer();
-    for (int i = 0; i < image_1->get_value_amount(); ++i)
+    const T* image_1_ptr=image_1->getDataPointer();
+    const T* image_2_ptr=image_2->getDataPointer();
+    T* out_ptr=out->getDataPointer();
+    for (int i = 0; i < image_1->getValueAmount(); ++i)
     {
         out_ptr[i]=image_1_ptr[i]-image_2_ptr[2];
     }
@@ -841,10 +841,10 @@ void subtract(const Image<T>& image_1,const Image<T>& image_2,Image<T>& dst)
 
 
     dst.resize(w1,h1,c1);
-    const T* image_1_ptr=image_1.get_data_pointer();
-    const T* image_2_ptr=image_2.get_data_pointer();
-    T* out_ptr=dst.get_data_pointer();
-    for (int i = 0; i < image_1.get_value_amount(); ++i)
+    const T* image_1_ptr=image_1.getDataPointer();
+    const T* image_2_ptr=image_2.getDataPointer();
+    T* out_ptr=dst.getDataPointer();
+    for (int i = 0; i < image_1.getValueAmount(); ++i)
     {
         //dst.at(i) = image_1.at(i) - image_2.at(i);
         out_ptr[i]=image_1_ptr[i]-image_2_ptr[i];
@@ -854,8 +854,8 @@ void subtract(const Image<T>& image_1,const Image<T>& image_2,Image<T>& dst)
 //TODO::to be CUDA@YANG
 //opencv 4000*2250*3 图像处理时间：3.34ms
 template <typename T>
-typename Image<T>::Ptr
-subtract_abs(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr image_2)
+typename Image<T>::ImagePtr
+subtractAbs(typename Image<T>::ConstImagePtr image_1, typename Image<T>::ConstImagePtr image_2)
 {
 
     if (image_1 == nullptr || image_2 == nullptr)
@@ -871,12 +871,12 @@ subtract_abs(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr im
         throw std::invalid_argument("两图像尺寸不匹配!\n");
     }
 
-    typename Image<T>::Ptr out(Image<T>::create());
+    typename Image<T>::ImagePtr out(Image<T>::create());
     out->allocate(w1,h1,c1);
-    const T* image_1_ptr=image_1->get_data_pointer();
-    const T* image_2_ptr=image_2->get_data_pointer();
-    T* out_ptr=out->get_data_pointer();
-    for (int i = 0; i < image_1->get_value_amount(); ++i)
+    const T* image_1_ptr=image_1->getDataPointer();
+    const T* image_2_ptr=image_2->getDataPointer();
+    T* out_ptr=out->getDataPointer();
+    for (int i = 0; i < image_1->getValueAmount(); ++i)
     {
        out_ptr[i]=abs(image_1_ptr[i]-image_2_ptr[i]);
     }
@@ -885,10 +885,10 @@ subtract_abs(typename Image<T>::ConstPtr image_1, typename Image<T>::ConstPtr im
 }
 
 template <typename T>
-typename Image<T>::Ptr
-expand_grayscale(typename Image<T>::ConstPtr image)
+typename Image<T>::ImagePtr
+expandGrayscale(typename Image<T>::ConstImagePtr image)
 {
-    //typename Image<T>::Ptr image_ptr = Image<T>::create(*image);
+    //typename Image<T>::ImagePtr image_ptr = Image<T>::create(*image);
     return image;
 }
 
@@ -906,13 +906,13 @@ void converTo(const TypedImageBase<_Tp1>& src,TypedImageBase<_Tp2>& dst,float al
     }
     float EPSILON =1.192093e-007;
 
-    const _Tp1* src_ptr=src.get_data_pointer();
-    _Tp2* dst_ptr=dst.get_data_pointer();
+    const _Tp1* src_ptr=src.getDataPointer();
+    _Tp2* dst_ptr=dst.getDataPointer();
     if(alpha-1.f>EPSILON){
-        for(int i=0;i<src.get_value_amount();i++)
+        for(int i=0;i<src.getValueAmount();i++)
             dst_ptr[i]=(_Tp2)(src_ptr[i]+offset);
     }else{
-        for(int i=0;i<src.get_value_amount();i++)
+        for(int i=0;i<src.getValueAmount();i++)
             dst_ptr[i]=(_Tp2)(src_ptr[i]*alpha+offset);
     }
 

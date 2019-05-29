@@ -1,13 +1,13 @@
 //
 // Created by doing on 19-5-22.
 //
-#include "features2d/features2d.h"
+#include "Features2d/features2d.h"
 #include <memory.h>
 #include <IMAGE/image_process.hpp>
 
 namespace features2d {
 
-int cornerScore_16(const unsigned char* ptr, const int pixel[], int threshold)
+int cornerScore16(const unsigned char* ptr, const int pixel[], int threshold)
 {
     const int K = 8, N = K*3 + 1;
     //v为当前像素值
@@ -106,7 +106,7 @@ threshold = (short)_mm_cvtsi128_si32(q0) - 1;
     return threshold;
 }
 
-int cornerScore_12(const unsigned char* ptr, const int pixel[], int threshold)
+int cornerScore12(const unsigned char* ptr, const int pixel[], int threshold)
 {
     const int K = 6, N = K*3 + 1;
     int k, v = ptr[0];
@@ -190,7 +190,7 @@ else
     return threshold;
 }
 
-int cornerScore_8(const unsigned char* ptr, const int pixel[], int threshold)
+int cornerScore8(const unsigned char* ptr, const int pixel[], int threshold)
 {
     const int K = 4, N = K * 3 + 1;
     int k, v = ptr[0];
@@ -261,11 +261,11 @@ int cornerScore(const unsigned char* ptr, const int pixel[], int threshold)
 {
     int res=0;
     if(patternSize==16)
-        res = cornerScore_16(ptr,pixel,threshold);
+        res = cornerScore16(ptr,pixel,threshold);
     else if(patternSize==12)
-        res = cornerScore_12(ptr,pixel,threshold);
+        res = cornerScore12(ptr,pixel,threshold);
     else if(patternSize==8)
-        res = cornerScore_8(ptr,pixel,threshold);
+        res = cornerScore8(ptr,pixel,threshold);
     else
         throw("pattern size error \n");
     return res;
@@ -307,7 +307,7 @@ template<typename _Tp> static inline _Tp* alignPtr(_Tp* ptr, int n=(int)sizeof(_
     return (_Tp*)(((size_t)ptr + n-1) & -n);
 }
 template<int patternSize>
-void FAST_t(UCInputArray& img, std::vector<KeyPoint>& keypoints, int threshold, bool nonmax_suppression)
+void FASTImpl(UCInputArray& img, std::vector<KeyPoint>& keypoints, int threshold, bool nonmax_suppression)
 {
     //K为圆周连续像素的个数
     //N用于循环圆周的像素点，因为要首尾连接，所以N要比实际圆周像素数量多K+1个
@@ -479,22 +479,22 @@ void FAST(UCInputArray _img, std::vector<KeyPoint>& keypoints, int threshold, bo
 
     switch(type) {
         case FastFeatureDetector::TYPE_5_8:
-            FAST_t<8>(_img, keypoints, threshold, nonmax_suppression);
+            FASTImpl<8>(_img, keypoints, threshold, nonmax_suppression);
             break;
         case FastFeatureDetector::TYPE_7_12:
-            FAST_t<12>(_img, keypoints, threshold, nonmax_suppression);
+            FASTImpl<12>(_img, keypoints, threshold, nonmax_suppression);
             break;
         case FastFeatureDetector::TYPE_9_16:
-            FAST_t<16>(_img, keypoints, threshold, nonmax_suppression);
+            FASTImpl<16>(_img, keypoints, threshold, nonmax_suppression);
             break;
     }
 }
 
-class FastFeatureDetector_Impl : public FastFeatureDetector
+class FastFeatureDetectorImpl : public FastFeatureDetector
 {
     public:
-    FastFeatureDetector_Impl( int _threshold, bool _nonmaxSuppression, int _type )
-            : threshold(_threshold), nonmaxSuppression(_nonmaxSuppression), type((short)_type)
+    FastFeatureDetectorImpl( int threshold, bool nonmax_suppression, int type )
+            : m_threshold(threshold), m_nonmax_suppression(nonmax_suppression), m_type((short)type)
     {}
 
     void detect( UCInputArray& gray, std::vector<KeyPoint>& keypoints, UCInputArray& mask ) override
@@ -506,7 +506,7 @@ class FastFeatureDetector_Impl : public FastFeatureDetector
         }
 
 
-        FAST( gray, keypoints, threshold, nonmaxSuppression, type );
+        FAST( gray, keypoints, m_threshold, m_nonmax_suppression, m_type );
         if(!mask.empty())
             KeyPointsFilter::runByPixelsMask( keypoints, mask );
     }
@@ -514,40 +514,40 @@ class FastFeatureDetector_Impl : public FastFeatureDetector
     void set(int prop, double value)
     {
         if(prop == THRESHOLD)
-            threshold = Round(value);
+            m_threshold = round(value);
         else if(prop == NONMAX_SUPPRESSION)
-            nonmaxSuppression = value != 0;
+            m_nonmax_suppression = value != 0;
         else if(prop == FAST_N)
-            type = Round(value);
+            m_type = round(value);
     }
 
     double get(int prop) const
     {
         if(prop == THRESHOLD)
-            return threshold;
+            return m_threshold;
         if(prop == NONMAX_SUPPRESSION)
-            return nonmaxSuppression;
+            return m_nonmax_suppression;
         if(prop == FAST_N)
-            return type;
+            return m_type;
         return 0;
     }
 
 
-    void setThreshold(int threshold_) override { threshold = threshold_; }
-    int getThreshold() const override { return threshold; }
+    void setThreshold(int threshold_) override { m_threshold = threshold_; }
+    int getThreshold() const override { return m_threshold; }
 
-    void setNonmaxSuppression(bool f) override { nonmaxSuppression = f; }
-    bool getNonmaxSuppression() const override { return nonmaxSuppression; }
+    void setNonmaxSuppression(bool f) override { m_nonmax_suppression = f; }
+    bool getNonmaxSuppression() const override { return m_nonmax_suppression; }
 
-    void setType(int type_) override { type = type_; }
-    int getType() const override { return type; }
+    void setType(int type_) override { m_type = type_; }
+    int getType() const override { return m_type; }
 
-    int threshold;
-    bool nonmaxSuppression;
-    int type;
+    int m_threshold;
+    bool m_nonmax_suppression;
+    int m_type;
 };
 
-shared_ptr<FastFeatureDetector> FastFeatureDetector::create(int threshold, bool nonmaxSuppression, int type) {
-    return make_shared<FastFeatureDetector_Impl>(threshold, nonmaxSuppression, type);
+shared_ptr<FastFeatureDetector> FastFeatureDetector::create(int threshold, bool nonmax_suppression, int type) {
+    return make_shared<FastFeatureDetectorImpl>(threshold, nonmax_suppression, type);
 }
 }

@@ -27,20 +27,19 @@ set(HEADERS
         ${PROJECT_SOURCE_DIR}/include/timer.h
         ${PROJECT_SOURCE_DIR}/include/IMAGE/visualizer.hpp
         ${PROJECT_SOURCE_DIR}/include/IMAGE/nearest_neighbor.hpp
-        ${PROJECT_SOURCE_DIR}/include/features2d/features2d.h
+        ${PROJECT_SOURCE_DIR}/include/Features2d/features2d.h
         ${PROJECT_SOURCE_DIR}/include/IMAGE/matching.h
         ${PROJECT_SOURCE_DIR}/include/IMAGE/image_pyramid.h
         )
 
 set(SOURCE_FILES
-        features2d/sift.cpp
-        features2d/ORB.cpp
-        features2d/feature2d.cpp
+        Features2d/sift.cpp
+        Features2d/ORB.cpp
+        Features2d/feature2d.cpp
         define.cpp
         image_io.cpp
-        #sift.cpp
         image_process.cpp
-        features2d/Fast.cpp
+        Features2d/Fast.cpp
         matching.cpp
         image_pyramid.cpp
         )
