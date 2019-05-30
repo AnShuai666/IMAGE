@@ -2,8 +2,7 @@
 // Created by AnShuai on 18-12-18.
 //
 #include "IMAGE/image.hpp"
-#include "MATH/Matrix/matrix.hpp"
-#include "MATH/Matrix/vector.hpp"
+#include "include/MATH/Matrix/matrix.hpp"
 #include <iostream>
 using namespace math::matrix;
 using namespace image;
@@ -33,9 +32,6 @@ int main()
     //img3.copy_channel(1,2);//复制通道报错
     float linear[2] = {1,1};
     img3.fill(2);
-    int value = img3.reinterpret(2,8,2);
-
-
-    cout<<value<<endl;
+    cout<<img3.ptr(0)[0]<<endl;
     return 0;
 }

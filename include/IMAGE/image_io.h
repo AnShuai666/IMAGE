@@ -31,10 +31,10 @@ struct ImageHeaders
 *  @property   图像加载
 *  @func       将图像filename加载进来,根据图像不同格式调用不同格式的加载函数
 *  @param_in   filename         图像路径及图像名
-*  @return     ByteImage::Ptr   图像类型为uint8的ByteImage，
+*  @return     ByteImage::ImagePtr   图像类型为uint8的ByteImage，
 */
-ByteImage::Ptr
-load_image(std::string& filename);
+ByteImage::ImagePtr
+loadImage(std::string& filename);
 
 /*
 *  @property   图像元数据加载
@@ -43,7 +43,7 @@ load_image(std::string& filename);
 *  @return     ImageHeaders     图像元数据结构体
 */
 ImageHeaders
-load_image_headers(std::string const filename);
+loadImageHeaders(std::string const filename);
 
 /*
 *  @property   图像保存
@@ -58,7 +58,7 @@ load_image_headers(std::string const filename);
 *******************************************************************/
 
 void
-save_image(ByteImage::ConstPtr image, std::string const& filename);
+saveImage(ByteImage::ConstImagePtr image, std::string const& filename);
 
 /*
 *  @property   图像保存
@@ -67,7 +67,7 @@ save_image(ByteImage::ConstPtr image, std::string const& filename);
 *  @param_in   filename         图像路径及图像名
 *  @return     void
 */
-void save_image(ByteImage::Ptr image, std::string const& filename);
+void saveImage(ByteImage::ImagePtr image, std::string const& filename);
 
 /*
 *  @property   图像保存
@@ -76,7 +76,7 @@ void save_image(ByteImage::Ptr image, std::string const& filename);
 *  @param_in   filename         图像路径及图像名
 *  @return     void
 */
-void save_image(FloatImage::ConstPtr image, std::string const& filename);
+void saveImage(FloatImage::ConstImagePtr image, std::string const& filename);
 
 /*
 *  @property   图像保存
@@ -85,7 +85,7 @@ void save_image(FloatImage::ConstPtr image, std::string const& filename);
 *  @param_in   filename         图像路径及图像名
 *  @return     void
 */
-void save_image(FloatImage::Ptr image, std::string const& filename);
+void saveImage(FloatImage::ImagePtr image, std::string const& filename);
 
 /*******************************************************************
 *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~png图像加载~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -100,14 +100,14 @@ void save_image(FloatImage::Ptr image, std::string const& filename);
                   3               RGB
                   4               RGBA
 *  @param_in   filename         图像路径及图像名
-*  @return     ByteImage::Ptr   图像类型为uint8的ByteImage
+*  @return     ByteImage::ImagePtr   图像类型为uint8的ByteImage
 */
-ByteImage::Ptr
-load_png_image(std::string const& filename);
+ByteImage::ImagePtr
+loadPngImage(std::string const& filename);
 
 
 ImageHeaders
-load_png_image_headers(std::string const& filename);
+loadPngImageHeaders(std::string const& filename);
 
 /*
 *  @property   图像存储
@@ -118,7 +118,7 @@ load_png_image_headers(std::string const& filename);
 *  @return     void
 */
 void
-save_png_image(ByteImage::ConstPtr image, std::string const& filename, int compression_level = 1);
+savePngImage(ByteImage::ConstImagePtr image, std::string const& filename, int compression_level = 1);
 
 /*******************************************************************
 *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~jpg图像加载~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -129,14 +129,14 @@ save_png_image(ByteImage::ConstPtr image, std::string const& filename, int compr
 *  @func       加载jpg格式的图像
 *  @param_in   filename         图像路径及图像名        常指针
 *  @param_in   exif             图像元信息
-*  @return     ByteImage::Ptr
+*  @return     ByteImage::ImagePtr
 */
-ByteImage::Ptr
-load_jpg_image(std::string const& filename,std::string* exif = nullptr);
+ByteImage::ImagePtr
+loadJpgImage(std::string const& filename,std::string* exif = nullptr);
 
 
 ImageHeaders
-load_jpg_image_headers(std::string const& filename);
+loadJpgImageHeaders(std::string const& filename);
 
 /*
 *  @property   图像存储
@@ -147,21 +147,21 @@ load_jpg_image_headers(std::string const& filename);
 *  @return     void
 */
 void
-save_jpg_image(ByteImage::ConstPtr image, std::string const& filename, int quality);
+saveJpgImage(ByteImage::ConstImagePtr image, std::string const& filename, int quality);
 
 
 /*******************************************************************
 *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tiff图像加载~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 *******************************************************************/
 
-ByteImage::Ptr
-load_tiff_image(std::string const& filename);
+ByteImage::ImagePtr
+loadTiffImage(std::string const& filename);
 
-RawImage::Ptr
-load_tiff_16_image(std::string const& filename);
+RawImage::ImagePtr
+loadTiff16Image(std::string const& filename);
 
 void
-save_tiff_image(ByteImage::ConstPtr image, std::string const& filename);
+saveTiffImage(ByteImage::ConstImagePtr image, std::string const& filename);
 
 
 IMAGE_NAMESPACE_END
