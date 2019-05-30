@@ -94,6 +94,11 @@
 #include <opencv2/xfeatures2d.hpp>
 using namespace features2d;
 using namespace std;
+enum kDetectMethod{
+    FAST_METHOD=0,
+    ORB_METHOD=1,
+    SIFT_METHOD=2
+};
 void unpack(const int kptoctave, int& octave, int& layer, float& scale)
 {
     octave = kptoctave & 255;
@@ -106,8 +111,8 @@ int main()
     image::ByteImage::ImagePtr test=image::ByteImage::create(2,2,3);
     image::ByteImage::ImagePtr image=std::make_shared<ByteImage>();
     image::ByteImage::ImagePtr image2=std::make_shared<ByteImage>();
-    std::string image_filename = "/home/doing/box2.jpg";
-    std::string image_filename2 = "/home/doing/box.jpg";
+    std::string image_filename = "/home/doing/lena.jpg";
+    std::string image_filename2 = "/home/doing/lenawarp.jpg";
 #define USECV 0
 #if USECV
     cv::ImagePtr<cv::Feature2D> cvorb=cv::ORB::create();
@@ -141,24 +146,28 @@ int main()
     cout<<"time: "<<(end-start)/CLOCKS_PER_SEC*1000.0<<" ms"<<endl;
     image::FloatImage::ImagePtr img_gray_ptr2=make_shared<image::Image<float>>(image2->width(),image2->height(),1);
     converTo(*image_gray2,*img_gray_ptr2);
-    //for(int i=0;i<image_gray2->get_value_amount();i++)
-     //   img_gray_ptr2->getData()[i]=(float)image_gray2->getData()[i];
     Mat* img_gray2=(Mat*)(img_gray_ptr2.get());
-
-
+    shared_ptr<features2d::Feature2D> fast = features2d::FastFeatureDetector::create();
     shared_ptr<features2d::Feature2D> orb = features2d :: ORB :: create();
     shared_ptr<features2d::Feature2D> sift = features2d :: SIFT :: create();
     vector<features2d::KeyPoint> keyPoint,keyPoint2;
     Mat descriptors,descriptors2;
     UCMat mask;
-    //orb->detect(*image_gray,keyPoint,mask);
-    //orb->compute(*image_gray,keyPoint,descriptors);
-
-    sift->detectAndCompute(*img_gray,mask,keyPoint,descriptors);
-    //orb->detectAndCompute(*image_gray,mask,keyPoint,descriptors);
-
-    sift->detectAndCompute(*img_gray2,mask,keyPoint2,descriptors2);
-    //orb->detectAndCompute(*image_gray2,mask,keyPoint2,descriptors2);
+    kDetectMethod detect_method=FAST_METHOD;
+    switch(detect_method){
+        case FAST_METHOD:
+            fast->detect(*image_gray,keyPoint,mask);
+            fast->detect(*image_gray2,keyPoint2,mask);
+            break;
+        case ORB_METHOD:
+            orb->detectAndCompute(*image_gray,mask,keyPoint,descriptors);
+            orb->detectAndCompute(*image_gray2,mask,keyPoint2,descriptors2);
+            break;
+        case SIFT_METHOD:
+            sift->detectAndCompute(*img_gray,mask,keyPoint,descriptors);
+            sift->detectAndCompute(*img_gray2,mask,keyPoint2,descriptors2);
+            break;
+    }
     cout<<keyPoint.size()<<endl;
     cout<<keyPoint2.size()<<endl;
     image::Visualizer<uint8_t> sift_vis;
@@ -175,12 +184,12 @@ int main()
         pt.radius=keyPoint[i].m_response*300;
         keypoints.push_back(pt);
     }
-    cout<<angle/keyPoint.size()<<endl;
     image::ByteImage::ImagePtr image_out;
     image_out = sift_vis.drawKeypoints(image,keypoints,image::RADIUS_CIRCLE_ORIENTATION);
     std::string image_out_name = "result_sift1.png";
     image::saveImage(image,image_out_name);
-
+    if(detect_method==FAST_METHOD)
+        return 0;
     int nn=1;
 #if USECV
 
