@@ -9,6 +9,7 @@ namespace features2d {
 
 int cornerScore16(const unsigned char* ptr, const int pixel[], int threshold)
 {
+    //统计连续K+2个值，首位相接，需要K×2+K+1个值。
     const int K = 8, N = K*3 + 1;
     //v为当前像素值
     int k, v = ptr[0];
@@ -110,7 +111,7 @@ int cornerScore12(const unsigned char* ptr, const int pixel[], int threshold)
 {
     const int K = 6, N = K*3 + 1;
     int k, v = ptr[0];
-    short d[N + 4];
+    short d[N];
     for( k = 0; k < N; k++ )
         d[k] = (short)(v - ptr[pixel[k]]);
 #if CV_SIMD128
@@ -310,8 +311,10 @@ template<int patternSize>
 void FASTImpl(UCInputArray& img, std::vector<KeyPoint>& keypoints, int threshold, bool nonmax_suppression)
 {
     //K为圆周连续像素的个数
-    //N用于循环圆周的像素点，因为要首尾连接，所以N要比实际圆周像素数量多K+1个
-    const int K = patternSize/2, N = patternSize + K + 1;
+    //N用于循环圆周的像素点，因为要首尾连接，所以N要比实际圆周像素数量多K-1个
+    const int K = patternSize/2, N = patternSize + K - 1;
+    //计算得分函数，它的值V是特征点与其圆周上N个像素点的绝对差值中所有连续K+2个像素中的最小值的最大值，而且该值还要大于阈值t；
+    //因为要首尾连接,当patternSize=16时，最多要统计25个偏移量
     int i, j, k, pixel[25];
     //找到圆周像素点相对于圆心的偏移量
     makeOffsets(pixel, (int)img.cols(), patternSize);
@@ -334,9 +337,9 @@ if(CV_CPU_HAS_SUPPORT_AVX2)
     // threshold_tab为阈值列表，在进行阈值比较的时候，只需查该表即可
     unsigned char threshold_tab[512];
     /*为阈值列表赋值，该表分为三段：
-     * 第一段从threshold_tab[0]至threshold_tab[255 - threshold]，值为1，落在该区域的值表示满足角点判断条件2；
+     * 第一段从threshold_tab[0]至threshold_tab[255 - threshold]，值为1，落在该区域的值表示满足角点判断条件2(val<val_pixel-th)；
      * 第二段从threshold_tab[255 – threshold]至threshold_tab[255 + threshold]，值为0，落在该区域的值表示不是角点；
-     * 第三段从threshold_tab[255 + threshold]至threshold_tab[511]，值为2，落在该区域的值表示满足角点判断条件1*/
+     * 第三段从threshold_tab[255 + threshold]至threshold_tab[511]，值为2，落在该区域的值表示满足角点判断条件1(val>val_pixel+th)*/
     for( i = -255; i <= 255; i++ )
         threshold_tab[i+255] = (unsigned char)(i < -threshold ? 1 : i > threshold ? 2 : 0);
 /*buf[0、buf[1]和buf[2]分别表示图像的前一行、当前行和后一行。因为在非极大值抑制的步骤2中，是要在3×3的角点邻域内进行比较，因此需要三行的图像数据。因为只有得到了当前行的数据，所以对于上一行来说，才凑够了连续三行的数据，因此输出的非极大值抑制的结果是上一行数据的处理结果*/
@@ -350,7 +353,7 @@ if(CV_CPU_HAS_SUPPORT_AVX2)
     cpbuf[2] = cpbuf[1] + img.cols() + 1;
     memset(buf[0], 0, img.cols()*3);
 
-    for(i = 3; i < img.rows()-2; i++)
+    for(i = 3; i < img.rows()-3; i++)
     {
         const unsigned char* ptr = img.ptr(i) + 3;
         unsigned char* curr = buf[(i - 3)%3];
@@ -358,88 +361,84 @@ if(CV_CPU_HAS_SUPPORT_AVX2)
         memset(curr, 0, img.cols());
         int ncorners = 0;
 
-        if( i < img.rows() - 3 )
+        for( j = 3; j < img.cols() - 3; j++, ptr++ )
         {
-
-            for( j = 3; j < img.cols() - 3; j++, ptr++ )
+            //当前像素的灰度值
+            int v = ptr[0];
+            //由当前像素的灰度值，确定其在阈值列表中的位置
+            const unsigned char* tab = &threshold_tab[0] - v + 255;
+            //pixel[0]表示圆周上编号为0的像素相对于圆心坐标的偏移量
+            //ptr[pixel[0]表示圆周上编号为0的像素值
+            //tab[ptr[pixel[0]]]表示相对于当前像素（即圆心）圆周上编号为0的像素值在阈值列表threshold_tab中所查询得到的值，如果为1，说明I0 < Ip - t，如果为2，说明I0 > Ip + t，如果为0，说明 Ip – t < I0 < Ip + t。因此通过tab，就可以得到当前像素是否满足角点条件。
+            //编号为0和8（即直径在圆周上的两个像素点）在列表中的值相或后得到d。d=0说明编号为0和8的值都是0；d=1说明编号为0和8的值至少有一个为1，而另一个不能为2；d=2说明编号为0和8的值至少有一个为2，而另一个不能为1；d=3说明编号为0和8的值有一个为1，另一个为2。只可能有这四种情况。
+            int d = tab[ptr[pixel[0]]] | tab[ptr[pixel[8]]];
+            //d=0说明圆周上不可能有连续12个像素满足角点条件，因此当前值一定不是角点，所以退出此次循环，进入下一次循环
+            if( d == 0 )
+                continue;
+            //继续进行其他直径上两个像素点的判断
+            d &= tab[ptr[pixel[2]]] | tab[ptr[pixel[10]]];
+            d &= tab[ptr[pixel[4]]] | tab[ptr[pixel[12]]];
+            d &= tab[ptr[pixel[6]]] | tab[ptr[pixel[14]]];
+            //d=0说明上述d中至少有一个d为0，所以肯定不是角点；另一种情况是一个d为2，而另一个d为1，相与后也为0，这说明一个是满足角点条件1，而另一个满足角点条件2，所以肯定也不会有连续12个像素满足同一个角点条件的，因此也一定不是角点。
+            if( d == 0 )
+                continue;
+            //继续判断圆周上剩余的像素点
+            d &= tab[ptr[pixel[1]]] | tab[ptr[pixel[9]]];
+            d &= tab[ptr[pixel[3]]] | tab[ptr[pixel[11]]];
+            d &= tab[ptr[pixel[5]]] | tab[ptr[pixel[13]]];
+            d &= tab[ptr[pixel[7]]] | tab[ptr[pixel[15]]];
+            //如果满足if条件，则说明有可能满足角点条件2
+            if( d & 1 )
             {
-                //当前像素的灰度值
-                int v = ptr[0];
-                //由当前像素的灰度值，确定其在阈值列表中的位置
-                const unsigned char* tab = &threshold_tab[0] - v + 255;
-                //pixel[0]表示圆周上编号为0的像素相对于圆心坐标的偏移量
-                //ptr[pixel[0]表示圆周上编号为0的像素值
-                //tab[ptr[pixel[0]]]表示相对于当前像素（即圆心）圆周上编号为0的像素值在阈值列表threshold_tab中所查询得到的值，如果为1，说明I0 < Ip - t，如果为2，说明I0 > Ip + t，如果为0，说明 Ip – t < I0 < Ip + t。因此通过tab，就可以得到当前像素是否满足角点条件。
-                //编号为0和8（即直径在圆周上的两个像素点）在列表中的值相或后得到d。d=0说明编号为0和8的值都是0；d=1说明编号为0和8的值至少有一个为1，而另一个不能为2；d=2说明编号为0和8的值至少有一个为2，而另一个不能为1；d=3说明编号为0和8的值有一个为1，另一个为2。只可能有这四种情况。
-                int d = tab[ptr[pixel[0]]] | tab[ptr[pixel[8]]];
-                //d=0说明圆周上不可能有连续12个像素满足角点条件，因此当前值一定不是角点，所以退出此次循环，进入下一次循环
-                if( d == 0 )
-                    continue;
-                //继续进行其他直径上两个像素点的判断
-                d &= tab[ptr[pixel[2]]] | tab[ptr[pixel[10]]];
-                d &= tab[ptr[pixel[4]]] | tab[ptr[pixel[12]]];
-                d &= tab[ptr[pixel[6]]] | tab[ptr[pixel[14]]];
-                //d=0说明上述d中至少有一个d为0，所以肯定不是角点；另一种情况是一个d为2，而另一个d为1，相与后也为0，这说明一个是满足角点条件1，而另一个满足角点条件2，所以肯定也不会有连续12个像素满足同一个角点条件的，因此也一定不是角点。
-                if( d == 0 )
-                    continue;
-                //继续判断圆周上剩余的像素点
-                d &= tab[ptr[pixel[1]]] | tab[ptr[pixel[9]]];
-                d &= tab[ptr[pixel[3]]] | tab[ptr[pixel[11]]];
-                d &= tab[ptr[pixel[5]]] | tab[ptr[pixel[13]]];
-                d &= tab[ptr[pixel[7]]] | tab[ptr[pixel[15]]];
-                //如果满足if条件，则说明有可能满足角点条件2
-                if( d & 1 )
+                //vt为真正的角点条件，即Ip – t，count为连续像素的计数值
+                int vt = v - threshold, count = 0;
+                //遍历整个圆周
+                for( k = 0; k < N; k++ )
                 {
-                    //vt为真正的角点条件，即Ip – t，count为连续像素的计数值
-                    int vt = v - threshold, count = 0;
-                    //遍历整个圆周
-                    for( k = 0; k < N; k++ )
+                    int x = ptr[pixel[k]];    //提取出圆周上的像素值
+                    if(x < vt)    //如果满足条件2
                     {
-                        int x = ptr[pixel[k]];    //提取出圆周上的像素值
-                        if(x < vt)    //如果满足条件2
+                        //连续计数，并判断是否大于K（K为圆周像素的一半）
+                        if( ++count > K )
                         {
-                            //连续计数，并判断是否大于K（K为圆周像素的一半）
-                            if( ++count > K )
-                            {
-                                //进入该if语句，说明已经得到一个角点
-                                //保存该点的位置，并把当前行的角点数加1
-                                cornerpos[ncorners++] = j;
-                                //进行非极大值抑制的第一步，计算得分函数
-                                if(nonmax_suppression)
-                                    curr[j] = (unsigned char)cornerScore<patternSize>(ptr, pixel, threshold);
-                                break;    //退出循环
-                            }
+                            //进入该if语句，说明已经得到一个角点
+                            //保存该点的位置，并把当前行的角点数加1
+                            cornerpos[ncorners++] = j;
+                            //进行非极大值抑制的第一步，计算得分函数
+                            if(nonmax_suppression)
+                                curr[j] = (unsigned char)cornerScore<patternSize>(ptr, pixel, threshold);
+                            break;    //退出循环
                         }
-                        else
-                            count = 0;    //连续像素的计数值清零
                     }
+                    else
+                        count = 0;    //连续像素的计数值清零
                 }
-                //如果满足if条件，则说明有可能满足角点条件1
-                if( d & 2 )
+            }
+            //如果满足if条件，则说明有可能满足角点条件1
+            if( d & 2 )
+            {
+                //vt为真正的角点条件，即Ip + t，count为连续像素的计数值
+                int vt = v + threshold, count = 0;
+                //遍历整个圆周
+                for( k = 0; k < N; k++ )
                 {
-                    //vt为真正的角点条件，即Ip + t，count为连续像素的计数值
-                    int vt = v + threshold, count = 0;
-                    //遍历整个圆周
-                    for( k = 0; k < N; k++ )
+                    int x = ptr[pixel[k]];    //提取出圆周上的像素值
+                    if(x > vt)    //如果满足条件1
                     {
-                        int x = ptr[pixel[k]];    //提取出圆周上的像素值
-                        if(x > vt)    //如果满足条件1
+                        //连续计数，并判断是否大于K（K为圆周像素的一半）
+                        if( ++count > K )
                         {
-                            //连续计数，并判断是否大于K（K为圆周像素的一半）
-                            if( ++count > K )
-                            {
-                                //进入该if语句，说明已经得到一个角点
-                                //保存该点的位置，并把当前行的角点数加1
-                                cornerpos[ncorners++] = j;
-                                //进行非极大值抑制的第一步，计算得分函数
-                                if(nonmax_suppression)
-                                    curr[j] = (unsigned char)cornerScore<patternSize>(ptr, pixel, threshold);
-                                break;    //退出循环
-                            }
+                            //进入该if语句，说明已经得到一个角点
+                            //保存该点的位置，并把当前行的角点数加1
+                            cornerpos[ncorners++] = j;
+                            //进行非极大值抑制的第一步，计算得分函数
+                            if(nonmax_suppression)
+                                curr[j] = (unsigned char)cornerScore<patternSize>(ptr, pixel, threshold);
+                            break;    //退出循环
                         }
-                        else
-                            count = 0;    //连续像素的计数值清零
                     }
+                    else
+                        count = 0;    //连续像素的计数值清零
                 }
             }
         }
