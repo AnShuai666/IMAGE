@@ -16,7 +16,7 @@ IMAGE_NAMESPACE_BEGIN
 struct ImagePyramidLevel
 {
     int width,height;
-    image::ByteImage::ConstPtr image;
+    image::ByteImage::ConstImagePtr image;
 
 };
 
@@ -26,13 +26,13 @@ class ImagePyramid : public ImagePyramidLevels
 {
 public:
     typedef std::shared_ptr<ImagePyramid> Ptr;
-    typedef std::shared_ptr<ImagePyramid const> ConstPtr;
+    typedef std::shared_ptr<ImagePyramid const> ConstImagePtr;
 };
 
 class ImagePyramidCache
 {
 public:
-    static ImagePyramid::ConstPtr get();
+    static ImagePyramid::ConstImagePtr get();
     static void cleanup();
 
 private:
