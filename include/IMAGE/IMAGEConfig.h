@@ -3,4 +3,4 @@
 #define IMAGE_VERSION_PATCH 0
 #define IMAGE_VERSION 1.0.0
 
-/* #undef CUDA_ENABLED */
+#define CUDA_ENABLED
