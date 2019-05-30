@@ -23,13 +23,13 @@
  * fill_color_by_cuda(&src1.at(0),color,src1.width(),src1.height(),src1.channels(),3,&src.at(0));
  */
 template <typename T>
-int fill_color_by_cuda(T *image,T *color,int const w,int const h,int const c,int const color_size);
+int fillColorByCuda(T *image,T *color,int const w,int const h,int const c,int const color_size);
 
 template <>
-int fill_color_by_cuda(char *image,char *color,int const w,int const h,int const c,int const color_size);
+int fillColorByCuda(char *image,char *color,int const w,int const h,int const c,int const color_size);
 
 template <>
-int fill_color_by_cuda(float  *image,float *color,int const w,int const h,int const c,int const color_size);
+int fillColorByCuda(float  *image,float *color,int const w,int const h,int const c,int const color_size);
 
 
 /**
@@ -45,14 +45,14 @@ int fill_color_by_cuda(float  *image,float *color,int const w,int const h,int co
  * @param_in        contrast        cpu实现,与gpu实现对比
  * @return
  * 调用示例：
- * add_channels_by_cuda(&dst.at(0),&src1.at(0),src1.width(),src1.height(),src1.channels(),num_channels,value);
+ * addChannelsByCuda(&dst.at(0),&src1.at(0),src1.width(),src1.height(),src1.channels(),num_channels,value);
  */
 template <typename T>
-int add_channels_by_cuda(T *dst_image,T  * src_image,int const w,int const h, int const c, int const num_channels,T  value);
+int addChannelsByCuda(T *dst_image,T  * src_image,int const w,int const h, int const c, int const num_channels,T  value);
 template <>
-int add_channels_by_cuda(char *dst_image,char  * src_image,int const w,int const h, int const c, int const num_channels,char  value);
+int addChannelsByCuda(char *dst_image,char  * src_image,int const w,int const h, int const c, int const num_channels,char  value);
 template <>
-int add_channels_by_cuda(float *dst_image,float  * src_image,int const w,int const h, int const c, int const num_channels,float  value);
+int addChannelsByCuda(float *dst_image,float  * src_image,int const w,int const h, int const c, int const num_channels,float  value);
 
 
 /**
@@ -71,11 +71,11 @@ int add_channels_by_cuda(float *dst_image,float  * src_image,int const w,int con
  * add_channels_front_by_cuda(&dst.at(0),&src1.at(0),src1.width(),src1.height(),src1.channels(),_value,false);
  */
 template <typename T>
-int add_channels_front_by_cuda(T *dst_image,T  * src_image,int const w,int const h, int const c, std::vector<T> value,bool _front_back);
+int addChannelsFrontByCuda(T *dst_image,T  * src_image,int const w,int const h, int const c, std::vector<T> value,bool _front_back);
 template <>
-int add_channels_front_by_cuda(char *dst_image,char  * src_image,int const w,int const h, int const c, std::vector<char> value,bool _front_back);
+int addChannelsFrontByCuda(char *dst_image,char  * src_image,int const w,int const h, int const c, std::vector<char> value,bool _front_back);
 template <>
-int add_channels_front_by_cuda(float *dst_image,float  * src_image,int const w,int const h, int const c, std::vector<float> value,bool _front_back);
+int addChannelsFrontByCuda(float *dst_image,float  * src_image,int const w,int const h, int const c, std::vector<float> value,bool _front_back);
 
 /**
  * @func            交换颜色通道
@@ -89,14 +89,14 @@ int add_channels_front_by_cuda(float *dst_image,float  * src_image,int const w,i
  * @param_in        contrast        cpu实现,与gpu实现对比
  * @return
  * 调用示例:
- * swap_channels_by_cuda(&src_gpu.at(0),src_gpu.width(),src_gpu.height(),src_gpu.channels(),0,2);
+ * swapChannelsByCuda(&src_gpu.at(0),src_gpu.width(),src_gpu.height(),src_gpu.channels(),0,2);
  */
 template <typename T>
-int swap_channels_by_cuda(T *src,int const w,int const h,int c,int const swap_c1,int swap_c2);
+int swapChannelsByCuda(T *src,int const w,int const h,int c,int const swap_c1,int swap_c2);
 template <>
-int swap_channels_by_cuda(char *src,int const w,int const h,int c,int const swap_c1,int swap_c2);
+int swapChannelsByCuda(char *src,int const w,int const h,int c,int const swap_c1,int swap_c2);
 template <>
-int swap_channels_by_cuda(float *src,int const w,int const h,int c,int const swap_c1,int swap_c2);
+int swapChannelsByCuda(float *src,int const w,int const h,int c,int const swap_c1,int swap_c2);
 
 
 /**
@@ -110,14 +110,14 @@ int swap_channels_by_cuda(float *src,int const w,int const h,int c,int const swa
  * @param_in        paste_c         目的颜色通道
  * @return
  * 调用示例:
- * copy_channels_by_cuda(&src_gpu.at(0),src_gpu.width(),src_gpu.height(),src_gpu.channels(),copy_c,paste_c);
+ * copyChannelsByCuda(&src_gpu.at(0),src_gpu.width(),src_gpu.height(),src_gpu.channels(),copy_c,paste_c);
  */
 template <typename T>
-int copy_channels_by_cuda(T *image,int const w,int const h,int const c,int const copy_c,int const paste_c);
+int copyChannelsByCuda(T *image,int const w,int const h,int const c,int const copy_c,int const paste_c);
 template <>
-int copy_channels_by_cuda(char *image,int const w,int const h,int const c,int const copy_c,int const paste_c);
+int copyChannelsByCuda(char *image,int const w,int const h,int const c,int const copy_c,int const paste_c);
 template <>
-int copy_channels_by_cuda(float *image,int const w,int const h,int const c,int const copy_c,int const paste_c);
+int copyChannelsByCuda(float *image,int const w,int const h,int const c,int const copy_c,int const paste_c);
 
 /**
  * @func            删除颜色通道
@@ -130,12 +130,12 @@ int copy_channels_by_cuda(float *image,int const w,int const h,int const c,int c
  * @param_in        del_c             需删除的颜色通道
  * @return
  * 调用示例:
- * delete_channel_by_cuda(&dst_gpu.at(0),&src_gpu.at(0),src_gpu.width(),src_gpu.height(),src_gpu.channels(),del_c);
+ * deleteChannelByCuda(&dst_gpu.at(0),&src_gpu.at(0),src_gpu.width(),src_gpu.height(),src_gpu.channels(),del_c);
  */
 template <typename T>
-int delete_channel_by_cuda(T *dstImage,T *srcImage,int const src_w,int const src_h,int const src_c,int const del_c);
+int deleteChannelByCuda(T *dstImage,T *srcImage,int const src_w,int const src_h,int const src_c,int const del_c);
 template <>
-int delete_channel_by_cuda(char *dstImage,char *srcImage,int const src_w,int const src_h,int const src_c,int const del_c);
+int deleteChannelByCuda(char *dstImage,char *srcImage,int const src_w,int const src_h,int const src_c,int const del_c);
 template <>
-int delete_channel_by_cuda(float *dstImage,float *srcImage,int const src_w,int const src_h,int const src_c,int const del_c);
+int deleteChannelByCuda(float *dstImage,float *srcImage,int const src_w,int const src_h,int const src_c,int const del_c);
 #endif //_IMAGE_1_CUH_

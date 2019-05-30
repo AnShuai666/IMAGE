@@ -25,8 +25,8 @@ int main(int argc, char ** argv)
     Image<char> src_gpu(w,h,c);//创建gpu处理图像
     int del_c=1;//所要删除的通道
 
-    src_cpu.fill_color(color,c);//填充cpu处理图像
-    src_gpu.fill_color(color,c);//填充gpu处理图像
+    src_cpu.fillColor(color,c);//填充cpu处理图像
+    src_gpu.fillColor(color,c);//填充gpu处理图像
     /*for (int i = 0; i <10 ; ++i) {
         for (int k = 0; k <src_cpu.channels(); ++k) {
             cout<<(int)src_cpu.at(i,0,k)<<"\t";
@@ -34,7 +34,7 @@ int main(int argc, char ** argv)
         cout<<endl;
     }*/
     util::TimerHigh time;
-    src_cpu.delete_channel(del_c);//执行cpu删除功能
+    src_cpu.deleteChannel(del_c);//执行cpu删除功能
     cout<<"cpu:"<<time.get_elapsed()<<"ms"<<endl;
 
     cout<<"*********************gpu实现*********************"<<endl;
@@ -42,7 +42,7 @@ int main(int argc, char ** argv)
     Image<char> dst_gpu(w,h,c-1);//创建gpu处理图像
 
     util::TimerHigh time1;
-    delete_channel_by_cuda(&dst_gpu.at(0),&src_gpu.at(0),src_gpu.width(),src_gpu.height(),src_gpu.channels(),del_c);
+    deleteChannelByCuda(&dst_gpu.at(0),&src_gpu.at(0),src_gpu.width(),src_gpu.height(),src_gpu.channels(),del_c);
     cout<<"gpu:"<<time1.get_elapsed()<<"ms"<<endl;
 
     int wc=(src_gpu.width())*(src_cpu.channels());

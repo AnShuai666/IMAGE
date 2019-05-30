@@ -10,9 +10,10 @@
 #include "MATH/Util/timer.h"
 #include "IMAGE/image_process.hpp"
 #include <iostream>
-#include <vector>
+
 #include "cuda_include/image_1.cuh"
 #include "cuda_include/common.cuh"
+
 using namespace std;
 int main(int argc, char ** argv)
 {
@@ -26,17 +27,17 @@ int main(int argc, char ** argv)
     int paste_c=1;
     //int paste_c=-1;
     char color[3]={12,25,36};
-    src_cpu.fill_color(color,c);
+    src_cpu.fillColor(color,c);
     util::TimerHigh time;
-    src_cpu.copy_channel(copy_c,paste_c);
+    src_cpu.copyChannel(copy_c,paste_c);
     cout<<time.get_elapsed()<<"ms"<<endl;
 
     cout<<"*********************gpu实现*********************"<<endl;
     warmUp();
 
-    src_gpu.fill_color(color,c);
+    src_gpu.fillColor(color,c);
     util::TimerHigh time1;
-    copy_channels_by_cuda(&src_gpu.at(0),src_gpu.width(),src_gpu.height(),src_gpu.channels(),copy_c,paste_c);
+    copyChannelsByCuda(&src_gpu.at(0),src_gpu.width(),src_gpu.height(),src_gpu.channels(),copy_c,paste_c);
     cout<<time1.get_elapsed()<<"ms"<<endl;
 
     int wc=(src_gpu.width())*(src_cpu.channels());

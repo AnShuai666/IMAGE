@@ -5,8 +5,7 @@
  * @时间      13:40
  * @邮箱
 */
-
-#include "IMAGE/image_io.h"
+#include "IMAGE/image.hpp"
 #include "MATH/Util/timer.h"
 #include "IMAGE/image_process.hpp"
 #include <iostream>
@@ -21,15 +20,15 @@ int main(int argc, char ** argv)
     int height=2250;
     int channels=3;
     char color[3]={12,10,25};
-    Image<char> src_cpu(width,height,channels);//创建初始图像(用于cpu)
-    src_cpu.fill_color(color,channels);//填充图像
+    image::Image<char> src_cpu(width,height,channels);//创建初始图像(用于cpu)
+    src_cpu.fillColor(color,channels);//填充图像
 
-    Image<char> src_gpu(width,height,channels);//创建初始图像(用于gpu)
-    src_gpu.fill_color(color,channels);//填充图像
+    image::Image<char> src_gpu(width,height,channels);//创建初始图像(用于gpu)
+    src_gpu.fillColor(color,channels);//填充图像
 
     ///CPU实现及时间检测
     util::TimerHigh time;
-    src_cpu.swap_channels(0,2,AT);//交换颜色通道(AT模式)
+    src_cpu.swapChannels(0,1,image::AT);//交换颜色通道(AT模式)
     cout<<time.get_elapsed()<<"ms"<<endl;
 
     cout<<"///////////gpu实现////////////"<<endl;
@@ -37,7 +36,7 @@ int main(int argc, char ** argv)
     warmUp();
 
     util::TimerHigh time1;
-    swap_channels_by_cuda(&src_gpu.at(0),src_gpu.width(),src_gpu.height(),src_gpu.channels(),0,2);
+    swapChannelsByCuda(&src_gpu.at(0),src_gpu.width(),src_gpu.height(),src_gpu.channels(),0,1);
     cout<<"gpu:"<<time1.get_elapsed()<<"ms"<<endl;
 
     int wc=(src_cpu.width())*(src_cpu.channels());

@@ -30,107 +30,107 @@ void gpu_cpu2zero1(T *cpu,T *gpu,size_t bytes)
 ///核函数
 /* 调用示例
  * dim3 block(x,y,1);
- * dim3 grid((wc-1+x)/x,(h-1+y)/y,1);
- * kernel_fill_color<T><<<grid,block>>>(d_out,d_color,wc,h,c);
+ * dim3 grid((kFact_width-1+x)/x,(h-1+y)/y,1);
+ * kernel_fill_color<T><<<grid,block>>>(d_out,d_color,kFact_width,h,c);
  */
 template <typename T>
-__global__ void kernel_fill_color(T * image, T *color,int const wc,int const h,int const c)
+__global__ void kernelFillColor(T * p_image, T *p_color,int const kFact_width,int const kHeight,int const kChannels)
 {
     int x=threadIdx.x+blockIdx.x*blockDim.x;
     int y=threadIdx.y+blockIdx.y*blockDim.y;
-    int idx=y*wc+x;
+    int idx=y*kFact_width+x;
     //越界判断
-    if(x<wc&&y<h)
+    if(x<kFact_width&&y<kHeight)
     {
-        int channels=idx%c;
-        image[idx]=color[channels];
+        int channels=idx%kChannels;
+        p_image[idx]=p_color[channels];
     }
 }
 /* 调用示例
  * dim3 block(x,y,1);
- * dim3 grid((wc-1+x*3)/(x*3),(h-1+y)/y,1);
- * kernel_fill_color3<T><<<grid,block>>>(d_out,d_color,wc,h,c);
+ * dim3 grid((kFact_width-1+x*3)/(x*3),(h-1+y)/y,1);
+ * kernel_fill_color3<T><<<grid,block>>>(d_out,d_color,kFact_width,h,c);
  */
 template <typename T>
-__global__ void kernel_fill_color3(T * image, T *color,int const wc,int const h,int const c)
+__global__ void kernelFillColor3(T * p_image, T *p_color,int const kFact_width,int const kHeight,int const kChannels)
 {
     int x=threadIdx.x+blockIdx.x*blockDim.x*3;
     int y=threadIdx.y+blockIdx.y*blockDim.y;
-    int idx=y*wc+x;
+    int idx=y*kFact_width+x;
 
     T local_color[4];
-    for(int i=0;i<c;i++)
+    for(int i=0;i<kChannels;i++)
     {
-        local_color[i]=color[i];
+        local_color[i]=p_color[i];
     }
     //越界判断
-    if((x+blockDim.x*2)<wc&&y<h)
+    if((x+blockDim.x*2)<kFact_width&&y<kHeight)
     {
-        int channels=idx%c;
-        image[idx]=local_color[channels];
+        int channels=idx%kChannels;
+        p_image[idx]=local_color[channels];
 
         idx+=blockDim.x;
-        channels=idx%c;
-        image[idx]=local_color[channels];
+        channels=idx%kChannels;
+        p_image[idx]=local_color[channels];
 
         idx+=blockDim.x;
-        channels=idx%c;
-        image[idx]=local_color[channels];
+        channels=idx%kChannels;
+        p_image[idx]=local_color[channels];
     }
 }
 /* 调用示例
  * dim3 block(x,y,1);
- * dim3 grid((wc-1+x*3)/(x*3),(h-1+y)/y,1);
- * kernel_fill_color3_by_share<T><<<grid,block,colorbytes>>>(d_out,d_color,wc,h,c);
+ * dim3 grid((kFact_width-1+x*3)/(x*3),(h-1+y)/y,1);
+ * kernel_fill_color3_by_share<T><<<grid,block,colorbytes>>>(d_out,d_color,kFact_width,h,c);
  */
 template <typename T>
-__global__ void kernel_fill_color3_by_share(T * image, T *color,int const wc,int const h,int const c)
+__global__ void kernelFillColorByShare3(T * p_image, T *p_color,int const kFact_width,int const kHeight,int const kChannels)
 {
-    SharedMemory<T> smem;
+    sharedMemory<T> smem;
     T* data = smem.getPointer();
     int x=threadIdx.x+blockIdx.x*blockDim.x*3;
     int y=threadIdx.y+blockIdx.y*blockDim.y;
-    int idx=y*wc+x;
+    int idx=y*kFact_width+x;
     int sidx=threadIdx.y*blockDim.x+threadIdx.x;
-    if(sidx<c)data[sidx]=color[sidx];
+    if(sidx<kChannels)data[sidx]=p_color[sidx];
     __syncthreads();
     //越界判断
-    if((x+blockDim.x*2)<wc&&y<h)
+    if((x+blockDim.x*2)<kFact_width&&y<kHeight)
     {
         int channels;
         for(int k=0;k<3;k++)
         {
-            channels=idx%c;
-            image[idx]=data[channels];
+            channels=idx%kChannels;
+            p_image[idx]=data[channels];
             idx+=blockDim.x;
         }
     }
 }
 /* 调用示例
  * dim3 block(x,y,1);
- * dim3 grid((wc-1+x*15)/(x*15),(h-1+y)/y,1);
- * kernel_fill_color15_by_share<T><<<grid,block,colorbytes>>>(d_out,d_color,wc,h,c);
+ * dim3 grid((kFact_width-1+x*15)/(x*15),(h-1+y)/y,1);
+ * kernel_fill_color15_by_share<T><<<grid,block,colorbytes>>>(d_out,d_color,kFact_width,h,c);
  */
 template <typename T>
-__global__ void kernel_fill_color15_by_share(T * image, T *color,int const wc,int const h,int const c)
+__global__ void kernelFillColorByShare15(T * p_image, T *p_color,int const kFact_width,int const kHeight,int const kChannels)
 {
-    SharedMemory<T> smem;
-    T* data = smem.getPointer();
+    sharedMemory<T> smem;
+    T* data = smem.p_getPointer();
     int x=threadIdx.x+blockIdx.x*blockDim.x*15;
     int y=threadIdx.y+blockIdx.y*blockDim.y;
-    int idx=y*wc+x;
+    int idx=y*kFact_width+x;
     int sidx=threadIdx.y*blockDim.x+threadIdx.x;
-    if(sidx<c)data[sidx]=color[sidx];
+    if(sidx<kChannels)data[sidx]=p_color[sidx];
     __syncthreads();
     //越界判断
 
-    if(x<wc&&y<h)
+    if(x<kFact_width&&y<kHeight)
     {
         int channels;
         for(int k=0;k<15;k++)
         {
-            channels=idx%c;
-            image[idx]=data[channels];
+            channels=idx%kChannels;
+            p_image[idx]=data[channels];
             idx+=blockDim.x;
         }
     }
@@ -149,18 +149,18 @@ __global__ void kernel_fill_color15_by_share(T * image, T *color,int const wc,in
  * kernel_add_channels<T><<<grid,block>>>(d_out,d_in,w,h,c,num_channels,value);
  */
 template <typename T>
-__global__ void kernel_add_Channel(T *dst,T *src, int const w,int const h,int const c,int const num_channels,T value)
+__global__ void kernelAddChannel(T *p_dst,T *p_src, int const kWidth,int const kHeight,int const kChannels,int const kNum_channels,T value)
 {
     int x=threadIdx.x+blockIdx.x*blockDim.x;//x坐标索引
     int y=threadIdx.y+blockIdx.y*blockDim.y;//y坐标索引
-    int c_add=c+num_channels;
-    int idx=y*w*c_add+x;//输出索引
-    if(x<w*c_add&&y<h)
+    int c_add=kChannels+kNum_channels;
+    int idx=y*kWidth*c_add+x;//输出索引
+    if(x<kWidth*c_add&&y<kHeight)
     {
         int channels=idx%c_add;
         int pixels=idx/c_add;
-        if (channels < c) dst[idx] = src[pixels * c + channels];
-        else dst[idx] = value[channels - c];
+        if (channels < kChannels) p_dst[idx] = p_src[pixels * kChannels + channels];
+        else p_dst[idx] = value;
     }
 }
 /* 调用示例
@@ -169,17 +169,17 @@ __global__ void kernel_add_Channel(T *dst,T *src, int const w,int const h,int co
  * kernel_add_channels_stride<T><<<grid,block>>>(d_out,d_in,w,h,c,num_channels,value);
  */
 template <typename T>
-__global__ void kernel_add_Channel_stride(T *dst,T *src, int const w,int const h,int const c,int const num_channels,T value)
+__global__ void kernelAddChannelStride(T *p_dst,T *p_src, int const kWidth,int const kHeight,int const kChannels,int const kNum_channels,T value)
 {
     int x = threadIdx.x + blockIdx.x * blockDim.x;//x坐标索引
     int y = threadIdx.y + blockIdx.y * blockDim.y;//y坐标索引
-    int c_add=c+num_channels;
-    int idx_out = y * w * c_add + x * c_add;//输出索引
-    int idx_in = y * w * c + x * c;//输入索引
-    if (x < w  && y < h)
+    int c_add=kChannels+kNum_channels;
+    int idx_out = y * kWidth * c_add + x * c_add;//输出索引
+    int idx_in = y * kWidth * kChannels + x * kChannels;//输入索引
+    if (x < kWidth  && y < kHeight)
     {
-        for (int i = 0; i <c ; ++i) dst[idx_out+i]=src[idx_in+i];
-        for (int j = 0; j <num_channels ; ++j)  dst[idx_out+c+j]=value[j];
+        for (int i = 0; i <kChannels ; ++i) p_dst[idx_out+i]=p_src[idx_in+i];
+        for (int j = 0; j <kNum_channels ; ++j)  p_dst[idx_out+kChannels+j]=value;
     }
 }
 /* 调用示例
@@ -188,23 +188,23 @@ __global__ void kernel_add_Channel_stride(T *dst,T *src, int const w,int const h
  * kernel_add_channels_stride2<T><<<grid,block>>>(d_out,d_in,w,h,c,num_channels,value);
  */
 template <typename T>
-__global__ void kernel_add_Channel_stride2(T *dst,T *src, int const w,int const h,int const c,int const num_channels,T value)
+__global__ void kernelAddChannelStride2(T *p_dst,T *p_src, int const kWidth,int const kHeight,int const kChannels,int const kNum_channels,T value)
 {
     int x=threadIdx.x+blockIdx.x*blockDim.x*2;//x坐标索引
     int y=threadIdx.y+blockIdx.y*blockDim.y;//y坐标索引
-    int c_add=c+num_channels;
-    int idx_out=y*w*c_add+x*c_add;//输出索引
-    int idx_in=y*w*c+x*c;//输入索引
-    if (x < w  && y < h)
+    int c_add=kChannels+kNum_channels;
+    int idx_out=y*kWidth*c_add+x*c_add;//输出索引
+    int idx_in=y*kWidth*kChannels+x*kChannels;//输入索引
+    if (x < kWidth  && y < kHeight)
     {
-        for (int i = 0; i <c ; ++i)
+        for (int i = 0; i <kChannels ; ++i)
         {
-            dst[idx_out+i]=src[idx_in+i];
-            dst[idx_out+blockDim.x*c_add+i]=src[idx_in+blockDim.x*c+i];
+            p_dst[idx_out+i]=p_src[idx_in+i];
+            p_dst[idx_out+blockDim.x*c_add+i]=p_src[idx_in+blockDim.x*kChannels+i];
         }
-        for (int j = 0; j <num_channels ; ++j) {
-            dst[idx_out + c + j] = value;
-            dst[idx_out + blockDim.x * c_add + c + j] = value;
+        for (int j = 0; j <kNum_channels ; ++j) {
+            p_dst[idx_out + kChannels + j] = value;
+            p_dst[idx_out + blockDim.x * c_add + kChannels + j] = value;
         }
     }
 }
@@ -222,25 +222,25 @@ __global__ void kernel_add_Channel_stride2(T *dst,T *src, int const w,int const 
  * kernel_add_channels<T><<<grid,block>>>(d_out,d_in,w,h,c,num_channels,d_value,_front_back);
  */
 template <typename T>
-__global__ void kernel_add_channels(T *dst,T *src, int const w,int const h,int const c,int const num_channels,T * value,bool _front_back)
+__global__ void kernelAddChannels(T *p_dst,T *p_src, int const kWidth,int const kHeight,int const kChannels,int const kNum_channels,T * p_value,bool _front_back)
 {
     int x=threadIdx.x+blockIdx.x*blockDim.x;//x坐标索引
     int y=threadIdx.y+blockIdx.y*blockDim.y;//y坐标索引
-    int c_add=c+num_channels;
-    int idx=y*w*c_add+x;//输出索引
-    if(x<w*c_add&&y<h)
+    int c_add=kChannels+kNum_channels;
+    int idx=y*kWidth*c_add+x;//输出索引
+    if(x<kWidth*c_add&&y<kHeight)
     {
         int channels=idx%c_add;
         int pixels=idx/c_add;
         if(_front_back)
         {
-            if (channels < c) dst[idx] = src[pixels * c + channels];
-            else dst[idx] = value[channels - c];
+            if (channels < kChannels) p_dst[idx] = p_src[pixels * kChannels + channels];
+            else p_dst[idx] = p_value[channels - kChannels];
         }
         else
         {
-            if (channels < num_channels) dst[idx] = value[channels];
-            else dst[idx] = src[pixels * c + channels - num_channels];
+            if (channels < kNum_channels) p_dst[idx] = p_value[channels];
+            else p_dst[idx] = p_src[pixels * kChannels + channels - kNum_channels];
         }
     }
 }
@@ -250,24 +250,24 @@ __global__ void kernel_add_channels(T *dst,T *src, int const w,int const h,int c
  * kernel_add_channels_stride<T><<<grid,block>>>(d_out,d_in,w,h,c,num_channels,d_value,_front_back);
  */
 template <typename T>
-__global__ void kernel_add_channels_stride(T *dst,T *src, int const w,int const h,int const c,int const num_channels,T * value,bool _front_back)
+__global__ void kernelAddChannelsStride(T *p_dst,T *p_src, int const kWidth,int const kHeight,int const kChannels,int const kNum_channels,T * p_value,bool _front_back)
 {
     int x = threadIdx.x + blockIdx.x * blockDim.x;//x坐标索引
     int y = threadIdx.y + blockIdx.y * blockDim.y;//y坐标索引
-    int c_add=c+num_channels;
-    int idx_out = y * w * c_add + x * c_add;//输出索引
-    int idx_in = y * w * c + x * c;//输入索引
-    if (x < w  && y < h)
+    int c_add=kChannels+kNum_channels;
+    int idx_out = y * kWidth * c_add + x * c_add;//输出索引
+    int idx_in = y * kWidth * kChannels + x * kChannels;//输入索引
+    if (x < kWidth  && y < kHeight)
     {
         if(_front_back)
         {
-            for (int i = 0; i <c ; ++i) dst[idx_out+i]=src[idx_in+i];
-            for (int j = 0; j <num_channels ; ++j)  dst[idx_out+c+j]=value[j];
+            for (int i = 0; i <kChannels ; ++i) p_dst[idx_out+i]=p_src[idx_in+i];
+            for (int j = 0; j <kNum_channels ; ++j)  p_dst[idx_out+kChannels+j]=p_value[j];
         }
         else
         {
-            for (int j = 0; j <num_channels ; ++j)  dst[idx_out+j]=value[j];
-            for (int i = 0; i <c ; ++i) dst[idx_out+num_channels+i]=src[idx_in+i];
+            for (int j = 0; j <kNum_channels ; ++j)  p_dst[idx_out+j]=p_value[j];
+            for (int i = 0; i <kChannels ; ++i) p_dst[idx_out+kNum_channels+i]=p_src[idx_in+i];
         }
     }
 }
@@ -277,39 +277,39 @@ __global__ void kernel_add_channels_stride(T *dst,T *src, int const w,int const 
  * kernel_add_channels_stride2<T><<<grid,block>>>(d_out,d_in,w,h,c,num_channels,d_value,_front_back);
  */
 template <typename T>
-__global__ void kernel_add_channels_stride2(T *dst,T *src, int const w,int const h,int const c,int const num_channels,T * value,bool _front_back)
+__global__ void kernelAddChannelsStride2(T *p_dst,T *p_src, int const kWidth,int const kHeight,int const kChannels,int const kNum_channels,T * p_value,bool _front_back)
 {
     int x=threadIdx.x+blockIdx.x*blockDim.x*2;//x坐标索引
     int y=threadIdx.y+blockIdx.y*blockDim.y;//y坐标索引
-    int c_add=c+num_channels;
-    int idx_out=y*w*c_add+x*c_add;//输出索引
-    int idx_in=y*w*c+x*c;//输入索引
-    if (x < w  && y < h)
+    int c_add=kChannels+kNum_channels;
+    int idx_out=y*kWidth*c_add+x*c_add;//输出索引
+    int idx_in=y*kWidth*kChannels+x*kChannels;//输入索引
+    if (x < kWidth  && y < kHeight)
     {
         if(_front_back)
         {
-            for (int i = 0; i <c ; ++i)
+            for (int i = 0; i <kChannels ; ++i)
             {
-                dst[idx_out+i]=src[idx_in+i];
-                dst[idx_out+blockDim.x*c_add+i]=src[idx_in+blockDim.x*c+i];
+                p_dst[idx_out+i]=p_src[idx_in+i];
+                p_dst[idx_out+blockDim.x*c_add+i]=p_src[idx_in+blockDim.x*kChannels+i];
             }
-            for (int j = 0; j <num_channels ; ++j)
+            for (int j = 0; j <kNum_channels ; ++j)
             {
-                dst[idx_out+c+j]=value[j];
-                dst[idx_out+blockDim.x*c_add+c+j]=value[j];
+                p_dst[idx_out+kChannels+j]=p_value[j];
+                p_dst[idx_out+blockDim.x*c_add+kChannels+j]=p_value[j];
             }
         }
         else
         {
-            for (int j = 0; j <num_channels ; ++j)
+            for (int j = 0; j <kNum_channels ; ++j)
             {
-                dst[idx_out+j]=value[j];
-                dst[idx_out+blockDim.x*c_add+j]=value[j];
+                p_dst[idx_out+j]=p_value[j];
+                p_dst[idx_out+blockDim.x*c_add+j]=p_value[j];
             }
-            for (int i = 0; i <c ; ++i)
+            for (int i = 0; i <kChannels ; ++i)
             {
-                dst[idx_out+num_channels+i]=src[idx_in+i];
-                dst[idx_out+blockDim.x*c_add+num_channels+i]=src[idx_in+blockDim.x*c+i];
+                p_dst[idx_out+kNum_channels+i]=p_src[idx_in+i];
+                p_dst[idx_out+blockDim.x*c_add+kNum_channels+i]=p_src[idx_in+blockDim.x*kChannels+i];
             }
         }
     }
@@ -327,18 +327,18 @@ __global__ void kernel_add_channels_stride2(T *dst,T *src, int const w,int const
  * kernel_swap_channels<T><<<grid,block>>>(d_in,w,h,c,swap_c1,swap_c2);
  */
 template <typename T>
-__global__ void kernel_swap_channels(T *src,int const w,int const h,int const c, int const swap_c1,int const swap_c2)
+__global__ void kernelSwapChannels(T *p_src,int const kWidth,int const kHeight,int const kChannels, int const kSwap_c1,int const kSwap_c2)
 {
     int const x=threadIdx.x+blockDim.x*blockIdx.x;
     int const y=threadIdx.y+blockDim.y*blockIdx.y;
-    int const idx=y*w+x;
-    if(x<w&&y<h)
+    int const idx=y*kWidth+x;
+    if(x<kWidth&&y<kHeight)
     {
         T a,b;
-        a=src[idx*c+swap_c1];
-        b=src[idx*c+swap_c2];
-        src[idx*c+swap_c1]=b;
-        src[idx*c+swap_c2]=a;
+        a=p_src[idx*kChannels+kSwap_c1];
+        b=p_src[idx*kChannels+kSwap_c2];
+        p_src[idx*kChannels+kSwap_c1]=b;
+        p_src[idx*kChannels+kSwap_c2]=a;
     }
 }
 /* 调用示例
@@ -347,20 +347,20 @@ __global__ void kernel_swap_channels(T *src,int const w,int const h,int const c,
  * kernel_swap_channels2<T><<<grid,block>>>(d_in,w,h,c,swap_c1,swap_c2);
  */
 template <typename T>
-__global__ void kernel_swap_channels2(T *src,int const w,int const h,int const c, int const swap_c1,int const swap_c2)
+__global__ void kernelSwapChannels2(T *p_src,int const kWidth,int const kHeight,int const kChannels, int const kSwap_c1,int const kSwap_c2)
 {
     int  x=threadIdx.x+blockIdx.x*blockDim.x;
     int  y=threadIdx.y+blockIdx.y*blockDim.y*2;
     for(int i=0;i<2;i++)
     {
-        int idx=(y+blockDim.y*i)*w*c+x*c;
-        if(x<w&&(y+blockDim.y*i)<h)
+        int idx=(y+blockDim.y*i)*kWidth*kChannels+x*kChannels;
+        if(x<kWidth&&(y+blockDim.y*i)<kHeight)
         {
             T a,b;
-            a=src[idx+swap_c1];
-            b=src[idx+swap_c2];
-            src[idx+swap_c1]=b;
-            src[idx+swap_c2]=a;
+            a=p_src[idx*kChannels+kSwap_c1];
+            b=p_src[idx*kChannels+kSwap_c2];
+            p_src[idx*kChannels+kSwap_c1]=b;
+            p_src[idx*kChannels+kSwap_c2]=a;
         }
     }
 }
@@ -376,15 +376,15 @@ __global__ void kernel_swap_channels2(T *src,int const w,int const h,int const c
  * kernel_copy_channels<T><<<grid,block>>>(d_in,w,h,c,copy_c,paste_c);
  */
 template <typename  T>
-__global__ void kernel_copy_channels(T *image,int const w,int const h,int const c,int const copy_c,int const paste_c)
+__global__ void kernelCopyChannels(T *p_image,int const kWidth,int const kHeight,int const kChannels,int const kCopy_c,int const kPaste_c)
 {
     int x=blockDim.x*blockIdx.x+threadIdx.x;
     int y=blockDim.y*blockIdx.y+threadIdx.y;
-    if(x<w&&y<h)
+    if(x<kWidth&&y<kHeight)
     {
-        int idx=y*w*c+x*c;
-        T value=image[idx+copy_c];
-        image[idx+paste_c]=value;
+        int idx=y*kWidth*kChannels+x*kChannels;
+        T value=p_image[idx+kChannels];
+        p_image[idx+kPaste_c]=value;
     }
 }
 
@@ -401,22 +401,22 @@ __global__ void kernel_copy_channels(T *image,int const w,int const h,int const 
  * kernel_delete_channel<T><<<grid,block>>>(d_out,d_in,src_w,src_h,src_c,dst_c,del_c);
  */
 template <typename T>
-__global__ void kernel_delete_channel(T *dst,T *src,int const w,int const h,int const c,int const dst_c,int const del_c)
+__global__ void kernelDeleteChannel(T *p_dst,T *p_src,int const kWidth,int const kHeight,int const kChannels,int const kDst_c,int const kDel_c)
 {
     int x=threadIdx.x+blockIdx.x*blockDim.x*5;
     int y=threadIdx.y+blockIdx.y*blockDim.y;
     for (int i = 0; i <5 ; ++i) {
 
-        if(x<w*dst_c&&y<h)
+        if(x<kWidth*kDst_c&&y<kHeight)
         {
-            int idx_out=y*w*dst_c+x;
-            int channel=idx_out%dst_c;
-            int pixel=idx_out/dst_c;
-            int idx_in=pixel*c+channel;
+            int idx_out=y*kWidth*kDst_c+x;
+            int channel=idx_out%kDst_c;
+            int pixel=idx_out/kDst_c;
+            int idx_in=pixel*kChannels+channel;
             T value;
-            if(channel>=del_c)idx_in+=1;
-            value=src[idx_in];
-            dst[idx_out]=value;
+            if(channel>=kDel_c)idx_in+=1;
+            value=p_src[idx_in];
+            p_dst[idx_out]=value;
         }
         x+=blockDim.x;
     }
@@ -427,24 +427,24 @@ __global__ void kernel_delete_channel(T *dst,T *src,int const w,int const h,int 
  * kernel_delete_channel2<T><<<grid,block>>>(d_out,d_in,src_w,src_h,src_c,dst_c,del_c);
  */
 template <typename T>
-__global__ void kernel_delete_channel2(T *dst,T *src,int const w,int const h,int const c,int const dst_c,int const del_c)
+__global__ void kernelDeleteChannel2(T *p_dst,T *p_src,int const kWidth,int const kHeight,int const kChannels,int const kDst_c,int const kDel_c)
 {
     int x=threadIdx.x+blockIdx.x*blockDim.x*2;
     int y=threadIdx.y+blockIdx.y*blockDim.y;
-    if(x<w&&y<h)
+    if(x<kWidth&&y<kHeight)
     {
-        int pixel=y*w+x;
-        int pixel1=y*w+x+blockDim.x;
+        int pixel=y*kWidth+x;
+        int pixel1=y*kWidth+x+blockDim.x;
         T value;
         int j=0;
-        for (int i = 0; i <c ; ++i)
+        for (int i = 0; i <kChannels ; ++i)
         {
-            if(i!=del_c)
+            if(i!=kDel_c)
             {
-                value=src[pixel*c+i];
-                dst[pixel*dst_c+j]=value;
-                value=src[pixel1*c+i];
-                dst[pixel1*dst_c+j]=value;
+                value=p_src[pixel*kChannels+i];
+                p_dst[pixel*kDst_c+j]=value;
+                value=p_src[pixel1*kChannels+i];
+                p_dst[pixel1*kDst_c+j]=value;
                 j++;
             }
         }
@@ -456,27 +456,27 @@ __global__ void kernel_delete_channel2(T *dst,T *src,int const w,int const h,int
  * kernel_delete_channel3<T><<<grid,block>>>(d_out,d_in,src_w,src_h,src_c,dst_c,del_c);
  */
 template <typename T>
-__global__ void kernel_delete_channel3(T *dst,T *src,int const w,int const h,int const c,int const dst_c,int const del_c)
+__global__ void kernelDeleteChannel3(T *p_dst,T *p_src,int const kWidth,int const kHeight,int const kChannels,int const kDst_c,int const kDel_c)
 {
     int x=threadIdx.x+blockIdx.x*blockDim.x*3;
     int y=threadIdx.y+blockIdx.y*blockDim.y;
-    if(x<w&&y<h)
+    if(x<kWidth&&y<kHeight)
     {
-        int pixel=y*w+x;
+        int pixel=y*kWidth+x;
         int pixel2=pixel+blockDim.x;
         int pixel3=pixel2+blockDim.x;
         T value;
         int j=0;
-        for (int i = 0; i <c ; ++i)
+        for (int i = 0; i <kChannels ; ++i)
         {
-            if(i!=del_c)
+            if(i!=kDel_c)
             {
-                value=src[pixel*c+i];
-                dst[pixel*dst_c+j]=value;
-                value=src[pixel2*c+i];
-                dst[pixel2*dst_c+j]=value;
-                value=src[pixel3*c+i];
-                dst[pixel3*dst_c+j]=value;
+                value=p_src[pixel*kChannels+i];
+                p_dst[pixel*kDst_c+j]=value;
+                value=p_src[pixel2*kChannels+i];
+                p_dst[pixel2*kDst_c+j]=value;
+                value=p_src[pixel3*kChannels+i];
+                p_dst[pixel3*kDst_c+j]=value;
                 j++;
             }
         }
@@ -492,216 +492,211 @@ __global__ void kernel_delete_channel3(T *dst,T *src,int const w,int const h,int
 
 ///填充颜色通道函数
 template <typename T>
-int fill_color_cu(T *image,T *color,int const w,int const h,int const c,int const color_size)
+int fillColorCu(T *p_image,T *p_color,int const kWidth,int const kHeight,int const kChannels,int const kColor_size)
 {
     //bool flag= false;
-    if(c!=color_size)
+    if(kChannels!=kColor_size)
     {
         std::cerr<<"颜色通道不匹配"<<std::endl;
         return 0;
     }
-    int wc=w*c;
+    int wc=kWidth*kChannels;
     //定义显存指针
-    T *d_out=NULL;
-    T *d_color=NULL;
+    T *p_d_out=NULL;
+    T *p_d_color=NULL;
     //计算显存所需字节数
-    size_t const imagebytes=w*h*c*sizeof(T);
-    int const colorbytes=color_size* sizeof(T);
+    size_t const kImagebytes=kWidth*kHeight*kChannels*sizeof(T);
+    int const kColorbytes=kColor_size* sizeof(T);
     //分配显存
-    cudaMalloc((void**)&d_out,imagebytes);
-    cudaMalloc((void**)&d_color,colorbytes);
+    cudaMalloc((void**)&p_d_out  ,kImagebytes);
+    cudaMalloc((void**)&p_d_color,kColorbytes);
     //cpu2gpu
-    cudaMemcpy(d_color,color,colorbytes,cudaMemcpyHostToDevice);
+    cudaMemcpy(p_d_color,p_color,kColorbytes,cudaMemcpyHostToDevice);
 
     //线程网格划分
     int x=32;
     int y=4;
     dim3 block(x,y,1);
-    dim3 grid((wc-1+x*15)/(x*15),(h-1+y)/y,1);
+    dim3 grid((wc-1+x*15)/(x*15),(kHeight-1+y)/y,1);
 
-    kernel_fill_color15_by_share<T><<<grid,block,colorbytes>>>(d_out,d_color,wc,h,c);
+    kernelFillColorByShare15<T><<<grid,block,kColorbytes>>>(p_d_out,p_d_color,wc,kHeight,kChannels);
 
     //gpu2cpu
-    cudaMemcpy(image,d_out,imagebytes,cudaMemcpyDeviceToHost);
-    //compare1<T>(image,contrast,w*c,h,flag);
+    cudaMemcpy(p_image,p_d_out,kImagebytes,cudaMemcpyDeviceToHost);
     //释放显存
-    cudaFree(d_out);
-    cudaFree(d_color);
+    cudaFree(p_d_out);
+    cudaFree(p_d_color);
     return 0;
 }
 ///增加颜色通道函数(单通道多数据)
 template <typename T>
-int add_Channel_cu(T *dst_image,T * src_image,int const w,int const h, int const c, int const num_channels,T  value)
+int addChannelsCu(T *p_dst_image,T * p_src_image,int const kWidth,int const kHeight,int const kChannels, int const kNum_channels,T  value)
 {
-    if(num_channels<=0)
+    if(kNum_channels<=0)
     {
         std::cerr<<"所添加的颜色通道个数小于1"<<std::endl;
         return 0;
     }
-    int const wc =w*c;//输入图像实际宽度
-    int const wc_add=w*(c+num_channels);//输出图像实际宽度
+    int const wc =kWidth*kChannels;//输入图像实际宽度
+    int const wc_add=kWidth*(kChannels+kNum_channels);//输出图像实际宽度
     //计算存储空间字节数
-    size_t const bytes_src=wc*h* sizeof(T);
-    size_t const bytes_dst=wc_add*h* sizeof(T);
+    size_t const kBytes_src=wc*kHeight* sizeof(T);
+    size_t const kBytes_dst=wc_add*kHeight* sizeof(T);
     //声明显存指针
-    T *d_in=NULL,*d_out=NULL;
+    T *p_d_in=NULL,*p_d_out=NULL;
     //定义显存指针
-    cudaMalloc((void**)&d_in,bytes_src);
-    cudaMalloc((void**)&d_out,bytes_dst);
+    cudaMalloc((void**)&p_d_in ,kBytes_src);
+    cudaMalloc((void**)&p_d_out,kBytes_dst);
     //cpu2gpu
-    cudaMemcpy(d_in,src_image,bytes_src,cudaMemcpyHostToDevice);
-    //int c_add=c+num_channels;
+    cudaMemcpy(p_d_in,p_src_image,kBytes_src,cudaMemcpyHostToDevice);
     //网格划分
     int x=32;
     int y=4;
     dim3 block(x,y,1);
-    dim3 grid((w-1+x*2)/(x*2),(h-1+y)/y,1);
+    dim3 grid((kWidth-1+x*2)/(x*2),(kHeight-1+y)/y,1);
     //核函数
-    kernel_add_Channel_stride2<T><<<grid,block>>>(d_out,d_in,w,h,c,num_channels,value);
+    kernelAddChannelStride2<T><<<grid,block>>>(p_d_out,p_d_in,kWidth,kHeight,kChannels,kNum_channels,value);
     //gpu2cpu
-    cudaMemcpy(dst_image,d_out,bytes_dst,cudaMemcpyDeviceToHost);
-    //compare1(dst_image,contrast,w*c,h, false);
+    cudaMemcpy(p_dst_image,p_d_out,kBytes_dst,cudaMemcpyDeviceToHost);
     ///释放显存指针
-    cudaFree(d_in);
-    cudaFree(d_out);
+    cudaFree(p_d_in);
+    cudaFree(p_d_out);
     return 0;
 }
 ///增加颜色通道函数(多通道多数据)
 template <typename T>
-int add_channels_cu(T *dst_image,T * src_image,int const w,int const h, int const c, int const num_channels,T * value,bool _front_back=true)
+int addChannelsCu(T *p_dst_image,T * p_src_image,int const kWidth,int const kHeight,int const kChannels, int const kNum_channels,T * p_value,bool _front_back=true)
 {
-    if(num_channels<=0)
+    if(kNum_channels<=0)
     {
         std::cerr<<"所添加的颜色通道个数小于1"<<std::endl;
         return 0;
     }
-    int const wc =w*c;//输入图像实际宽度
-    int const wc_add=w*(c+num_channels);//输出图像实际宽度
+    int const wc =kWidth*kChannels;//输入图像实际宽度
+    int const wc_add=kWidth*(kChannels+kNum_channels);//输出图像实际宽度
     //计算存储空间字节数
-    size_t const bytes_value=num_channels* sizeof(T);
-    size_t const bytes_src=wc*h* sizeof(T);
-    size_t const bytes_dst=wc_add*h* sizeof(T);
+    size_t const kBytes_value=kNum_channels* sizeof(T);
+    size_t const kBytes_src  =wc*kHeight* sizeof(T);
+    size_t const kBytes_dst  =wc_add*kHeight* sizeof(T);
     //声明显存指针
-    T *d_in=NULL,*d_out=NULL,*d_value=NULL;
+    T *p_d_in=NULL,*p_d_out=NULL,*p_d_value=NULL;
     //定义显存指针
-    cudaMalloc((void**)&d_value,bytes_value);
-    cudaMalloc((void**)&d_in,bytes_src);
-    cudaMalloc((void**)&d_out,bytes_dst);
+    cudaMalloc((void**)&p_d_value,kBytes_value);
+    cudaMalloc((void**)&p_d_in,kBytes_src);
+    cudaMalloc((void**)&p_d_out,kBytes_dst);
     //cpu2gpu
-    cudaMemcpy(d_value,value,bytes_value,cudaMemcpyHostToDevice);
-    cudaMemcpy(d_in,src_image,bytes_src,cudaMemcpyHostToDevice);
-    //int c_add=c+num_channels;
+    cudaMemcpy(p_d_value,p_value,kBytes_value,cudaMemcpyHostToDevice);
+    cudaMemcpy(p_d_in,p_src_image,kBytes_src,cudaMemcpyHostToDevice);
     //网格划分
     int x=32;
     int y=4;
     dim3 block(x,y,1);
-    dim3 grid((w-1+x*2)/(x*2),(h-1+y)/y,1);
+    dim3 grid((kWidth-1+x*2)/(x*2),(kHeight-1+y)/y,1);
     //核函数
-    kernel_add_channels_stride2<T><<<grid,block>>>(d_out,d_in,w,h,c,num_channels,d_value,_front_back);
+    kernelAddChannelsStride2<T><<<grid,block>>>(p_d_out,p_d_in,kWidth,kHeight,kChannels,kNum_channels,p_d_value,_front_back);
     //gpu2cpu
-    cudaMemcpy(dst_image,d_out,bytes_dst,cudaMemcpyDeviceToHost);
-    //compare1(dst_image,contrast,w*c,h, false);
+    cudaMemcpy(p_dst_image,p_d_out,kBytes_dst,cudaMemcpyDeviceToHost);
     ///释放显存指针
-    cudaFree(d_in);
-    cudaFree(d_out);
-    cudaFree(d_value);
+    cudaFree(p_d_in);
+    cudaFree(p_d_out);
+    cudaFree(p_d_value);
     return 0;
 }
 ///交换颜色通道函数
 template <typename T>
-int swap_channels_by_cu(T *src,int const w,int const h,int c,int const swap_c1,int swap_c2)
+int swapChannelsByCu(T *p_src,int const kWidth,int const kHeight,int const kChannels,int const kSwap_c1,int kSwap_c2)
 {
-    if(swap_c1==swap_c2)return 0;
-    if(swap_c1<0||swap_c1>=c||swap_c2<0||swap_c2>=c)
+    if(kSwap_c1==kSwap_c2)return 0;
+    if(kSwap_c1<0||kSwap_c1>=kChannels||kSwap_c2<0||kSwap_c2>=kChannels)
     {
-        std::cerr<<"swap_channels_by_cuda函数所要交换的颜色通道不合适!!"<<std::endl;
+        std::cerr<<"swapChannelsByCuda函数所要交换的颜色通道不合适!!"<<std::endl;
         return 1;
     }
     //计算字节数
-    size_t const bytes=w*h*c* sizeof(T);
+    size_t const kBytes=kWidth*kHeight*kChannels* sizeof(T);
     //声明显存指针
-    T *d_in=NULL;
+    T *p_d_in=NULL;
     //定义显存指针
-    cudaMalloc((void**)&d_in,bytes);
+    cudaMalloc((void**)&p_d_in,kBytes);
     //cpu2gpu
-    cudaMemcpy(d_in,src,bytes,cudaMemcpyHostToDevice);
+    cudaMemcpy(p_d_in,p_src,kBytes,cudaMemcpyHostToDevice);
     //网格划分
     int x=32;
     int y=4;
     dim3 block(x,y,1);
-    dim3 grid((w-1+x)/(x),(h-1+y)/y,1);
+    dim3 grid((kWidth-1+x)/(x),(kHeight-1+y)/y,1);
     //核函数
-    kernel_swap_channels<T><<<grid,block>>>(d_in,w,h,c,swap_c1,swap_c2);
+    kernelSwapChannels<T><<<grid,block>>>(p_d_in,kWidth,kHeight,kChannels,kSwap_c1,kSwap_c2);
     //gpu2cpu
-    cudaMemcpy(src,d_in,bytes,cudaMemcpyDeviceToHost);
+    cudaMemcpy(p_src,p_d_in,kBytes,cudaMemcpyDeviceToHost);
     //释放显存指针
-    cudaFree(d_in);
+    cudaFree(p_d_in);
     return 0;
 }
 ///复制颜色通道
 template <typename  T>
-int copy_channels_by_cu(T *image,int const w,int const h,int const c,int const copy_c,int const paste_c)
+int copyChannelsByCu(T *p_image,int const kWidth,int const kHeight,int const kChannels,int const kCopy_c,int const kPaste_c)
 {
-    if(copy_c>=c||paste_c>=c)
+    if(kCopy_c>=kChannels||kPaste_c>=kChannels)
     {
         std::cerr<<"输入通道数超过图像的最大通道数"<<std::endl;
         return 1;
     }
-    if(copy_c==paste_c)return 0;
-    if(paste_c<0)
+    if(kCopy_c==kPaste_c)return 0;
+    if(kPaste_c<0)
     {
         //TODO:向后添加一个全为零的颜色通道
     }
     //计算字节数
-    size_t const bytes=w*h*c* sizeof(T);
+    size_t const kBytes=kWidth*kHeight*kChannels* sizeof(T);
     //声明显存指针
-    T *d_in=NULL;
+    T *p_d_in=NULL;
     //定义显存指针
-    cudaMalloc(&d_in,bytes);
+    cudaMalloc(&p_d_in,kBytes);
     //cpu2gpu
-    cudaMemcpy(d_in,image,bytes,cudaMemcpyHostToDevice);
+    cudaMemcpy(p_d_in,p_image,kBytes,cudaMemcpyHostToDevice);
     //网格划分
     int x=32;
     int y=4;
     dim3 block(x,y,1);
-    dim3 grid((w-1+x)/(x),(h-1+y)/y,1);
+    dim3 grid((kWidth-1+x)/(x),(kHeight-1+y)/y,1);
     //核函数
-    kernel_copy_channels<T><<<grid,block>>>(d_in,w,h,c,copy_c,paste_c);
+    kernelCopyChannels<T><<<grid,block>>>(p_d_in,kWidth,kHeight,kChannels,kCopy_c,kPaste_c);
     //gpu2cpu
-    cudaMemcpy(image,d_in,bytes,cudaMemcpyDeviceToHost);
+    cudaMemcpy(p_image,p_d_in,kBytes,cudaMemcpyDeviceToHost);
     //释放显存指针
-    cudaFree(d_in);
+    cudaFree(p_d_in);
     return 0;
 }
 ///删除颜色通道
 template <typename T>
-int delete_channel_by_cu(T *dstImage,T *srcImage,int const src_w,int const src_h,int const src_c,int const del_c)
+int deleteChannelByCu(T *p_dstImage,T *p_srcImage,int const kSrc_width,int const kSrc_height,int const kSrc_channels,int const kDel_channel)
 {
-    if(del_c<0||del_c>=src_c)return 0;
-    int const dst_c=src_c-1;//输出通道数
+    if(kDel_channel<0||kDel_channel>=kSrc_channels)return 0;
+    int dst_c=kSrc_channels-1;//输出通道数
     //计算所需存储的字节数
-    size_t const bytes_in=src_w*src_h*src_c* sizeof(T);
-    size_t const bytes_out=src_w*src_h*dst_c* sizeof(T);
+    size_t const kBytes_in=kSrc_width*kSrc_height*kSrc_channels* sizeof(T);
+    size_t const kBytes_out=kSrc_width*kSrc_height*dst_c* sizeof(T);
     //声明显存指针
-    T *d_in=NULL;
-    T *d_out=NULL;
+    T *p_d_in=NULL;
+    T *p_d_out=NULL;
     //定义显存指针
-    cudaMalloc(&d_in,bytes_in);
-    cudaMalloc(&d_out,bytes_out);
+    cudaMalloc(&p_d_in ,kBytes_in);
+    cudaMalloc(&p_d_out,kBytes_out);
     //cpu2gpu
-    cudaMemcpy(d_in,srcImage,bytes_in,cudaMemcpyHostToDevice);
+    cudaMemcpy(p_d_in,p_srcImage,kBytes_in,cudaMemcpyHostToDevice);
     //网格划分
     int x=32;
     int y=2;
     dim3 block(x,y,1);
-    dim3 grid((src_w-1+x*2)/(x*2),(src_h-1+y)/y,1);
+    dim3 grid((kSrc_width-1+x*2)/(x*2),(kSrc_height-1+y)/y,1);
     //核函数
-    kernel_delete_channel2<T><<<grid,block>>>(d_out,d_in,src_w,src_h,src_c,dst_c,del_c);
+    kernelDeleteChannel2<T><<<grid,block>>>(p_d_out,p_d_in,kSrc_width,kSrc_height,kSrc_channels,dst_c,kDel_channel);
     //gpu2cpu
-    cudaMemcpy(dstImage,d_out,bytes_out,cudaMemcpyDeviceToHost);
+    cudaMemcpy(p_dstImage,p_d_out,kBytes_out,cudaMemcpyDeviceToHost);
     //释放显存指针
-    cudaFree(d_in);
-    cudaFree(d_out);
+    cudaFree(p_d_in);
+    cudaFree(p_d_out);
     return 0;
 }
 
@@ -713,124 +708,124 @@ int delete_channel_by_cu(T *dstImage,T *srcImage,int const src_w,int const src_h
 /******************************************************************************************/
 ///填充颜色通道函数
 template <typename T>
-int fill_color_by_cuda(T *image,T *color,int const w,int const h,int const c,int const color_size)
+int fillColorByCuda(T *image,T *color,int const w,int const h,int const c,int const color_size)
 {
-    fill_color_cu<T>(image,color,w,h,c, color_size);
+    fillColorCu<T>(image,color,w,h,c, color_size);
     return 0;
 }
 template <>
-int fill_color_by_cuda(char *image,char *color,int const w,int const h,int const c,int const color_size)
+int fillColorByCuda(char *image,char *color,int const w,int const h,int const c,int const color_size)
 {
-    fill_color_cu<char>(image,color,w,h,c, color_size);
+    fillColorCu<char>(image,color,w,h,c, color_size);
     //compare1<char>(image,contrast,w*c,h, false);
     return 0;
 }
 template <>
-int fill_color_by_cuda(float  *image,float *color,int const w,int const h,int const c,int const color_size)
+int fillColorByCuda(float  *image,float *color,int const w,int const h,int const c,int const color_size)
 {
-    fill_color_cu<float>(image,color,w,h,c, color_size);
+    fillColorCu<float>(image,color,w,h,c, color_size);
     //compare1<float>(image,contrast,w*c,h, true);
     return 0;
 }
 
 ///增加颜色通道函数(后)
 template <typename T>
-int add_channels_by_cuda(T *dst_image,T  * src_image,int const w,int const h, int const c, int const num_channels,T  value)
+int addChannelsByCuda(T *dst_image,T  * src_image,int const w,int const h, int const c, int const num_channels,T  value)
 {
-    add_Channel_cu(dst_image,src_image, w, h, c,num_channels,value);
+    addChannelsCu(dst_image,src_image, w, h, c,num_channels,value);
     return  0;
 }
 template <>
-int add_channels_by_cuda(char *dst_image,char  * src_image,int const w,int const h, int const c, int const num_channels,char  value)
+int addChannelsByCuda(char *dst_image,char  * src_image,int const w,int const h, int const c, int const num_channels,char  value)
 {
-    add_Channel_cu<char>(dst_image,src_image, w, h, c,num_channels,value);
+    addChannelsCu<char>(dst_image,src_image, w, h, c,num_channels,value);
     return  0;
 }
 template <>
-int add_channels_by_cuda(float *dst_image,float  * src_image,int const w,int const h, int const c, int const num_channels,float  value)
+int addChannelsByCuda(float *dst_image,float  * src_image,int const w,int const h, int const c, int const num_channels,float  value)
 {
-    add_Channel_cu<float>(dst_image,src_image, w, h, c,num_channels,value);
+    addChannelsCu<float>(dst_image,src_image, w, h, c,num_channels,value);
     //compare1<float>(dst_image,contrast,w*c,h, true);
     return  0;
 }
 
 ///增加颜色通道函数(前/后)
 template <typename T>
-int add_channels_front_by_cuda(T *dst_image,T  * src_image,int const w,int const h, int const c, vector<T> value,bool _front_back)
+int addChannelsFrontByCuda(T *dst_image,T  * src_image,int const w,int const h, int const c, vector<T> value,bool _front_back)
 {
-    add_channels_cu(dst_image,src_image, w, h, c,(int)value.size(),&value.at(0),_front_back);
+    addChannelsCu(dst_image,src_image, w, h, c,(int)value.size(),&value.at(0),_front_back);
     //compare1(dst_image,contrast,w*c,h, false);
     return 0;
 }
 template <>
-int add_channels_front_by_cuda(char *dst_image,char  * src_image,int const w,int const h, int const c, vector<char> value,bool _front_back)
+int addChannelsFrontByCuda(char *dst_image,char  * src_image,int const w,int const h, int const c, vector<char> value,bool _front_back)
 {
-    add_channels_cu<char>(dst_image,src_image, w, h, c,(int)value.size(),&value.at(0),_front_back);
+    addChannelsCu<char>(dst_image,src_image, w, h, c,(int)value.size(),&value.at(0),_front_back);
     return 0;
 }
 template <>
-int add_channels_front_by_cuda(float *dst_image,float  * src_image,int const w,int const h, int const c, vector<float> value,bool _front_back)
+int addChannelsFrontByCuda(float *dst_image,float  * src_image,int const w,int const h, int const c, vector<float> value,bool _front_back)
 {
-    add_channels_cu<float>(dst_image,src_image, w, h, c,(int)value.size(),&value.at(0),_front_back);
+    addChannelsCu<float>(dst_image,src_image, w, h, c,(int)value.size(),&value.at(0),_front_back);
     return 0;
 }
 
 ///交换颜色通道
 template <typename T>
-int swap_channels_by_cuda(T *src,int const w,int const h,int c,int const swap_c1,int swap_c2)
+int swapChannelsByCuda(T *src,int const w,int const h,int c,int const swap_c1,int swap_c2)
 {
-    swap_channels_by_cu(src,w,h,c,swap_c1,swap_c2);
+
     return 0;
 }
 template <>
-int swap_channels_by_cuda(char *src,int const w,int const h,int c,int const swap_c1,int swap_c2)
+int swapChannelsByCuda(char *src,int const w,int const h,int c,int const swap_c1,int swap_c2)
 {
-    swap_channels_by_cu<char>(src,w,h,c,swap_c1,swap_c2);
+    swapChannelsByCu<char>(src,w,h,c,swap_c1,swap_c2);
     //compare1<char>(src,contrast,w*c,h, false);
     return 0;
 }
 template <>
-int swap_channels_by_cuda(float *src,int const w,int const h,int c,int const swap_c1,int swap_c2)
+int swapChannelsByCuda(float *src,int const w,int const h,int c,int const swap_c1,int swap_c2)
 {
-    swap_channels_by_cu<float>(src,w,h,c,swap_c1,swap_c2);
+    swapChannelsByCu<float>(src,w,h,c,swap_c1,swap_c2);
     //compare1<float>(src,contrast,w*c,h, true);
     return 0;
 }
 
 ///复制颜色通道
 template <typename T>
-int copy_channels_by_cuda(T *image,int const w,int const h,int const c,int const copy_c,int const paste_c)
+int copyChannelsByCuda(T *image,int const w,int const h,int const c,int const copy_c,int const paste_c)
 {
     return 0;
 }
 template <>
-int copy_channels_by_cuda(char *image,int const w,int const h,int const c,int const copy_c,int const paste_c)
+int copyChannelsByCuda(char *image,int const w,int const h,int const c,int const copy_c,int const paste_c)
 {
-    copy_channels_by_cu<char>(image,w,h,c,copy_c,paste_c);
+    copyChannelsByCu<char>(image,w,h,c,copy_c,paste_c);
     return 0;
 }
 template <>
-int copy_channels_by_cuda(float *image,int const w,int const h,int const c,int const copy_c,int const paste_c)
+int copyChannelsByCuda(float *image,int const w,int const h,int const c,int const copy_c,int const paste_c)
 {
-    copy_channels_by_cu<float>(image,w,h,c,copy_c,paste_c);
+    copyChannelsByCu<float>(image,w,h,c,copy_c,paste_c);
     return 0;
 }
 
 ///删除颜色通道
 template <typename T>
-int delete_channel_by_cuda(T *dstImage,T *srcImage,int const src_w,int const src_h,int const src_c,int const del_c)
+int deleteChannelByCuda(T *dstImage,T *srcImage,int const src_w,int const src_h,int const src_c,int const del_c)
 {
     return 0;
 }
 template <>
-int delete_channel_by_cuda(char *dstImage,char *srcImage,int const src_w,int const src_h,int const src_c,int const del_c)
+int deleteChannelByCuda(char *dstImage,char *srcImage,int const src_w,int const src_h,int const src_c,int const del_c)
 {
-    delete_channel_by_cu<char>(dstImage,srcImage,src_w,src_h,src_c,del_c);
+    deleteChannelByCu<char>(dstImage,srcImage,src_w,src_h,src_c,del_c);
     return 0;
 }
 template <>
-int delete_channel_by_cuda(float *dstImage,float *srcImage,int const src_w,int const src_h,int const src_c,int const del_c)
+int deleteChannelByCuda(float *dstImage,float *srcImage,int const src_w,int const src_h,int const src_c,int const del_c)
 {
-    delete_channel_by_cu<float>(dstImage,srcImage,src_w,src_h,src_c,del_c);
+    deleteChannelByCu<float>(dstImage,srcImage,src_w,src_h,src_c,del_c);
     return 0;
 }

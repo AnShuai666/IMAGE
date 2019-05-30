@@ -14,13 +14,13 @@
 /**
  * @property    图像饱和度降低
  * @func        将图像转换为几种HSL图像
- * @param_out   out_image          转换后的图像
+ * @param_out   p_out_image          转换后的图像
  * @param_in    in_image           待转换图像
  * @param_in    pixel_amount       像素点个数
  * @param_in    type               亮度类型
  * @param_in    alpha              是否有alpha通道
  */
-void desaturateByCuda(float * const out_image,float const  *in_image,const int pixel_amount, const int type,const bool alpha);
+void desaturateByCuda(float * const p_out_image,float const  *p_in_image,const int kPixel_amount, const int kType,const bool kAlpha);
 
 
 /**
@@ -30,30 +30,30 @@ void desaturateByCuda(float * const out_image,float const  *in_image,const int p
  *                                 奇数行列时：
  *                                      奇数行：(,x/2)与(,x/2+1)的平均值
  *                                      偶数行：(y/2,)与(y/2+1,)的平均值
- * @param_out   out_image          放大后的图像首地址
- * @param_in    in_image           待放大图像首地址
- * @param_in    width              输入图像的宽度
- * @param_in    height             输入图像的高度
- * @param_in    channels           输入图像的颜色通道数
+ * @param_out   p_out_image          放大后的图像首地址
+ * @param_in    p_in_image           待放大图像首地址
+ * @param_in    kWidth              输入图像的宽度
+ * @param_in    kHeight             输入图像的高度
+ * @param_in    kChannels           输入图像的颜色通道数
  * @param_in    out                cpu计算结果，用于对比数据
  * 调用示例：
- * doubleSizeByCuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels());
+ * doubleSizeByCuda(&p_out_image->at(0),&img->at(0),img->width(),img->height(),img->channels());
  */
-void doubleSizeByCuda(float * const out_image,float const  * const in_image,int const width,int const height,int const channels);
+void doubleSizeByCuda(float * const p_out_image,float const  * const p_in_image,int const kWidth,int const kHeight,int const kChannels);
 /**
  * @property    图像缩放
  * @func        将图像缩小为原图1/2倍　 像素点为(2*y,2*x)(2*y,2*x+1)(2*y+1,2*x)(2*y+1,2*x+1)的平均值
  *                                 若最后一行或最后一列为奇数列．则越界部分再取最后一行或最后一列
- * @param_out   out_image          放大后的图像首地址
- * @param_in    in_image           待放大图像首地址
- * @param_in    width             输入图像的宽度
- * @param_in    height             输入图像的高度
- * @param_in    channels           输入图像的颜色通道数
+ * @param_out   p_out_image          放大后的图像首地址
+ * @param_in    p_in_image           待放大图像首地址
+ * @param_in    kWidth              输入图像的宽度
+ * @param_in    kHeight             输入图像的高度
+ * @param_in    kChannels           输入图像的颜色通道数
  * @param_in    out                cpu计算结果，用于对比数据
  * 调用示例：
- * halfSizeByCuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels());
+ * halfSizeByCuda(&p_out_image->at(0),&img->at(0),img->width(),img->height(),img->channels());
  */
-void halfSizeByCuda(float * const out_image,float const  * const in_image,int const width,int const height,int const channels);
+void halfSizeByCuda(float * const p_out_image,float const  * const p_in_image,int const kWidth,int const kHeight,int const kChannels);
 
 /**
  * @property    图像缩放
@@ -73,17 +73,17 @@ void halfSizeByCuda(float * const out_image,float const  * const in_image,int co
  *                                      x[1] = 2*x;
  *                                      x[2] = min(2*x + 1, (int)weight - 1);
  *                                      x[3] = min(2*x + 2, (int)weight - 1);
- * @param_out   out_image          放大后的图像首地址
- * @param_in    in_image           待放大图像首地址
- * @param_in    width             输入图像的宽度
- * @param_in    height             输入图像的高度
- * @param_in    channels           输入图像的颜色通道数
+ * @param_out   p_out_image          放大后的图像首地址
+ * @param_in    p_in_image           待放大图像首地址
+ * @param_in    kWidth              输入图像的宽度
+ * @param_in    kHeight             输入图像的高度
+ * @param_in    kChannels           输入图像的颜色通道数
  * @param_in    sigma2             目标高斯尺度平方值　　也就是方差
  * @param_in    out                cpu计算结果，用于对比数据
  * 调用示例：
- * halfsizeGuassianByCuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels(),sigma2);
+ * halfsizeGuassianByCuda(&p_out_image->at(0),&img->at(0),img->width(),img->height(),img->channels(),sigma2);
  */
-void halfSizeGuassianByCuda(float * const out_image,float const  * const in_image, int const width,int const height,int const channels,float sigma2);
+void halfSizeGaussianByCuda(float * const p_out_image,float const  * const p_in_image, int const kWidth,int const kHeight,int const kChannels,float sigma2);
 /**
  * @property    分离式高斯模糊函数
  * @func        对图像进行高斯模糊    高斯核为高斯函数f(x,y)=1/[(2pi)*sigma^2] * e^-((x^2 + y^2)/2sigma2)
@@ -95,18 +95,18 @@ void halfSizeGuassianByCuda(float * const out_image,float const  * const in_imag
  *                                 y维：
  *                                 输出图片的每个像素点为x维模糊图片上的(y-ks)到(y+ks)的值乘以高斯权值和再除以weight
  *                                      边界考虑：y-ks>0,y+ks<w-1
- * @param_out   out_image          放大后的图像首地址
- * @param_in    in_image           待放大图像首地址
- * @param_in    w                  输入图像的宽度
- * @param_in    h                  输入图像的高度
- * @param_in    c                  输入图像的颜色通道数
+ * @param_out   p_out_image        放大后的图像首地址
+ * @param_in    p_in_image         待放大图像首地址
+ * @param_in    kWidth             输入图像的宽度
+ * @param_in    kHeight            输入图像的高度
+ * @param_in    kChannels          输入图像的颜色通道数
  * @param_in    sigma              目标高斯尺度值　　也就是标准差　
  * @param_in    out                cpu计算结果，用于对比数据
  * @return
  * 调用示例：
- * blurGaussianByCuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels(),sigma);
+ * blurGaussianByCuda(&p_out_image->at(0),&img->at(0),img->width(),img->height(),img->channels(),sigma);
  */
-int blurGaussianByCuda(float * const out_image,float const  * const in_image, int const w,int const h,int const c,float sigma);
+int blurGaussianByCuda(float * const p_out_image,float const  * const p_in_image, int const kWidth,int const kHeight,int const kChannels,float sigma);
 
 /**
  * @property    分离式高斯模糊函数
@@ -114,65 +114,63 @@ int blurGaussianByCuda(float * const out_image,float const  * const in_image, in
  *                                 将对图像进行高斯模糊,运用高斯卷积核,进行可分离卷积,先对x方向进行卷积,再在y方向进行卷积,
  *                                 等同于对图像进行二维卷积
  *                                 该高斯核为高斯函数f(x,y)=1/[(2pi)*sigma^2] * e^-((x^2 + y^2)/2sigma2)
- * @param_out   out_image          放大后的图像首地址
- * @param_in    in_image           待放大图像首地址
- * @param_in    w                  输入图像的宽度
- * @param_in    h                  输入图像的高度
- * @param_in    c                  输入图像的颜色通道数
+ * @param_out   p_out_image        放大后的图像首地址
+ * @param_in    p_in_image         待放大图像首地址
+ * @param_in    kWidth             输入图像的宽度
+ * @param_in    kHeight            输入图像的高度
+ * @param_in    kChannels          输入图像的颜色通道数
  * @param_in    sigma2             目标高斯尺度平方值　　也就是方差
  * @param_in    out                cpu计算结果，用于对比数据
  * @return
  * 调用示例：
- * blurGaussian2ByCuda(&out_image->at(0),&img->at(0),img->width(),img->height(),img->channels(),sigma2);
+ * blurGaussian2ByCuda(&p_out_image->at(0),&img->at(0),img->width(),img->height(),img->channels(),sigma2);
  */
-int blurGaussian2ByCuda(float * const out_image,float const  * const in_image, int const w,int const h,int const c,float sigma2);
+int blurGaussian2ByCuda(float * const p_out_image,float const  * const p_in_image, int const kWidth,int const kHeight,int const kChannels,float sigma2);
 
 /***
  * @property    求图像差函数
  * @func        求差异图像的有符号图像,in_image1-in_image2
- * @param_out   out_image     图像差
- * @param_in    in_image1     输入图像1
- * @param_in    in_image2     输入图像2
- * @param_in    w             输入图像的宽度
- * @param_in    h             输入图像的高度
- * @param_in    c             输入图像的颜色通道数
- * @param_in    out           cpu计算结果，用于对比数据
+ * @param_out   p_out_image     图像差
+ * @param_in    p_in_image1     输入图像1
+ * @param_in    p_in_image2     输入图像2
+ * @param_in    kWidth          输入图像的宽度
+ * @param_in    kHeight         输入图像的高度
+ * @param_in    kChannels       输入图像的颜色通道数
  * @return
  * 调用示例：
- * subtractByCuda(&out_image->at(0),&img1->at(0),&img2->at(0),img->width(),img->height(),img->channels());
+ * subtractByCuda(&p_out_image->at(0),&img1->at(0),&img2->at(0),img->width(),img->height(),img->channels());
  */
-int subtractByCuda(float * const out_image,float const  * const in_image1,float const  * const in_image2, int const w,int const h,int const c);
+int subtractByCuda(float * const p_out_image,float const  * const p_in_image1,float const  * const p_in_image2, int const kWidth,int const kHeight,int const kChannels);
 /***
  * @property    求图像差函数
  * @func        求差异图像的无符号图像,|in_image1-in_image2|
- * @paramout    out_image     图像差
- * @paramin     in_image1     输入图像1
- * @paramin     in_image2     输入图像2
- * @paramin     w             输入图像的宽度
- * @paramin     h             输入图像的高度
- * @paramin     c             输入图像的颜色通道数
- * @paramin     out           cpu计算结果，用于对比数据
+ * @paramout     p_out_image     图像差
+ * @param_in     p_in_image1     输入图像1
+ * @param_in     p_in_image2     输入图像2
+ * @param_in     w             输入图像的宽度
+ * @param_in     h             输入图像的高度
+ * @param_in     c             输入图像的颜色通道数
  * @return
  * 调用示例：
- * differenceByCuda(&out_image->at(0),&img1->at(0),&img2->at(0),img->width(),img->height(),img->channels());
+ * differenceByCuda(&p_out_image->at(0),&img1->at(0),&img2->at(0),img->width(),img->height(),img->channels());
  */
 template <typename T>
-int differenceByCuda(T * const out_image,T const  * const in_image1,T const  * const in_image2,int const w,int const h,int const c);
+int differenceByCuda(T * const p_out_image,T const  * const p_in_image1,T const  * const p_in_image2, int const kWidth,int const kHeight,int const kChannels);
 template <>
-int differenceByCuda<float>(float * const out_image,float const  * const in_image1,float const  * const in_image2, int const w,int const h,int const c);
+int differenceByCuda<float>(float * const p_out_image,float const  * const p_in_image1,float const  * const p_in_image2, int const kWidth,int const kHeight,int const kChannels);
 template <>
-int differenceByCuda<char>(char * const out_image,char const  * const in_image1,char const  * const in_image2, int const w,int const h,int const c);
+int differenceByCuda<char>(char * const p_out_image,char const  * const p_in_image1,char const  * const p_in_image2, int const kWidth,int const kHeight,int const kChannels);
 
 /**
  * @property    图像变换
  * @func        将图像中位图转换为浮点图像，灰度值范围从[0-255]->[0.0,1.0]
  * @param_out   dstImage    输出图像
  * @param_in    srcImage    输入图像
- * @param_in    width       输入图像的宽度
- * @param_in    height      输入图像的高度
- * @param_in    channels    输入图像的颜色通道数
+ * @param_in    kWidth      输入图像的宽度
+ * @param_in    kHeight     输入图像的高度
+ * @param_in    kChannels   输入图像的颜色通道数
  * @param_in    contrast    cpu计算结果，用于对比数据
  * @return
  */
-int byteToFloatImageByCuda(float * dstImage,unsigned char *srcImage,int const width,int const height,int const channels);
+int byteToFloatImageByCuda(float * p_dstImage,unsigned char *p_srcImage,int const kWidth,int const kHeight,int const kChannels);
 #endif //IMAGE_PROCESS_1_CUH

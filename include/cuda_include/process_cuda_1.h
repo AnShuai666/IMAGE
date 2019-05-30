@@ -1,7 +1,7 @@
 
 
-#ifndef _PROCESS_CUDA_1_H_
-#define _PROCESS_CUDA_1_H_
+#ifndef _PROCESS_CUDA_00_H_
+#define _PROCESS_CUDA_00_H_
 
 //#include "define.h"
 #include "MATH/Function/function.hpp"
@@ -245,7 +245,7 @@ rescale_half_size_gaussian_cu(typename Image<T>::ConstPtr image, float sigma2)
     }
     typename Image<T>::Ptr out(Image<T>::create());
     out->allocate(ow,oh,ic);
-    halfSizeGuassianByCuda(&out->at(0),&image->at(0),iw,ih,ic,sigma2);
+    halfSizeGaussianByCuda(&out->at(0),&image->at(0),iw,ih,ic,sigma2);
     return out;
 }
 
