@@ -1340,7 +1340,7 @@ IMAGE_NAMESPACE_BEGIN
     void
     Image<T>::swapChannels(int channel1, int channel2, SWAP_METHOD swap_method)
     {
-        if (!this->valid() || channel1 == channel2)
+        if (this->empty() || channel1 == channel2)
         {
             return;
         }
@@ -1383,7 +1383,7 @@ IMAGE_NAMESPACE_BEGIN
             printf("ArgumentOutOfRangeException\n");
             //TODO::抛出异常
         }
-        if(!this->valid() || src == dest)
+        if(this->empty() || src == dest)
         {
             return;
         }

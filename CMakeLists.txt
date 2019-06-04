@@ -147,8 +147,8 @@ configure_file(
         "${PROJECT_SOURCE_DIR}/config/IMAGEConfigVersion.cmake.in"
         "${PROJECT_SOURCE_DIR}/cmakemodule/IMAGEConfigVersion.cmake" @ONLY
 )
-
-set(MATH_DIR /home/as/MATH/cmakemodule)
+include_directories(../MATH/include)
+set(MATH_DIR /home/doing/MATH/cmakemodule)
 #find_package(MATH REQUIRED)
 #message(${MATH_FOUND})
 #message(${MATH_INCLUDE_DIR})
@@ -176,7 +176,6 @@ find_library (
         HINTS "/usr/local/lib/MATH/" # where to look
         NO_DEFAULT_PATH # do not search system default paths
 )
-
 # check if we found the library
 message(STATUS "MATHLIB: [${MATHLIB}]")
 #

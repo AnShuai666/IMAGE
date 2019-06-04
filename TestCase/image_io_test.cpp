@@ -17,5 +17,4 @@ BOOST_AUTO_TEST_CASE(example)
     BOOST_CHECK( str == "12345");
 }
 
-
 BOOST_AUTO_TEST_SUITE_END()

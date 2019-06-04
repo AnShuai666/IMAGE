@@ -165,25 +165,56 @@ static void getAngles(const vector<UCMat>& image_pyramid,std::vector<KeyPoint>& 
 {
     size_t ptidx, ptsize = pts.size();
 
+
     for( ptidx = 0; ptidx < ptsize; ptidx++ )
     {
+        int m_01 = 0, m_10 = 0;
         int x0 = round(pts[ptidx].m_pt.x);
         int y0 = round(pts[ptidx].m_pt.y);
         const UCMat& img=image_pyramid[pts[ptidx].m_octave];
-        int m_01 = 0, m_10 = 0;
-
-        for (int y = -half_k; y <= half_k; ++y)
+        const unsigned char* center=img.ptr(y0)+x0;
+        // Treat the center line differently, v=0
+        for (int u = -half_k; u <= half_k; ++u)
+            m_10 += u * center[u];
+        // Go line by line in the circular patch
+        for (int v = 1; v <= half_k; ++v)
         {
-            const unsigned char* ptr=img.ptr(y+y0);
-            for (int x = -half_k; x <= half_k; ++x)
+            // 同时计算中心对称的上下两行
+            int v_sum = 0;
+            const unsigned char* top=img.ptr(y0-v)+x0;
+            const unsigned char* down=img.ptr(y0+v)+x0;
+            for (int u = -half_k; u <= half_k; ++u)
             {
-               m_01+=y*ptr[x0+x];
-               m_10+=x*ptr[x0+x];
+                int val_plus = down[u], val_minus = top[u];
+                v_sum += (val_plus - val_minus);
+                m_10 += u * (val_plus + val_minus);
             }
+            m_01 += v * v_sum;
         }
 
         pts[ptidx].m_angle = atan((float)m_01, (float)m_10);
+
     }
+
+//    for( ptidx = 0; ptidx < ptsize; ptidx++ )
+//    {
+//        int x0 = round(pts[ptidx].m_pt.x);
+//        int y0 = round(pts[ptidx].m_pt.y);
+//        const UCMat& img=image_pyramid[pts[ptidx].m_octave];
+//        int m_01 = 0, m_10 = 0;
+//
+//        for (int y = -half_k; y <= half_k; ++y)
+//        {
+//            const unsigned char* ptr=img.ptr(y+y0);
+//            for (int x = -half_k; x <= half_k; ++x)
+//            {
+//               m_01+=y*ptr[x0+x];
+//               m_10+=x*ptr[x0+x];
+//            }
+//        }
+//
+//        pts[ptidx].m_angle = atan((float)m_01, (float)m_10);
+//    }
 }
 
 
