@@ -86,7 +86,7 @@ public:
     */
     virtual ~ImageBase();
 
-
+    ImageBase&operator=(const ImageBase& src);
 
 
 /********************************************************************
@@ -120,50 +120,6 @@ public:
     *  @return     bool
     */
     bool empty() const;
-//
-//    /*
-//    *  @property   获取图像字节数
-//    *  @func       虚函数，具体实现需要在子类中进行
-//    *  @return     std::size_t  在子类中实现时返回图像字节数，否则返回0
-//    */
-//    virtual std::size_t getByteSize() const;
-//
-//    /*
-//    *  @property   获取图像数据指针
-//    *  @func       虚函数，具体实现需要在子类中进行重载
-//    *  @const1     指针指向内容不能变，也就是图像数据
-//    *  @const2     防止改变类成员变量
-//    *  @return     char const *  在子类中实现时返回图像指针，否则返回nullptr
-//    */
-//    virtual char const *getBytePointer() const;
-//
-//    /*
-//    *  @property   获取图像数据指针
-//    *  @func       虚函数，具体实现需要在子类中进行重载
-//    *  @return     char *  在子类中实现时返回图像指针，否则返回nullptr
-//    */
-//    virtual char *getBytePointer();
-//
-//    /*
-//    *  @property   获取图像数据类型
-//    *  @func       虚函数，具体实现需要在子类中进行重载
-//    *  @return    ImageType  在子类中实现时返回图像枚举类型，否则返回IMAGE_TYPE_UNKNOW
-//    */
-//    virtual ImageType getType() const;
-//
-//    /*
-//    *  @property   获取图像数据类型
-//    *  @func       虚函数，具体实现需要在子类中进行重载
-//    *  @return     char const*  在子类中实现时返回图像类型，否则返回IMAGE_TYPE_UNKNOW
-//    */
-//    virtual char const* getTypeString() const;
-//
-//    /*
-//    *  @property   获取图像数据类型
-//    *  @func       虚函数，具体实现需要在子类中进行重载
-//    *  @return     ImageType 在子类中实现时返回图像类型，否则返回IMAGE_TYPE_UNKNOW string是什么就返回什么图像枚举类型
-//    */
-//    virtual ImageType get_type_for_string(std::string const& type_string);
 
 
 protected:
@@ -607,7 +563,7 @@ public:
  *  @return     复制后图像引用
  */
 
- //    Image<T>& operator= (Image<T> const& image);
+     Image<T>& operator= (Image<T> const& image);
 
      //通过 .at() /  .ptr() 访问数据
 
@@ -708,7 +664,16 @@ IMAGE_NAMESPACE_BEGIN
     {
 
     }
-
+    inline
+    ImageBase& ImageBase::operator=(const ImageBase& src)
+    {
+        if(&src==this)
+            return *this;
+        m_c=src.m_c;
+        m_h=src.m_h;
+        m_w=src.m_w;
+        return *this;
+    }
 
     inline int
     ImageBase::width() const
@@ -835,9 +800,7 @@ IMAGE_NAMESPACE_BEGIN
     TypedImageBase<T>& TypedImageBase<T>::operator = (TypedImageBase<T> const& image){
         if(this==&image)
             return *this;
-        this->m_w=image.m_w;
-        this->m_h=image.m_h;
-        this->m_c=image.m_c;
+        ImageBase::operator=(image);
         this->m_data.resize(image.m_data.size());
         this->m_data.assign(image.m_data.begin(),image.m_data.end());
         return *this;
@@ -1567,17 +1530,13 @@ IMAGE_NAMESPACE_BEGIN
             px[i] = this->linearAt(x,y,1 + i);
         }
     }
-//    template <typename T>
-//    Image<T>& Image<T>::operator = (Image<T> const& image){
-//        if(this==&image)
-//            return *this;
-//        this->m_w=image.m_w;
-//        this->m_h=image.m_h;
-//        this->m_c=image.m_c;
-//        this->m_data.resize(image.m_data.size());
-//        this->m_data.assign(image.m_data.begin(),image.m_data.end());
-//        return *this;
-//    };
+    template <typename T>
+    Image<T>& Image<T>::operator = (Image<T> const& image){
+        if(this==&image)
+            return *this;
+        TypedImageBase<T>::operator=(image);
+        return *this;
+    };
 //    template <typename T>
 //    inline T const&
 //    Image<T>::operator[](int index) const
