@@ -4,7 +4,8 @@ project(IMAGE)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "-fPIC")
 set(CMAKE_BUILD_TYPE "Debug")
-
+SET(CMAKE_CXX_FLAGS "-msse3")
+SET(CMAKE_CXX_FLAGS "-mavx2")
 set(IMAGE_VERSION_MAJOR 1)
 set(IMAGE_VERSION_MINOR 5)
 set(IMAGE_VERSION_PATCH 1)
@@ -93,9 +94,11 @@ else()
     message(STATUS "  请安装Boost")
 endif ()
 
+
 ####################################################
 #######################SIMD#########################
 ####################################################
+
 
 if (SIMD_ENABLED)
     message(STATUS "使能SIMD支持")

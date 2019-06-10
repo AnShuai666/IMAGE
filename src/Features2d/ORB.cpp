@@ -544,13 +544,13 @@ class ORBImpl : public ORB
 private:
 
     void computeOrbDescriptors( const vector<UCMat>& image_pyramid, std::vector<KeyPoint>& keypoints,
-                               Mat& descriptors, const std::vector<Point>& _pattern, int dsize );
+                               UCMat& descriptors, const std::vector<Point>& _pattern, int dsize );
     void computeKeyPoints(vector<UCMat>& image_pyramid,std::vector<KeyPoint>& all_keypoints,UCInputArray& mask);
     void buildPyramid( const UCMat& base, std::vector<UCMat>& pyr, int nlayers ) const;
     // Compute the ORBImpl features and descriptors on an image
     void detectOrCompute( UCInputArray& image, UCInputArray& mask,
                           std::vector<KeyPoint>& keypoints,
-                          OutputArray& descriptors,
+                          UCOutputArray& descriptors,
                           bool use_provided_keypoints=false )override;
 
 };
@@ -573,7 +573,7 @@ int ORBImpl::defaultNorm() const
 
 void ORBImpl::
 computeOrbDescriptors( const vector<UCMat>& image_pyramid, std::vector<KeyPoint>& keypoints,
-                       Mat& descriptors, const std::vector<Point>& pattern_vec, int dsize )
+                       UCMat& descriptors, const std::vector<Point>& pattern_vec, int dsize )
 {
     int j, i, keypoints_num = (int)keypoints.size();
     const float PI=3.141592653;
@@ -589,7 +589,7 @@ computeOrbDescriptors( const vector<UCMat>& image_pyramid, std::vector<KeyPoint>
         float x, y;
         int ix, iy;
         const Point* pattern = &pattern_vec[0];
-        float* desc = descriptors.ptr(j);
+        u_char* desc = descriptors.ptr(j);
         int step=image_pyramid[kpt.m_octave].cols();
 #define GET_VALUE(idx) \
        (x = pattern[idx].x*a - pattern[idx].y*b, \
@@ -620,7 +620,7 @@ computeOrbDescriptors( const vector<UCMat>& image_pyramid, std::vector<KeyPoint>
                 val |= (t0 < t1) << 6;
                 t0 = GET_VALUE(14); t1 = GET_VALUE(15);
                 val |= (t0 < t1) << 7;
-                desc[i] = (float)val;
+                desc[i] = (u_char)val;
             }
         }
 #undef GET_VALUE
@@ -751,7 +751,7 @@ void ORBImpl::buildPyramid(const UCMat &base, vector<UCMat> &pyr, int nLevels) c
  */
 void ORBImpl::detectOrCompute( UCInputArray& image, UCInputArray& mask,
                                  std::vector<KeyPoint>& keypoints,
-                                 OutputArray& descriptors, bool use_provided_keypoints )
+                                 UCOutputArray& descriptors, bool use_provided_keypoints )
 {
     bool do_descriptors = !descriptors.empty();
 

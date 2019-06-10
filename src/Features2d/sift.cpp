@@ -109,6 +109,7 @@
 #include <MATH/Matrix/matrix_lu.hpp>
 #include "IMAGE/image_process.hpp"
 #include <math.h>
+#define CV_AVX2 1
 namespace features2d
 {
 
@@ -142,7 +143,7 @@ private:
                                 std::vector<KeyPoint>& keypoints ) const;
     //! finds the keypoints and computes descriptors for them using SIFT algorithm.
     //! Optionally it can compute descriptors for the user-provided keypoints
-    void detectOrCompute(InputArray& img, UCInputArray& mask,
+    void detectOrCompute(UCInputArray& img, UCInputArray& mask,
                           std::vector<KeyPoint>& keypoints,
                           OutputArray& descriptors,
                           bool use_provided_keypoints = false) ;
@@ -219,10 +220,11 @@ unpackOctave(const KeyPoint& kpt, int& octave, int& layer, float& scale)
     scale = octave >= 0 ? 1.f/(1 << octave) : (float)(1 << -octave);
 }
 
-static Mat createInitialImage(const Mat& gray_fpt, bool double_image_size, float sigma )
+static Mat createInitialImage(const UCMat& gray_uc, bool double_image_size, float sigma )
 {
     float sig_diff;
-
+    Mat gray_fpt;
+    image::converTo(gray_uc,gray_fpt);
     if( double_image_size )
     {
         sig_diff = sqrtf( std::max(sigma * sigma - SIFT_INIT_SIGMA * SIFT_INIT_SIGMA * 4, 0.01f) );
@@ -381,6 +383,33 @@ static float calcOrientationHist( const Mat& img, Point pt, int radius,
         Mag[k]=sqrt(X[i]*X[i]+Y[i]*Y[i]);
     }
     k=0;
+#if CV_AVX2
+    __m256 __nd360 = _mm256_set1_ps(n/360.f);
+    __m256i __n = _mm256_set1_epi32(n);
+    int CV_DECL_ALIGNED(32) bin_buf[8];
+    float CV_DECL_ALIGNED(32) w_mul_mag_buf[8];
+    for ( ; k <= len - 8; k+=8 )
+    {
+        __m256i __bin = _mm256_cvtps_epi32(_mm256_mul_ps(__nd360, _mm256_loadu_ps(&Ori[k])));
+
+        __bin = _mm256_sub_epi32(__bin, _mm256_andnot_si256(_mm256_cmpgt_epi32(__n, __bin), __n));
+        __bin = _mm256_add_epi32(__bin, _mm256_and_si256(__n, _mm256_cmpgt_epi32(_mm256_setzero_si256(), __bin)));
+
+        __m256 __w_mul_mag = _mm256_mul_ps(_mm256_loadu_ps(&W[k]), _mm256_loadu_ps(&Mag[k]));
+
+        _mm256_store_si256((__m256i *) bin_buf, __bin);
+        _mm256_store_ps(w_mul_mag_buf, __w_mul_mag);
+
+        temphist[bin_buf[0]] += w_mul_mag_buf[0];
+        temphist[bin_buf[1]] += w_mul_mag_buf[1];
+        temphist[bin_buf[2]] += w_mul_mag_buf[2];
+        temphist[bin_buf[3]] += w_mul_mag_buf[3];
+        temphist[bin_buf[4]] += w_mul_mag_buf[4];
+        temphist[bin_buf[5]] += w_mul_mag_buf[5];
+        temphist[bin_buf[6]] += w_mul_mag_buf[6];
+        temphist[bin_buf[7]] += w_mul_mag_buf[7];
+    }
+#endif
     for( ; k < len; k++ )
     {
         int bin = round((n/360.f)*Ori[k]);
@@ -391,6 +420,7 @@ static float calcOrientationHist( const Mat& img, Point pt, int radius,
         temphist[bin] += W[k]*Mag[k];
     }
 
+
     // smooth the histogram
     // 数据按照 (n-2),(n-1),0,1,2,3,4,.....,n-1,0,1放置，方便一维滤波。
     temphist[-1] = temphist[n-1];
@@ -399,6 +429,20 @@ static float calcOrientationHist( const Mat& img, Point pt, int radius,
     temphist[n+1] = temphist[1];
 
     i = 0;
+#if CV_AVX2
+    __m256 __d_1_16 = _mm256_set1_ps(1.f/16.f);
+    __m256 __d_4_16 = _mm256_set1_ps(4.f/16.f);
+    __m256 __d_6_16 = _mm256_set1_ps(6.f/16.f);
+    for( ; i <= n - 8; i+=8 )
+    {
+
+        __m256 __hist = _mm256_add_ps(
+                _mm256_mul_ps(_mm256_add_ps(_mm256_loadu_ps(&temphist[i-2]), _mm256_loadu_ps(&temphist[i+2])),__d_1_16),
+                _mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_loadu_ps(&temphist[i-1]), _mm256_loadu_ps(&temphist[i+1])),__d_4_16),
+                _mm256_mul_ps(_mm256_loadu_ps(&temphist[i]), __d_6_16)));
+        _mm256_storeu_ps(&hist[i], __hist);
+    }
+#endif
     for( ; i < n; i++ )
     {
         hist[i] = (temphist[i-2] + temphist[i+2])*(1.f/16.f) +
@@ -745,93 +789,92 @@ static void calcSIFTDescriptor( const Mat& img, Point2f ptf, float ori, float sc
     }
 
     k = 0;
+
 #if CV_AVX2
-    if( USE_AVX2 )
+
+    int CV_DECL_ALIGNED(32) idx_buf[8];
+    float CV_DECL_ALIGNED(32) rco_buf[64];
+    const __m256 __ori = _mm256_set1_ps(ori);
+    const __m256 __bins_per_rad = _mm256_set1_ps(bins_per_rad);
+    const __m256i __n = _mm256_set1_epi32(n);
+    for( ; k <= len - 8; k+=8 )
     {
-        int CV_DECL_ALIGNED(32) idx_buf[8];
-        float CV_DECL_ALIGNED(32) rco_buf[64];
-        const __m256 __ori = _mm256_set1_ps(ori);
-        const __m256 __bins_per_rad = _mm256_set1_ps(bins_per_rad);
-        const __m256i __n = _mm256_set1_epi32(n);
-        for( ; k <= len - 8; k+=8 )
-        {
-            __m256 __rbin = _mm256_loadu_ps(&RBin[k]);
-            __m256 __cbin = _mm256_loadu_ps(&CBin[k]);
-            __m256 __obin = _mm256_mul_ps(_mm256_sub_ps(_mm256_loadu_ps(&Ori[k]), __ori), __bins_per_rad);
-            __m256 __mag = _mm256_mul_ps(_mm256_loadu_ps(&Mag[k]), _mm256_loadu_ps(&W[k]));
+        __m256 __rbin = _mm256_loadu_ps(&RBin[k]);
+        __m256 __cbin = _mm256_loadu_ps(&CBin[k]);
+        __m256 __obin = _mm256_mul_ps(_mm256_sub_ps(_mm256_loadu_ps(&Ori[k]), __ori), __bins_per_rad);
+        __m256 __mag = _mm256_mul_ps(_mm256_loadu_ps(&Mag[k]), _mm256_loadu_ps(&W[k]));
 
-            __m256 __r0 = _mm256_floor_ps(__rbin);
-            __rbin = _mm256_sub_ps(__rbin, __r0);
-            __m256 __c0 = _mm256_floor_ps(__cbin);
-            __cbin = _mm256_sub_ps(__cbin, __c0);
-            __m256 __o0 = _mm256_floor_ps(__obin);
-            __obin = _mm256_sub_ps(__obin, __o0);
+        __m256 __r0 = _mm256_floor_ps(__rbin);
+        __rbin = _mm256_sub_ps(__rbin, __r0);
+        __m256 __c0 = _mm256_floor_ps(__cbin);
+        __cbin = _mm256_sub_ps(__cbin, __c0);
+        __m256 __o0 = _mm256_floor_ps(__obin);
+        __obin = _mm256_sub_ps(__obin, __o0);
 
-            __m256i __o0i = _mm256_cvtps_epi32(__o0);
-            __o0i = _mm256_add_epi32(__o0i, _mm256_and_si256(__n, _mm256_cmpgt_epi32(_mm256_setzero_si256(), __o0i)));
-            __o0i = _mm256_sub_epi32(__o0i, _mm256_andnot_si256(_mm256_cmpgt_epi32(__n, __o0i), __n));
+        __m256i __o0i = _mm256_cvtps_epi32(__o0);
+        __o0i = _mm256_add_epi32(__o0i, _mm256_and_si256(__n, _mm256_cmpgt_epi32(_mm256_setzero_si256(), __o0i)));
+        __o0i = _mm256_sub_epi32(__o0i, _mm256_andnot_si256(_mm256_cmpgt_epi32(__n, __o0i), __n));
 
-            __m256 __v_r1 = _mm256_mul_ps(__mag, __rbin);
-            __m256 __v_r0 = _mm256_sub_ps(__mag, __v_r1);
+        __m256 __v_r1 = _mm256_mul_ps(__mag, __rbin);
+        __m256 __v_r0 = _mm256_sub_ps(__mag, __v_r1);
 
-            __m256 __v_rc11 = _mm256_mul_ps(__v_r1, __cbin);
-            __m256 __v_rc10 = _mm256_sub_ps(__v_r1, __v_rc11);
+        __m256 __v_rc11 = _mm256_mul_ps(__v_r1, __cbin);
+        __m256 __v_rc10 = _mm256_sub_ps(__v_r1, __v_rc11);
 
-            __m256 __v_rc01 = _mm256_mul_ps(__v_r0, __cbin);
-            __m256 __v_rc00 = _mm256_sub_ps(__v_r0, __v_rc01);
+        __m256 __v_rc01 = _mm256_mul_ps(__v_r0, __cbin);
+        __m256 __v_rc00 = _mm256_sub_ps(__v_r0, __v_rc01);
 
-            __m256 __v_rco111 = _mm256_mul_ps(__v_rc11, __obin);
-            __m256 __v_rco110 = _mm256_sub_ps(__v_rc11, __v_rco111);
+        __m256 __v_rco111 = _mm256_mul_ps(__v_rc11, __obin);
+        __m256 __v_rco110 = _mm256_sub_ps(__v_rc11, __v_rco111);
 
-            __m256 __v_rco101 = _mm256_mul_ps(__v_rc10, __obin);
-            __m256 __v_rco100 = _mm256_sub_ps(__v_rc10, __v_rco101);
+        __m256 __v_rco101 = _mm256_mul_ps(__v_rc10, __obin);
+        __m256 __v_rco100 = _mm256_sub_ps(__v_rc10, __v_rco101);
 
-            __m256 __v_rco011 = _mm256_mul_ps(__v_rc01, __obin);
-            __m256 __v_rco010 = _mm256_sub_ps(__v_rc01, __v_rco011);
+        __m256 __v_rco011 = _mm256_mul_ps(__v_rc01, __obin);
+        __m256 __v_rco010 = _mm256_sub_ps(__v_rc01, __v_rco011);
 
-            __m256 __v_rco001 = _mm256_mul_ps(__v_rc00, __obin);
-            __m256 __v_rco000 = _mm256_sub_ps(__v_rc00, __v_rco001);
+        __m256 __v_rco001 = _mm256_mul_ps(__v_rc00, __obin);
+        __m256 __v_rco000 = _mm256_sub_ps(__v_rc00, __v_rco001);
 
-            __m256i __one = _mm256_set1_epi32(1);
-            __m256i __idx = _mm256_add_epi32(
-                _mm256_mullo_epi32(
-                    _mm256_add_epi32(
-                        _mm256_mullo_epi32(_mm256_add_epi32(_mm256_cvtps_epi32(__r0), __one), _mm256_set1_epi32(d + 2)),
-                        _mm256_add_epi32(_mm256_cvtps_epi32(__c0), __one)),
-                    _mm256_set1_epi32(n + 2)),
-                __o0i);
+        __m256i __one = _mm256_set1_epi32(1);
+        __m256i __idx = _mm256_add_epi32(
+            _mm256_mullo_epi32(
+                _mm256_add_epi32(
+                    _mm256_mullo_epi32(_mm256_add_epi32(_mm256_cvtps_epi32(__r0), __one), _mm256_set1_epi32(d + 2)),
+                    _mm256_add_epi32(_mm256_cvtps_epi32(__c0), __one)),
+                _mm256_set1_epi32(n + 2)),
+            __o0i);
 
-            _mm256_store_si256((__m256i *)idx_buf, __idx);
+        _mm256_store_si256((__m256i *)idx_buf, __idx);
 
-            _mm256_store_ps(&(rco_buf[0]),  __v_rco000);
-            _mm256_store_ps(&(rco_buf[8]),  __v_rco001);
-            _mm256_store_ps(&(rco_buf[16]), __v_rco010);
-            _mm256_store_ps(&(rco_buf[24]), __v_rco011);
-            _mm256_store_ps(&(rco_buf[32]), __v_rco100);
-            _mm256_store_ps(&(rco_buf[40]), __v_rco101);
-            _mm256_store_ps(&(rco_buf[48]), __v_rco110);
-            _mm256_store_ps(&(rco_buf[56]), __v_rco111);
-            #define HIST_SUM_HELPER(id)                                  \
-                hist[idx_buf[(id)]] += rco_buf[(id)];                    \
-                hist[idx_buf[(id)]+1] += rco_buf[8 + (id)];              \
-                hist[idx_buf[(id)]+(n+2)] += rco_buf[16 + (id)];         \
-                hist[idx_buf[(id)]+(n+3)] += rco_buf[24 + (id)];         \
-                hist[idx_buf[(id)]+(d+2)*(n+2)] += rco_buf[32 + (id)];   \
-                hist[idx_buf[(id)]+(d+2)*(n+2)+1] += rco_buf[40 + (id)]; \
-                hist[idx_buf[(id)]+(d+3)*(n+2)] += rco_buf[48 + (id)];   \
-                hist[idx_buf[(id)]+(d+3)*(n+2)+1] += rco_buf[56 + (id)];
+        _mm256_store_ps(&(rco_buf[0]),  __v_rco000);
+        _mm256_store_ps(&(rco_buf[8]),  __v_rco001);
+        _mm256_store_ps(&(rco_buf[16]), __v_rco010);
+        _mm256_store_ps(&(rco_buf[24]), __v_rco011);
+        _mm256_store_ps(&(rco_buf[32]), __v_rco100);
+        _mm256_store_ps(&(rco_buf[40]), __v_rco101);
+        _mm256_store_ps(&(rco_buf[48]), __v_rco110);
+        _mm256_store_ps(&(rco_buf[56]), __v_rco111);
+        #define HIST_SUM_HELPER(id)                                  \
+            hist[idx_buf[(id)]] += rco_buf[(id)];                    \
+            hist[idx_buf[(id)]+1] += rco_buf[8 + (id)];              \
+            hist[idx_buf[(id)]+(n+2)] += rco_buf[16 + (id)];         \
+            hist[idx_buf[(id)]+(n+3)] += rco_buf[24 + (id)];         \
+            hist[idx_buf[(id)]+(d+2)*(n+2)] += rco_buf[32 + (id)];   \
+            hist[idx_buf[(id)]+(d+2)*(n+2)+1] += rco_buf[40 + (id)]; \
+            hist[idx_buf[(id)]+(d+3)*(n+2)] += rco_buf[48 + (id)];   \
+            hist[idx_buf[(id)]+(d+3)*(n+2)+1] += rco_buf[56 + (id)];
 
-            HIST_SUM_HELPER(0);
-            HIST_SUM_HELPER(1);
-            HIST_SUM_HELPER(2);
-            HIST_SUM_HELPER(3);
-            HIST_SUM_HELPER(4);
-            HIST_SUM_HELPER(5);
-            HIST_SUM_HELPER(6);
-            HIST_SUM_HELPER(7);
+        HIST_SUM_HELPER(0);
+        HIST_SUM_HELPER(1);
+        HIST_SUM_HELPER(2);
+        HIST_SUM_HELPER(3);
+        HIST_SUM_HELPER(4);
+        HIST_SUM_HELPER(5);
+        HIST_SUM_HELPER(6);
+        HIST_SUM_HELPER(7);
 
-            #undef HIST_SUM_HELPER
-        }
+        #undef HIST_SUM_HELPER
     }
 #endif
     for( ; k < len; k++ )
@@ -871,6 +914,7 @@ static void calcSIFTDescriptor( const Mat& img, Point2f ptf, float ori, float sc
         hist[idx+(d+3)*(n+2)] += v_rco110;
         hist[idx+(d+3)*(n+2)+1] += v_rco111;
     }
+
     // finalize histogram, since the orientation histograms are circular
     for( i = 0; i < d; i++ )
         for( j = 0; j < d; j++ )
@@ -888,9 +932,22 @@ static void calcSIFTDescriptor( const Mat& img, Point2f ptf, float ori, float sc
     float nrm2 = 0;
     len = d*d*n;
     k = 0;
+#if CV_AVX2
+        float CV_DECL_ALIGNED(32) nrm2_buf[8];
+        __m256 __nrm2 = _mm256_setzero_ps();
+        __m256 __dst;
+        for( ; k <= len - 8; k += 8 )
+        {
+            __dst = _mm256_loadu_ps(&dst[k]);
+            __nrm2 = _mm256_add_ps(__nrm2, _mm256_mul_ps(__dst, __dst));
+
+        }
+        _mm256_store_ps(nrm2_buf, __nrm2);
+        nrm2 = nrm2_buf[0] + nrm2_buf[1] + nrm2_buf[2] + nrm2_buf[3] +
+               nrm2_buf[4] + nrm2_buf[5] + nrm2_buf[6] + nrm2_buf[7];
+#endif
     for( ; k < len; k++ )
         nrm2 += dst[k]*dst[k];
-
 
 
     float thr = std::sqrt(nrm2)*SIFT_DESCR_MAG_THR;
@@ -992,7 +1049,7 @@ int SiftImpl::defaultNorm() const
 }
 
 
-void SiftImpl::detectOrCompute(InputArray& image, UCInputArray& mask,
+void SiftImpl::detectOrCompute(UCInputArray& image, UCInputArray& mask,
                       std::vector<KeyPoint>& keypoints,
                       OutputArray& descriptors,
                       bool use_provided_keypoints)

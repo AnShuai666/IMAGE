@@ -436,6 +436,7 @@ public:
      */
     Image(int width, int height, int channels=1);
 
+
      /*
      *  @property   拷贝构造函数
      *  @func       将图像进行初始化,
@@ -1172,7 +1173,6 @@ IMAGE_NAMESPACE_BEGIN
     {
         this->allocate(width,height,channels);
     }
-
     template <typename T>
     inline
     Image<T>::Image(Image<T> const& image1)

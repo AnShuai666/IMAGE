@@ -7,11 +7,11 @@
 
 #ifndef IMAGE_IMAGE_PROCESS_HPP
 #define IMAGE_IMAGE_PROCESS_HPP
-
+#define CV_DECL_ALIGNED(x) __attribute__ ((aligned (x)))
 //#include "define.h"
 #include "IMAGE/image.hpp"
 #include "MATH/Function/function.hpp"
-
+#define AVX2 0
 IMAGE_NAMESPACE_BEGIN
 /*******************************************************************
 *~~~~~~~~~~~~~~~~~~~~~图像饱和度类型枚举声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -722,56 +722,79 @@ void blurGaussian(const Image<T>* in,Image<T>* out, float sigma)
     std::vector<float> kernel(ks + 1);
     float weight = 0;
 
-    for (int i = 0; i < ks + 1; ++i)
+    for (int i = 0; i <= ks ; ++i)
     {
         kernel[i] = math::func::gaussian((float)i, sigma);
         weight += kernel[i]*2;
     }
     weight-=kernel[0];
+    bool use_avx= false;
+    Image<float>::ImagePtr sep(Image<float>::create(w, h, c));
+//#if AVX2
+//    use_avx= true;
+//#endif
+//    //可分离高斯核实现
+//    //x方向对对象进行卷积
+//    if(use_avx&&in->channels()==1&&ks<=8) {
+//        float kernel_left[8] = {};
+//        float kernel_right[8] = {};
+//        for (int i = 0; i < ks; i++) {
+//            kernel_right[i] = kernel[i + 1];
+//            kernel_left[7-i]=kernel[i + 1];
+//        }
+//        for (int i = ks; i < 8; i++) {
+//            kernel_right[i] = 0;
+//            kernel_left[7-i] = 0;
+//        }
+//        const __m256 __kernel_right = _mm256_loadu_ps(kernel_right);
+//        const __m256 __kernel_left = _mm256_loadu_ps(kernel_left);
+//        float CV_DECL_ALIGNED(32) dst_buf[8];
+//
+//        for (int y = 0; y < h; ++y) {
+//            const T *src_ptr = in->ptr(y);
+//            float *dst_ptr = sep->ptr(y);
+//            for (int x = 8; x < w - 8; ++x) {
+//                __m256 __data_left = _mm256_loadu_ps(src_ptr + x - 8);
+//                __m256 __data_right = _mm256_loadu_ps(src_ptr + x + 1);
+//                __m256 __accum = _mm256_add_ps(
+//                        _mm256_mul_ps(__data_left, __kernel_left),
+//                        _mm256_mul_ps(__data_right, __kernel_right));
+//                _mm256_store_ps(dst_buf, __accum);
+//                dst_ptr[x] = (dst_buf[0] + dst_buf[1] + dst_buf[2] + dst_buf[3]+
+//                dst_buf[4] + dst_buf[5] + dst_buf[6] + dst_buf[7]  + src_ptr[x]*kernel[0])/ weight;
+//            }
+//        }
+//    }
     //可分离高斯核实现
     //x方向对对象进行卷积
-    Image<float>::ImagePtr sep(Image<float>::create(w,h,c));
-    int px = 0;
-    for (int y = 0; y < h; ++y)
-    {
-        const T* src_ptr=in->ptr(y);
-        float* dst_ptr=sep->ptr(y);
-        for (int x = ks; x < w-ks; ++x,++px)
-        {
-            for (int cc = 0; cc < c; ++cc)
-            {
-                float accum=0;
-                for (int i = -ks; i <=ks; ++i)
-                {
-                    //int idx = math::func::clamp(x + i,0,w - 1);
-                    int idx=x+i;
-                    //accum += in->at(y * w + idx, cc) * kernel[abs(i)];
-                    accum+=src_ptr[idx*c+cc]*kernel[abs(i)];
+    for (int y = 0; y < h; ++y) {
+        const T *src_ptr = in->ptr(y);
+        float *dst_ptr = sep->ptr(y);
+        for (int x = ks; x < w - ks; ++x) {
+            for (int cc = 0; cc < c; ++cc) {
+                float accum = 0;
+                for (int i = 1; i <= ks; ++i) {
+                    int idx_right = x + i,idx_left=x-i;
+                    accum += (src_ptr[idx_left * c + cc]+src_ptr[idx_right * c + cc]) * kernel[i];
                 }
-                //sep->at(px,cc) = accum / weight;
-                dst_ptr[x*c+cc]=accum/weight;
+                accum+=src_ptr[x*c]*kernel[0];
+                dst_ptr[x * c + cc] = accum / weight;
             }
         }
     }
+
     //y方向对图像进行卷积
-    px=0;
-    for (int y = ks; y < h-ks; ++y)
-    {
-        T* dst_ptr=out->ptr(y);
-        for (int x = 0; x < w; ++x,++px)
-        {
-            for (int cc = 0; cc < c; ++cc)
-            {
-                float accum =0;
-                for (int i = -ks; i <= ks; ++i)
-                {
-                    //int idx = math::func::clamp(y+i,0,(int)h - 1);
-                    //accum += sep->at(idx * w + x, cc)* kernel[abs(i)];
-                    int idx=y+i;
-                    accum+=sep->ptr(idx)[x*c+cc]*kernel[abs(i)];
+    for (int y = ks; y < h - ks; ++y) {
+        T *dst_ptr = out->ptr(y);
+        for (int x = 0; x < w; ++x) {
+            for (int cc = 0; cc < c; ++cc) {
+                float accum = 0;
+                for (int i = 1; i <= ks; ++i) {
+                    int idx_down = y + i,idx_up=y-i;
+                    accum += (sep->ptr(idx_up)[x * c + cc] + sep->ptr(idx_down)[x * c + cc])* kernel[i];
                 }
-                //out->at(px,cc) = (T)(accum / weight);
-                dst_ptr[x*c+cc]=(T)(accum/weight);
+                accum+=sep->ptr(y)[x * c + cc]*kernel[0];
+                dst_ptr[x * c + cc] = (T) (accum / weight);
             }
         }
     }

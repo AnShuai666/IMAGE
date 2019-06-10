@@ -45,7 +45,7 @@
 #include <MATH/Matrix/matrix.hpp>
 #include "types.hpp"
 #include "IMAGE/image.hpp"
-
+#define CV_DECL_ALIGNED(x) __attribute__ ((aligned (x)))
 
 namespace features2d
 {
@@ -116,8 +116,6 @@ public:
     matrix with non-zero values in the region of interest.
      */
 
-    virtual void detect( InputArray& image,std::vector<KeyPoint>& keypoints,
-                         UCInputArray& mask );
     virtual void detect( UCInputArray& image,std::vector<KeyPoint>& keypoints,
                          UCInputArray& mask );
 
@@ -132,37 +130,37 @@ public:
     descriptors computed for a keypoints[i]. Row j is the keypoints (or keypoints[i]) is the
     descriptor for keypoint j-th keypoint.
      */
-    virtual void compute( InputArray& image,
+    virtual void compute( UCInputArray& image,
                                   std::vector<KeyPoint>& keypoints,
                                   OutputArray& descriptors );
     virtual void compute( UCInputArray& image,
                           std::vector<KeyPoint>& keypoints,
-                          OutputArray& descriptors );
+                          UCOutputArray& descriptors );
 
 
 
 
     /** Detects keypoints and computes the descriptors */
-     virtual void detectAndCompute( InputArray& image, UCInputArray& mask,
+     virtual void detectAndCompute( UCInputArray& image, UCInputArray& mask,
                                            std::vector<KeyPoint>& keypoints,
                                            OutputArray& descriptors);
     /** Detects keypoints and computes the descriptors */
     virtual void detectAndCompute( UCInputArray& image, UCInputArray& mask,
                                    std::vector<KeyPoint>& keypoints,
-                                   OutputArray& descriptors);
+                                   UCOutputArray& descriptors);
 
      virtual int descriptorSize() const;
      virtual int descriptorType() const;
      virtual int defaultNorm() const;
 
 private:
-    virtual void detectOrCompute( InputArray& image, UCInputArray& mask,
+    virtual void detectOrCompute( UCInputArray& image, UCInputArray& mask,
                                    std::vector<KeyPoint>& keypoints,
                                    OutputArray& descriptors,
                                    bool useProvidedKeypoints=false );
     virtual void detectOrCompute( UCInputArray& image, UCInputArray& mask,
                                   std::vector<KeyPoint>& keypoints,
-                                  OutputArray& descriptors,
+                                  UCOutputArray& descriptors,
                                   bool useProvidedKeypoints=false );
 };
 

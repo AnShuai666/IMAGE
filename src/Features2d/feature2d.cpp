@@ -99,7 +99,7 @@ Feature2D::~Feature2D() {}
  * mask         Mask specifying where to look for keypoints (optional). Must be a char
  *              matrix with non-zero values in the region of interest.
  */
-void Feature2D::detect( InputArray& image,
+void Feature2D::detect( UCInputArray& image,
                         std::vector<KeyPoint>& keypoints,
                         UCInputArray& mask )
 {
@@ -119,35 +119,15 @@ void Feature2D::detect( InputArray& image,
     Mat des;
     detectOrCompute(image, mask, keypoints, des, false);
 }
-void Feature2D::detect( UCInputArray& image,
-                        std::vector<KeyPoint>& keypoints,
-                        UCInputArray& mask )
-{
-    if( image.empty() )
-    {
-        keypoints.clear();
-        return;
-    }
-    if(!mask.empty())
-    {
-        if(mask.rows()!=image.rows()
-           ||mask.cols()!=image.cols()
-           ||mask.channels()!=1){
-            throw("Mask size error\n");
-        }
-    }
-    Mat des;
-    detectOrCompute(image, mask, keypoints, des, false);
-}
 /*
  * Compute the descriptors for a set of keypoints in an image.
  * image        The image.
  * keypoints    The input keypoints. Keypoints for which a descriptor cannot be computed are removed.
  * descriptors  Copmputed descriptors. Row i is the descriptor for keypoint i.
  */
-void Feature2D::compute( InputArray& image,
+void Feature2D::compute( UCInputArray& image,
                          std::vector<KeyPoint>& keypoints,
-                         OutputArray& descriptors ){
+                         UCOutputArray& descriptors ){
     if( image.empty()||keypoints.empty())
     {
         descriptors.release();
@@ -177,7 +157,7 @@ void Feature2D::compute( UCInputArray& image,
     UCMat mask;
     detectOrCompute(image, mask, keypoints, descriptors, true);
 }
-void Feature2D::detectAndCompute( InputArray& image, UCInputArray& mask,
+void Feature2D::detectAndCompute( UCInputArray& image, UCInputArray& mask,
                                 std::vector<KeyPoint>& keypoints,
                                 OutputArray& descriptors){
     if( image.empty() )
@@ -202,7 +182,7 @@ void Feature2D::detectAndCompute( InputArray& image, UCInputArray& mask,
 }
 void Feature2D::detectAndCompute( UCInputArray& image, UCInputArray& mask,
                                   std::vector<KeyPoint>& keypoints,
-                                  OutputArray& descriptors){
+                                  UCOutputArray& descriptors){
     if( image.empty() )
     {
         descriptors.release();
@@ -224,7 +204,7 @@ void Feature2D::detectAndCompute( UCInputArray& image, UCInputArray& mask,
     detectOrCompute(image, mask, keypoints, descriptors, false);
 }
 /* Detects keypoints and computes the descriptors */
-void Feature2D::detectOrCompute( InputArray&, UCInputArray&,
+void Feature2D::detectOrCompute( UCInputArray&, UCInputArray&,
                                   std::vector<KeyPoint>&,
                                   OutputArray&,
                                   bool){
@@ -233,7 +213,7 @@ void Feature2D::detectOrCompute( InputArray&, UCInputArray&,
 }
 void Feature2D::detectOrCompute( UCInputArray&, UCInputArray&,
                                  std::vector<KeyPoint>&,
-                                 OutputArray&,
+                                 UCOutputArray&,
                                  bool){
 
     throw("Error::StsNotImplemented");
