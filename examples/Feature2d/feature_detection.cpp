@@ -460,7 +460,55 @@ int fastDetect()
 #endif
     return 0;
 }
+enum kFeatureExtractMethod
+{
+    _SIFT=0,
+    _ORB
+};
+template <typename T>
+void
+detectFeatures(image::ByteImage::ImagePtr image,std::vector<math::matrix::Vector2f>& features,typename image::Image<T>::ImagePtr des,kFeatureExtractMethod method)
+{
+
+    image::ByteImage::ImagePtr gray_img;
+    if(image->channels()!=1)
+        gray_img=image::desaturate<unsigned char>(image,image::DESATURATE_LUMINANCE);
+    else
+        gray_img=image;
+    shared_ptr<features2d::Feature2D> detecter;
+    std::vector<features2d::KeyPoint> keypoints;
+    features2d::UCMat mask;
+    features2d::Mat descriptors;
+    features2d::UCMat uc_descriptors;
+    switch (method) {
+        case _SIFT:
+            detecter = features2d::SIFT::create();
+            detecter->detectAndCompute(*gray_img, mask, keypoints, descriptors);
+            image::converTo(descriptors, *des);
+            break;
+        case _ORB:
+            detecter = features2d::ORB::create();
+            detecter->detectAndCompute(*gray_img, mask, keypoints, uc_descriptors);
+            image::converTo(uc_descriptors, *des);
+            break;
+        default:
+            throw("unknow detect method\n");
+    }
+
+    for(int i=0;i<keypoints.size();i++) {
+        math::matrix::Vector2f point(keypoints[i].m_pt.x, keypoints[i].m_pt.y);
+        features.push_back(point);
+    }
+}
 int main()
 {
-    siftDetect();
+ //   siftDetect();
+    image::ByteImage::ImagePtr image=std::make_shared<ByteImage>();
+    std::string image_filename = "/home/doing/lena.jpg";
+    image = image::loadImage(image_filename);
+    image::Image<int>::ImagePtr des=make_shared<Image<int>>();
+    std::vector<math::matrix::Vector2f> features;
+    UCMat mask;
+    detectFeatures<int>(image,features,des,kFeatureExtractMethod::_ORB);
+
 }

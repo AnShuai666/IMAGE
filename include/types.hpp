@@ -10,9 +10,70 @@
 #define CV_64F  6
 #define CV_USRTYPE1 7
 
+#include<vector>
+
 template<typename _Tp> class Size_;
 template<typename _Tp> class Point_;
 template<typename _Tp> class Rect_;
+template<typename _Tp> class Scalar_;
+
+
+//////////////////////////////// Scalar_ ///////////////////////////////
+
+/** @brief Template class for a 4-element vector derived from Vec.
+
+Being derived from Vec\<_Tp, 4\> , Scalar\_ and Scalar can be used just as typical 4-element
+vectors. In addition, they can be converted to/from CvScalar . The type Scalar is widely used in
+OpenCV to pass pixel values.
+*/
+template<typename _Tp> class Scalar_
+{
+public:
+    //! default constructor
+    Scalar_();
+    Scalar_(_Tp v0, _Tp v1, _Tp v2=0, _Tp v3=0);
+    Scalar_(_Tp v0);
+
+    static Scalar_<_Tp> all(_Tp v0);
+
+    std::vector<_Tp> val;
+};
+
+typedef Scalar_<double> Scalar;
+
+
+template<typename _Tp> inline
+Scalar_<_Tp>::Scalar_():val(std::vector<_Tp>(4))
+{
+    this->val[0] = this->val[1] = this->val[2] = this->val[3] = 0;
+}
+
+template<typename _Tp> inline
+Scalar_<_Tp>::Scalar_(_Tp v0, _Tp v1, _Tp v2, _Tp v3):val(std::vector<_Tp>(4))
+{
+    this->val[0] = v0;
+    this->val[1] = v1;
+    this->val[2] = v2;
+    this->val[3] = v3;
+}
+
+
+
+template<typename _Tp> inline
+Scalar_<_Tp>::Scalar_(_Tp v0):val(std::vector<_Tp>(4))
+{
+    this->val[0] = v0;
+    this->val[1] = this->val[2] = this->val[3] = 0;
+}
+
+template<typename _Tp> inline
+Scalar_<_Tp> Scalar_<_Tp>::all(_Tp v0)
+{
+    return Scalar_<_Tp>(v0, v0, v0, v0);
+}
+
+
+
 //////////////////////////////// Size_ ////////////////////////////////
 
 /** @brief Template class for specifying the size of an image or rectangle.

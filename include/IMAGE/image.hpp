@@ -126,7 +126,7 @@ protected:
     int m_w;
     int m_h;
     int m_c;//指的是图像通道数 正整数
-
+    ImageType m_data_type;
 };
 
 /********************************************************************
@@ -341,9 +341,7 @@ protected:
 
 };
 
-
-
-/********************************************************************
+    /********************************************************************
  *~~~~~~~~~~~~~~~~~~~~~常用矩阵类型别名声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *******************************************************************/
 template <typename T> class Image;
@@ -565,78 +563,6 @@ public:
 
      Image<T>& operator= (Image<T> const& image);
 
-     //通过 .at() /  .ptr() 访问数据
-
-//    /*
-//    *  @property   重载运算符[]
-//    *  @func       访问图像数据
-//    *  @param_in   index    图像数据线性索引值
-//    *  @return     T const&
-//    */
-//    T const& operator[] (int index) const;
-//
-//    /*
-//    *  @property   重载运算符[]
-//    *  @func       访问图像数据
-//    *  @param_in   index    图像数据线性索引值
-//    *  @return     T&
-//    */
-//     T& operator[] (int index);
-//
-//    /*
-//    *  @property   重载运算符()
-//    *  @func       访问图像数据
-//    *  @param_in   index    图像数据线性索引值
-//    *  @return     T const&
-//    */
-//    T const& operator() (int index) const;
-//
-//    /*
-//    *  @property   重载运算符()
-//    *  @func       访问图像数据
-//    *  @param_in   index    图像像素索引值
-//    *  @param_in   channel  图像像素通道索引值
-//    *  @return     T const&
-//    */
-//    T const& operator() (int index, int channel) const;
-//
-//    /*
-//    *  @property   重载运算符()
-//    *  @func       访问图像数据
-//    *  @param_in   x        图像像素x方向索引值
-//    *  @param_in   y        图像像素y方向索引值
-//    *  @param_in   channel  图像像素通道索引值
-//    *  @return     T const&
-//    */
-//    T const& operator() (int x, int y, int channel) const;
-//
-//    /*
-//    *  @property   重载运算符()
-//    *  @func       访问图像数据
-//    *  @param_in   index    图像数据线性索引值
-//    *  @return     T&
-//    */
-//    T& operator()(int index);
-//
-//    /*
-//    *  @property   重载运算符()
-//    *  @func       访问图像数据
-//    *  @param_in   index    图像像素索引值
-//    *  @param_in   channel  图像像素通道索引值
-//    *  @return     T&
-//    */
-//    T& operator()(int index, int channel);
-//
-//    /*
-//    *  @property   重载运算符()
-//    *  @func       访问图像数据
-//    *  @param_in   x        图像像素x方向索引值
-//    *  @param_in   y        图像像素y方向索引值
-//    *  @param_in   channel  图像像素通道索引值
-//    *  @return     T&
-//    */
-//    T& operator()(int x, int y, int channel);
-
  };
 
 IMAGE_NAMESPACE_END
@@ -648,7 +574,7 @@ IMAGE_NAMESPACE_BEGIN
 
     inline
     ImageBase::ImageBase()
-            : m_w(0),m_h(0),m_c(0)
+            : m_w(0),m_h(0),m_c(0),m_data_type(ImageType::IMAGE_TYPE_UNKNOWN)
     {
 
     }
@@ -658,6 +584,7 @@ IMAGE_NAMESPACE_BEGIN
         this->m_w=_img.m_w;
         this->m_h=_img.m_h;
         this->m_c=_img.m_c;
+        this->m_data_type=_img.m_data_type;
     }
     inline
     ImageBase::~ImageBase()
@@ -707,68 +634,6 @@ IMAGE_NAMESPACE_BEGIN
         return (m_w*m_h*m_c==0);
     }
 
-//
-//    inline std::size_t
-//    ImageBase::getByteSize() const
-//    {
-//        throw("Error::StsNotImplemented");
-//        return 0;
-//    }
-//
-//    inline char const*
-//    ImageBase::getBytePointer() const
-//    {
-//        throw("Error::StsNotImplemented");
-//        return nullptr;
-//    }
-//
-//    inline char *
-//    ImageBase::getBytePointer()
-//    {
-//        throw("Error::StsNotImplemented");
-//        return nullptr;
-//    }
-//
-//    inline ImageType
-//    ImageBase::getType() const
-//    {
-//        return IMAGE_TYPE_UNKNOWN;
-//    }
-//
-//    inline char const*
-//    ImageBase::getTypeString() const
-//    {
-//        return "unknown";
-//    }
-//
-//
-//    inline ImageType
-//    ImageBase::get_type_for_string(std::string const &type_string)
-//    {
-//        if (type_string == "sint8")
-//            return IMAGE_TYPE_SINT8;
-//        else if (type_string == "sint16")
-//            return IMAGE_TYPE_SINT16;
-//        else if (type_string == "sint32")
-//            return IMAGE_TYPE_SINT32;
-//        else if (type_string == "sint64")
-//            return IMAGE_TYPE_SINT64;
-//        else if (type_string == "uint8")
-//            return IMAGE_TYPE_UINT8;
-//        else if (type_string == "uint16")
-//            return IMAGE_TYPE_UINT16;
-//        else if (type_string == "uint32")
-//            return IMAGE_TYPE_UINT32;
-//        else if (type_string == "uint64")
-//            return IMAGE_TYPE_UINT64;
-//        else if (type_string == "float")
-//            return IMAGE_TYPE_FLOAT;
-//        else if (type_string == "double")
-//            return IMAGE_TYPE_DOUBLE;
-//        else
-//            return IMAGE_TYPE_UNKNOWN;
-//    }
-//
 
 /********************************************************************
 *~~~~~~~~~~~~~~~~~~~~~TypedImageBase成员函数实现~~~~~~~~~~~~~~~~~~~~~~~
