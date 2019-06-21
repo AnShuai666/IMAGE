@@ -822,7 +822,6 @@ void ORBImpl::detectOrCompute( UCInputArray& image, UCInputArray& mask,
         keypoints_num = (int)keypoints.size();
         if( keypoints_num == 0 )
         {
-            descriptors.release();
             return;
         }
 

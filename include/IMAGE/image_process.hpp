@@ -87,9 +87,9 @@ void imageResizeLinear(const Image<T>& src,Image<T>& dst,int width, int height) 
         float scale_x=(float)src_w/width;
         float scale_y=(float)src_h/height;
 
-        T* dataDst=dst.getData().data();
+        T* dataDst=dst.ptr();
         int stepDst=width*channels;
-        const T* dataSrc=src.getData().data();
+        const T* dataSrc=src.ptr();
         int stepSrc=src_w*channels;
         for(int i=0;i<height;i++){
             int dst_offst=i*width*channels;
@@ -484,7 +484,7 @@ typename Image<T>::ImagePtr
 expandGrayscale(typename Image<T>::ConstImagePtr image);
 
 template <typename _Tp1,typename _Tp2>
-void converTo(const TypedImageBase<_Tp1>& src,TypedImageBase<_Tp2>& dst,float alpha=1.f,float offset=0.f);
+void converTo(const Image<_Tp1>& src,Image<_Tp2>& dst,float alpha=1.f,float offset=0.f);
 IMAGE_NAMESPACE_END
 
 /*******************************************************************
@@ -547,8 +547,8 @@ typename Image<T>::ImagePtr desaturate(typename Image<T>::ConstImagePtr image, K
 
     bool has_alpha = (image->channels() == 4);
 
-    typename Image<T>::ImagePtr out_image(Image<T>::create());
-    out_image->allocate(image->width(),image->height(),1 + has_alpha);
+    std::shared_ptr<Image<T>> out_image=std::make_shared<Image<T>>();
+    out_image->resize(image->width(),image->height(),1 + has_alpha);
 
     typedef T (*DesaturateFunc)(T const*);
     DesaturateFunc func;
@@ -578,8 +578,8 @@ typename Image<T>::ImagePtr desaturate(typename Image<T>::ConstImagePtr image, K
     int in_pos = 0;
     //TODO:: to be CUDA @Yang
     //opencv 4000*2250*3 图像处理时间: 14.4ms
-    T* dst_ptr=out_image->getDataPointer();
-    T const* v = image->getDataPointer();
+    T* dst_ptr=out_image->ptr();
+    T const* v = image->ptr();
     for (int i = 0; i < image->getPixelAmount(); ++i)
     {
 
@@ -711,7 +711,7 @@ void blurGaussian(const Image<T>* in,Image<T>* out, float sigma)
         out->resize(in->width(),in->height(),in->channels());
         int amount=in->getValueAmount();
         for(int i=0;i<amount;i++)
-            out->getData()[i]=in->getData()[i];
+            out->ptr()[i]=in->ptr()[i];
         return;
     }
 
@@ -829,9 +829,9 @@ subtract(typename Image<T>::ConstImagePtr image_1, typename Image<T>::ConstImage
 
     typename Image<T>::ImagePtr out(Image<T>::create());
     out->allocate(w1,h1,c1);
-    const T* image_1_ptr=image_1->getDataPointer();
-    const T* image_2_ptr=image_2->getDataPointer();
-    T* out_ptr=out->getDataPointer();
+    const T* image_1_ptr=image_1->ptr();
+    const T* image_2_ptr=image_2->ptr();
+    T* out_ptr=out->ptr();
     for (int i = 0; i < image_1->getValueAmount(); ++i)
     {
         out_ptr[i]=image_1_ptr[i]-image_2_ptr[2];
@@ -864,9 +864,9 @@ void subtract(const Image<T>& image_1,const Image<T>& image_2,Image<T>& dst)
 
 
     dst.resize(w1,h1,c1);
-    const T* image_1_ptr=image_1.getDataPointer();
-    const T* image_2_ptr=image_2.getDataPointer();
-    T* out_ptr=dst.getDataPointer();
+    const T* image_1_ptr=image_1.ptr();
+    const T* image_2_ptr=image_2.ptr();
+    T* out_ptr=dst.ptr();
     for (int i = 0; i < image_1.getValueAmount(); ++i)
     {
         //dst.at(i) = image_1.at(i) - image_2.at(i);
@@ -896,9 +896,9 @@ subtractAbs(typename Image<T>::ConstImagePtr image_1, typename Image<T>::ConstIm
 
     typename Image<T>::ImagePtr out(Image<T>::create());
     out->allocate(w1,h1,c1);
-    const T* image_1_ptr=image_1->getDataPointer();
-    const T* image_2_ptr=image_2->getDataPointer();
-    T* out_ptr=out->getDataPointer();
+    const T* image_1_ptr=image_1->ptr();
+    const T* image_2_ptr=image_2->ptr();
+    T* out_ptr=out->ptr();
     for (int i = 0; i < image_1->getValueAmount(); ++i)
     {
        out_ptr[i]=abs(image_1_ptr[i]-image_2_ptr[i]);
@@ -916,7 +916,7 @@ expandGrayscale(typename Image<T>::ConstImagePtr image)
 }
 
 template <typename _Tp1,typename _Tp2>
-void converTo(const TypedImageBase<_Tp1>& src,TypedImageBase<_Tp2>& dst,float alpha,float offset)
+void converTo(const Image<_Tp1>& src,Image<_Tp2>& dst,float alpha,float offset)
 {
     if(dst.empty())
         dst.resize(src.width(),src.height(),src.channels());
@@ -929,8 +929,8 @@ void converTo(const TypedImageBase<_Tp1>& src,TypedImageBase<_Tp2>& dst,float al
     }
     float EPSILON =1.192093e-007;
 
-    const _Tp1* src_ptr=src.getDataPointer();
-    _Tp2* dst_ptr=dst.getDataPointer();
+    const _Tp1* src_ptr=src.ptr();
+    _Tp2* dst_ptr=dst.ptr();
     if(alpha-1.f>EPSILON){
         for(int i=0;i<src.getValueAmount();i++)
             dst_ptr[i]=(_Tp2)(src_ptr[i]+offset);

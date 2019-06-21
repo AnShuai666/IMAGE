@@ -203,9 +203,8 @@ loadPngImage(std::string const& filename)
     png_read_update_info(png_ptr,png_info);
 
     //生成自定义图像
-    ByteImage::ImagePtr image = ByteImage::create();
-    image->allocate(imageHeaders.width,imageHeaders.height,imageHeaders.channels);
-    ByteImage::ImageData &data = image->getData();
+    ByteImage::ImagePtr image = ByteImage::create(imageHeaders.width,imageHeaders.height,imageHeaders.channels);
+    ByteImage::ImageData data = image->ptr(0);
 
     //创建行指针向量
     std::vector<png_bytep> row_pointers;
@@ -383,7 +382,7 @@ savePngImage(ByteImage::ConstImagePtr image, std::string const &filename, int co
     //设置行指针
     std::vector<png_bytep> row_pointers;
     row_pointers.resize(image->width());
-    ByteImage::ImageData const &data = image->getData();
+    ByteImage::constImageData  data = image->ptr();
     for (int i = 0; i < image->height(); ++i)
     {
         row_pointers[i] = const_cast<png_bytep >(&data[i * image->width() * image->channels()]);
@@ -465,7 +464,7 @@ loadJpgImage(std::string const& filename,std::string* exif )
         int const height = cinfo.image_height;
         int const channels = (cinfo.out_color_space == JCS_RGB ? 3 : 1);
         image = ByteImage::create(width,height,channels);
-        ByteImage::ImageData& data = image->getData();
+        ByteImage::ImageData data = image->ptr();
         //开始解压
         jpeg_start_decompress(&cinfo);
 
@@ -551,7 +550,7 @@ saveJpgImage(ByteImage::ConstImagePtr image, std::string const &filename, int qu
     jpeg_set_quality(cinfo_ptr,quality,TRUE);
     jpeg_start_compress(cinfo_ptr,TRUE);
 
-    ByteImage::ImageData const &data = image->getData();
+    ByteImage::constImageData data = image->ptr();
     int row_stride = image->width() * image->channels();
     while (cinfo_ptr->next_scanline < cinfo_ptr->image_height)
     {

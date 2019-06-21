@@ -130,7 +130,6 @@ void Feature2D::compute( UCInputArray& image,
                          UCOutputArray& descriptors ){
     if( image.empty()||keypoints.empty())
     {
-        descriptors.release();
         return;
     }
     if(descriptors.empty())
@@ -146,7 +145,6 @@ void Feature2D::compute( UCInputArray& image,
                          OutputArray& descriptors ){
     if( image.empty()||keypoints.empty())
     {
-        descriptors.release();
         return;
     }
     if(descriptors.empty())
@@ -162,7 +160,6 @@ void Feature2D::detectAndCompute( UCInputArray& image, UCInputArray& mask,
                                 OutputArray& descriptors){
     if( image.empty() )
     {
-        descriptors.release();
         return;
     }
     if(descriptors.empty())//descriptors.empty() 作为标志位判断是否计算描述子
@@ -185,7 +182,6 @@ void Feature2D::detectAndCompute( UCInputArray& image, UCInputArray& mask,
                                   UCOutputArray& descriptors){
     if( image.empty() )
     {
-        descriptors.release();
         return;
     }
     if(descriptors.empty())//descriptors.empty() 作为标志位判断是否计算描述子

@@ -199,8 +199,8 @@ int orbDetect()
     return 0;
 #else
 
-    flann::Features<u_char> dataset=flann::Features<u_char >(descriptors.getData().data(),descriptors.rows(),descriptors.cols());
-    flann::Features<u_char> query=flann::Features<u_char>(descriptors2.getData().data(),descriptors2.rows(),descriptors2.cols());
+    flann::Features<u_char> dataset=flann::Features<u_char >(descriptors.ptr(),descriptors.rows(),descriptors.cols());
+    flann::Features<u_char> query=flann::Features<u_char>(descriptors2.ptr(),descriptors2.rows(),descriptors2.cols());
     flann::Features<int> indices(new int[query.rows * nn], query.rows, nn);
     flann::Features<unsigned int> dists(new unsigned int[query.rows * nn], query.rows, nn);
     flann::Index<flann::Hamming<u_char> > index(dataset, flann::HierarchicalClusteringIndexParams());
@@ -234,7 +234,7 @@ int orbDetect()
     cout<<num<<endl;
 
     //保存图像 还需要重载
-    image_out_name = "result_sift3.png";
+    image_out_name = "result_sift2.png";
     std::cout<<"保存图像: "<<std::endl;
     image::saveImage(res,image_out_name);
     return 0;
@@ -322,8 +322,8 @@ int siftDetect()
     flann::Features<float> query=flann::Features<float>(cvdata,cvkeyPoint.size(),2);
 #else
 
-    flann::Features<float> dataset=flann::Features<float >(descriptors.getData().data(),descriptors.rows(),descriptors.cols());
-    flann::Features<float> query=flann::Features<float>(descriptors2.getData().data(),descriptors2.rows(),descriptors2.cols());
+    flann::Features<float> dataset=flann::Features<float >(descriptors.ptr(),descriptors.rows(),descriptors.cols());
+    flann::Features<float> query=flann::Features<float>(descriptors2.ptr(),descriptors2.rows(),descriptors2.cols());
 #endif
 
     flann::Features<int> indices(new int[query.rows * nn], query.rows, nn);
@@ -360,7 +360,7 @@ int siftDetect()
     for(int i=0;i<keyPoint2.size();i++)
     {
         uint8_t color[3]={(uint8_t)(rand()%255),(uint8_t)(rand()%255),(uint8_t)(rand()%255)};
-        if(dists[i][0]<min_dist*0.5) {
+        if(dists[i][0]<min_dist*0.3) {
             sift_vis.drawLine(*res, keyPoint[indices[i][0]].m_pt.x, keyPoint[indices[i][0]].m_pt.y,
                               keyPoint2[i].m_pt.x + image->width(), keyPoint2[i].m_pt.y, color);
             num++;
@@ -502,7 +502,8 @@ detectFeatures(image::ByteImage::ImagePtr image,std::vector<math::matrix::Vector
 }
 int main()
 {
- //   siftDetect();
+    siftDetect();
+    orbDetect();
     image::ByteImage::ImagePtr image=std::make_shared<ByteImage>();
     std::string image_filename = "/home/doing/lena.jpg";
     image = image::loadImage(image_filename);
