@@ -1,3 +1,4 @@
+include_directories(../../MATH/include)
 include_directories(../include)
 include_directories(${MATH_INCLUDE_DIRS})
 link_directories(${MATH_LIBRARY_DIRS})
@@ -17,28 +18,39 @@ if (JPEG_FOUND)
 endif ()
 
 set(HEADERS
-        ../include/IMAGE/define.h
-        ../include/IMAGE/image.hpp
-        ../include/IMAGE/image_io.h
-        ../include/IMAGE/sift.hpp
-        ../include/IMAGE/image_process.hpp
-        ../include/IMAGE/visualizer.hpp
-        ../include/IMAGE/nearest_neighbor.hpp
-        ../include/IMAGE/matching.h
-        ../include/IMAGE/image_pyramid.h
-
+        ${PROJECT_SOURCE_DIR}/include/IMAGE/define.h
+        ${PROJECT_SOURCE_DIR}/include/IMAGE/image.hpp
+        ${PROJECT_SOURCE_DIR}/include/IMAGE/image_io.h
+        ${PROJECT_SOURCE_DIR}/include/exception.h
+        ${PROJECT_SOURCE_DIR}/include/mystring.h
+        ${PROJECT_SOURCE_DIR}/include/IMAGE/image_process.hpp
+        ${PROJECT_SOURCE_DIR}/include/timer.h
+        ${PROJECT_SOURCE_DIR}/include/IMAGE/visualizer.hpp
+        ${PROJECT_SOURCE_DIR}/include/IMAGE/nearest_neighbor.hpp
+        ${PROJECT_SOURCE_DIR}/include/Features2d/features2d.h
+        ${PROJECT_SOURCE_DIR}/include/IMAGE/matching.h
+        ${PROJECT_SOURCE_DIR}/include/IMAGE/image_pyramid.h
         )
 
 set(SOURCE_FILES
+        Features2d/sift.cpp
+        Features2d/ORB.cpp
+        Features2d/feature2d.cpp
         define.cpp
         image_io.cpp
-        sift.cpp
         image_process.cpp
+        Features2d/Fast.cpp
         matching.cpp
         image_pyramid.cpp
-        )
-add_library(image SHARED ${HEADERS} ${SOURCE_FILES}  )
+        image.cpp)
+
+link_directories(/home/doing/gitHub/MATH/lib)
+
+add_library(image SHARED ${HEADERS} ${SOURCE_FILES})
+
 target_link_libraries(image ${PNG_LIBRARIES} ${JPEG_LIBRARIES} )
+target_link_libraries(image math)
+
 install(TARGETS image
         LIBRARY DESTINATION lib/IMAGE
         ARCHIVE DESTINATION lib/IMAGE
@@ -47,4 +59,3 @@ install(TARGETS image
 if (CUDA_FOUND)
     add_subdirectory(cuda_src)
 endif ()
-
