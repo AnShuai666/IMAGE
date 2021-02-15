@@ -4,10 +4,11 @@ project(IMAGE)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "-fPIC")
 set(CMAKE_BUILD_TYPE "Debug")
-
+SET(CMAKE_CXX_FLAGS "-msse3")
+SET(CMAKE_CXX_FLAGS "-mavx2")
 set(IMAGE_VERSION_MAJOR 1)
-set(IMAGE_VERSION_MINOR 0)
-set(IMAGE_VERSION_PATCH 0)
+set(IMAGE_VERSION_MINOR 5)
+set(IMAGE_VERSION_PATCH 1)
 set(IMAGE_VERSION
         ${IMAGE_VERSION_MAJOR}.${IMAGE_VERSION_MINOR}.${IMAGE_VERSION_PATCH})
 
@@ -93,9 +94,11 @@ else()
     message(STATUS "  请安装Boost")
 endif ()
 
+
 ####################################################
 #######################SIMD#########################
 ####################################################
+
 
 if (SIMD_ENABLED)
     message(STATUS "使能SIMD支持")
@@ -120,21 +123,21 @@ endif ()
 ######################MATH##########################
 ####################################################
 
-find_package(MATH REQUIRED)
-if (MATH_FOUND)
-    message(STATUS "  找到MATH，版本为${MATH_VERSION}")
-    message(STATUS "  头文件：${MATH_INCLUDE_DIR}")
-    message(STATUS "  库目录：${MATH_LIBRARY_DIR}")
-    message(STATUS "  库文件：MATH_LIBS ${MATH_LIBS}")
-    message(STATUS "  库文件：MATH_LIBRARY ${MATH_LIBRARY}")
-    message(STATUS "  库文件：MATH_LIBRARIES ${MATH_LIBRARIES}")
-else()
-    message(STATUS "  未找到MATH")
-    message(STATUS "  请安装MATH")
-endif ()
+#find_package(MATH REQUIRED)
+#if (MATH_FOUND)
+#    message(STATUS "  找到MATH，版本为${MATH_VERSION}")
+#    message(STATUS "  头文件：${MATH_INCLUDE_DIR}")
+#    message(STATUS "  库目录：${MATH_LIBRARY_DIR}")
+#    message(STATUS "  库文件：MATH_LIBS ${MATH_LIBS}")
+#    message(STATUS "  库文件：MATH_LIBRARY ${MATH_LIBRARY}")
+#    message(STATUS "  库文件：MATH_LIBRARIES ${MATH_LIBRARIES}")
+#else()
+#    message(STATUS "  未找到MATH")
+#    message(STATUS "  请安装MATH")
+#endif ()
 configure_file(
         "${PROJECT_SOURCE_DIR}/config/IMAGEConfig.h.in"
-        "include/IMAGE/IMAGEConfig.h"
+        "${PROJECT_SOURCE_DIR}/include/IMAGEConfig.h"
 )
 
 configure_file(
@@ -147,11 +150,20 @@ configure_file(
         "${PROJECT_SOURCE_DIR}/config/IMAGEConfigVersion.cmake.in"
         "${PROJECT_SOURCE_DIR}/cmakemodule/IMAGEConfigVersion.cmake" @ONLY
 )
+include_directories(../MATH/include)
+set(MATH_DIR /home/doing/MATH/cmakemodule)
+#find_package(MATH REQUIRED)
+#message(${MATH_FOUND})
+#message(${MATH_INCLUDE_DIR})
+#message(${MATH_LIBRARIES})
 
+install(FILES IMAGEConfig.cmake
+        DESTINATION share/IMAGE)
+install(FILES IMAGEConfigVersion.cmake
+        DESTINATION share/IMAGE)
 
 add_subdirectory(examples)
 add_subdirectory(src)
-add_subdirectory(src_bin)
 add_subdirectory(TestCase)
 
 install(FILES cmakemodule/IMAGEConfig.cmake
@@ -167,10 +179,9 @@ find_library (
         HINTS "/usr/local/lib/MATH/" # where to look
         NO_DEFAULT_PATH # do not search system default paths
 )
-
 # check if we found the library
 message(STATUS "MATHLIB: [${MATHLIB}]")
-
-if (NOT MATHLIB)
-    message(SEND_ERROR "Did not find lib MATH")
-endif()
+#
+#if (NOT MATHLIB)
+#    message(SEND_ERROR "Did not find lib MATH")
+#endif()
