@@ -42,14 +42,14 @@ set(SOURCE_FILES
         Features2d/Fast.cpp
         matching.cpp
         image_pyramid.cpp
-        )
+        image.cpp)
 
 link_directories(/home/doing/gitHub/MATH/lib)
 
 add_library(image SHARED ${HEADERS} ${SOURCE_FILES})
 
 target_link_libraries(image ${PNG_LIBRARIES} ${JPEG_LIBRARIES} )
-target_link_libraries(image matrix)
+target_link_libraries(image math)
 
 install(TARGETS image
         LIBRARY DESTINATION lib/IMAGE

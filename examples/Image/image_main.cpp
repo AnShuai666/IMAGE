@@ -10,15 +10,55 @@ using namespace std;
 
 //HUB TEST
 
+class base{
+public:
+    base(int row,int col)
+    {
+        date=row+col;
+    }
+
+    int  date;
+};
+class son:public base
+{
+public:
+    son():base(0,0)
+    {row=0;
+    col=0;};
+    son(int _row,int _col):base(_row,_col)
+    {
+        row=_row;
+        col=_col;
+    }
+
+    son&operator=(son& src)
+    {
+
+        row=src.row;
+        col=src.col;
+    }
+    int row;
+    int col;
+};
+
+
 
 int main()
 {
-    cout<<"debug"<<endl;
 
+    Image<float> s(10,10);
+    for(int i=0;i<100;i++)
+        s.at(i)=i;
+    Image<float> s2;
+    s2=s;
+    for(int i=0;i<100;i++)
+        cout<<s2.at(i)<<endl;
     Matrix3d mat_33(3);
     TypedImageBase<float> img;
     img.resize(3,3,3);
     img.fill(3);
+    TypedImageBase<float> test;
+    test=TypedImageBase<float>();
     TypedImageBase<float> img1(img),img2;
     img1.allocate(4,4,1);
 

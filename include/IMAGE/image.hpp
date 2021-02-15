@@ -10,6 +10,7 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
+#include <string.h>
 #include "types.hpp"
 #ifndef IMAGE_IMAGE_HPP
 #define IMAGE_IMAGE_HPP
@@ -33,7 +34,28 @@ enum ImageType
     IMAGE_TYPE_FLOAT,
     IMAGE_TYPE_DOUBLE
 };
-
+inline
+ImageType getType(const char* name)
+{
+   if(name==typeid(unsigned char).name())
+       return IMAGE_TYPE_UINT8;
+   else if(name == typeid(char).name())
+       return IMAGE_TYPE_SINT8;
+   else if(name == typeid(unsigned short).name())
+       return IMAGE_TYPE_UINT16;
+   else if(name == typeid(short).name())
+       return IMAGE_TYPE_SINT16;
+   else if(name == typeid(unsigned int).name())
+       return IMAGE_TYPE_UINT32;
+   else if(name == typeid(int).name())
+       return IMAGE_TYPE_SINT32;
+   else if(name == typeid(float).name())
+       return IMAGE_TYPE_FLOAT;
+   else if(name == typeid(double).name())
+       return IMAGE_TYPE_DOUBLE;
+   else
+       return IMAGE_TYPE_UNKNOWN;
+}
 /*******************************************************************
 *~~~~~~~~~~~~~~~~~~~~~图像访问方法枚举声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 *******************************************************************/
@@ -79,19 +101,21 @@ public:
     */
     ImageBase();
     ImageBase(const ImageBase& img);
-
+    ImageBase(int width,int height,int channels,ImageType type);
     /*
     *  @property   默认构造函数
     *  @func        对图像进行析构
     */
     virtual ~ImageBase();
 
-
+    ImageBase&operator=(const ImageBase& src);
 
 
 /********************************************************************
  *~~~~~~~~~~~~~~~~~~~~~~~ImageBase管理函数~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *******************************************************************/
+    int getValueAmount() const;
+    int getPixelAmount() const;
     /*
     *  @property   获取图像宽度
     *  @func       获取图像的宽
@@ -114,278 +138,39 @@ public:
     */
     int channels() const;
 
+    int depth() const;
+    int step() const;
     /*
     *  @property   判断是否为空
     *  @func       判断是否为空
     *  @return     bool
     */
     bool empty() const;
-//
-//    /*
-//    *  @property   获取图像字节数
-//    *  @func       虚函数，具体实现需要在子类中进行
-//    *  @return     std::size_t  在子类中实现时返回图像字节数，否则返回0
-//    */
-//    virtual std::size_t getByteSize() const;
-//
-//    /*
-//    *  @property   获取图像数据指针
-//    *  @func       虚函数，具体实现需要在子类中进行重载
-//    *  @const1     指针指向内容不能变，也就是图像数据
-//    *  @const2     防止改变类成员变量
-//    *  @return     char const *  在子类中实现时返回图像指针，否则返回nullptr
-//    */
-//    virtual char const *getBytePointer() const;
-//
-//    /*
-//    *  @property   获取图像数据指针
-//    *  @func       虚函数，具体实现需要在子类中进行重载
-//    *  @return     char *  在子类中实现时返回图像指针，否则返回nullptr
-//    */
-//    virtual char *getBytePointer();
-//
-//    /*
-//    *  @property   获取图像数据类型
-//    *  @func       虚函数，具体实现需要在子类中进行重载
-//    *  @return    ImageType  在子类中实现时返回图像枚举类型，否则返回IMAGE_TYPE_UNKNOW
-//    */
-//    virtual ImageType getType() const;
-//
-//    /*
-//    *  @property   获取图像数据类型
-//    *  @func       虚函数，具体实现需要在子类中进行重载
-//    *  @return     char const*  在子类中实现时返回图像类型，否则返回IMAGE_TYPE_UNKNOW
-//    */
-//    virtual char const* getTypeString() const;
-//
-//    /*
-//    *  @property   获取图像数据类型
-//    *  @func       虚函数，具体实现需要在子类中进行重载
-//    *  @return     ImageType 在子类中实现时返回图像类型，否则返回IMAGE_TYPE_UNKNOW string是什么就返回什么图像枚举类型
-//    */
-//    virtual ImageType get_type_for_string(std::string const& type_string);
 
+    void resize(int width,int height,int channels);
+/********************************************************************
+ *~~~~~~~~~~~~~~~~~~~~~~~ImageBase访问函数~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *******************************************************************/
 
-protected:
+    template <typename T>
+    T* ptr(int row=0);
+    template <typename T>
+    T* at(int x,int y);
+    template <typename T>
+    T& at(int x,int y,int channel);
+    template <typename T>
+    const T* ptr(int row=0) const;
+    template <typename T>
+    const T* at(int x,int y) const;
+    template <typename T>
+    T at(int x,int y,int channel) const;
+    protected:
     int m_w;
     int m_h;
     int m_c;//指的是图像通道数 正整数
-
+    ImageType m_data_type;
+    char *m_data;
 };
-
-/********************************************************************
-*~~~~~~~~~~~~~~~~~~~~~~~~~Image 类的声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
-*******************************************************************/
-/*
- * @func   有类型图像基类
-*/
-template <typename T>
-class TypedImageBase : public ImageBase
-{
-
- /********************************************************************
- *~~~~~~~~~~~~~~~~~~~~~~TypedImageBase常用容器别名定义~~~~~~~~~~~~~~~~~~
- *******************************************************************/
-public:
-    typedef std::shared_ptr<TypedImageBase<T>> TypedPtr;
-    typedef std::shared_ptr<TypedImageBase<T> const> ConstTypedPtr;
-    typedef std::vector<T> ImageData;
-
-/********************************************************************
-*~~~~~~~~~~~~~~~~~~TypedImageBase构造函数与析构函数~~~~~~~~~~~~~~~~~~~~~
-********************************************************************/
-public:
-    /*
-    *  @property   默认构造函数
-    *  @func       将图像进行初始化，产生一幅空图
-    */
-    TypedImageBase();
-
-    /*
-    *  @property   拷贝构造函数
-    *  @func       将图像用typedImageBase1进行初始化
-    *  @param_in   typed_image_base  已存在的图
-    */
-    TypedImageBase(TypedImageBase<T> const& typed_image_base);
-
-    /*
-    *  @property   析构函数
-    *  @func       将图像进行析构
-    */
-    virtual ~TypedImageBase();
-        /*
-    *  @property   重载运算符=
-    *  @func       图像=赋值
-    *  @param_in   待复制图像
-    *  @return     复制后图像引用
-    */
-    TypedImageBase<T>& operator= (TypedImageBase<T> const& image);
-
-
-    /*
-    *  @property   图像复制
-    *  @func       为图像动态分配内存，并以该内存区域对共享指针进行初始化
-    *  @return     Ptr
-    */
-    virtual TypedPtr duplicate() const;
-
-    /*
-    *  @property   图像清理
-    *  @func       将图像从内存中清除, 即长、宽、通道及图像数据都清零
-    *  @return     void
-    */
-    virtual void release();
-
-    /*
-    *  @property   图像大小重定义
-    *  @func       改变图像的尺寸以及数据大小，原来存在的数据继续保留，
-                   如果图像缩小，则原多余的图像仍然会占据内存
-    *  @param_in   width        新图像宽
-    *  @param_in   height       新图像高
-    *  @param_in   channels     新图像通道数
-    *  @return     void
-    */
-    void resize(int width, int height, int channels);
-
-    /*
-    *  @property   图像大小重定义
-    *  @func       重新分配图像空间，原来存在的数据清空
-    *  @param_in   width        新图像宽
-    *  @param_in   height       新图像高
-    *  @param_in   channels     新图像通道数
-    *  @return     void
-    */
-    void allocate(int width,int height, int channels);
-
-    /*
-    *  @property   图像数据填充
-    *  @func       将图像所有像素填充数据value
-    *  @param_in   value    待填充数据值
-    *  @return     void
-    */
-    void fill(T const& value);
-
-    /*
-    *  @property   两图像交换
-    *  @func       将两幅图像所有值进行交换
-    *  @param_in   typed_image_base    待交换图像
-    *  @return     void
-    */
-    void swap(TypedImageBase<T>& typed_image_base);
-
-    /*
-    *  @property   获取图像数据换
-    *  @func       获取图像数据vector
-    *  @return     ImageData const&
-    */
-    ImageData const& getData() const;
-
-    /*
-    *  @property   获取图像数据换
-    *  @func       获取图像数据vector
-    *  @return     ImageDatat&
-    */
-    ImageData& getData();
-
-    /*
-    *  @property   获取图像数据换指针
-    *  @func       获取图像数据vector的指针，图像为空返回空指针
-    *  @return     T const*
-    */
-    T const* getDataPointer() const;
-
-    /*
-    *  @property   获取图像数据换指针
-    *  @func       获取图像数据vector的指针，图像为空返回空指针
-    *  @return     T*
-    */
-    T* getDataPointer();
-
-    /*
-    *  @property   获取图像总像素大小
-    *  @func       获取图像总像素个数
-    *  @return     int
-    */
-    int getPixelAmount() const;
-
-    /*
-    *  @property   获取图像总数据大小
-    *  @func       获取图像总像数据个数，即数据大小
-    *  @return     int
-    */
-    int getValueAmount() const;
-
-    /*
-    *  @property   获取图像数据总字节大小
-    *  @func       获取图像总数据字节大小，
-    *  @return     std::size_t
-    */
-    std::size_t getByteSize() const;
-
-    /*
-    *  @property   获取图像数据字符指针
-    *  @func       获取字符指针后，访问图像则以8bit长度进行访问
-    *  @const1     指针指向数据不能更改
-    *  @return     char const*
-    */
-    //用reinterpret_cast没有数位丢失
-    char const* getBytePointer() const;
-
-    /*
-    *  @property   获取图像数据字符指针
-    *  @func       获取字符指针后，访问图像则以8bit长度进行访问
-    *  @return     char*
-    */
-    char* getBytePointer();
-
-    /*
-    *  @property   获取图像数据类型字符串
-    *  @func       根据图像类型，获取对应的字符串数据，多个重载函数实现该虚函数
-    *  @return     char const*
-    */
-    virtual char const* getTypeString() const;
-
-    /*
-    *  @property   获取图像数据枚举类型
-    *  @func       根据图像类型，获取对应的枚举类型，多个重载函数实现该虚函数
-    *  @return     ImageType
-    */
-    virtual ImageType getType() const;
-
-    /*
-    *  @property   获取图像起始迭代器
-    *  @func       获取图像数据初始指针，指向图像第一个数据
-    *  @return     T*
-    */
-    T* begin();
-
-    /*
-    *  @property   获取图像起始迭代器
-    *  @func       获取图像数据初始指针，指向图像第一个数据
-    *  @return     T*
-    */
-    T const* begin() const;
-
-    /*
-    *  @property   获取图像末尾迭代器
-    *  @func       获取图像数据末尾指针，指向图像最后一个数据的下一个位置
-    *  @return     T*
-    */
-    T* end();
-
-    /*
-    *  @property   获取图像末尾迭代器
-    *  @func       获取图像数据初始指针，指向图像最后一个数据的下一个位置
-    *  @return     T const*
-    */
-    T const* end() const;
-
-protected:
-    ImageData m_data; //数组遍历速度比容器快20%左右
-
-};
-
-
 
 /********************************************************************
  *~~~~~~~~~~~~~~~~~~~~~常用矩阵类型别名声明~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -404,7 +189,7 @@ typedef Image<int>          IntImage;
   * @func   RGB图，通道分离
  */
 template <typename T>
-class Image : public TypedImageBase<T>
+class Image : public ImageBase
 {
 
 /********************************************************************
@@ -413,7 +198,8 @@ class Image : public TypedImageBase<T>
 public:
    typedef std::shared_ptr<Image<T>> ImagePtr;
    typedef std::shared_ptr<Image<T> const> ConstImagePtr;
-   typedef std::vector<T>  ImageData;
+   typedef T*  ImageData;
+   typedef const T*  constImageData;
    typedef T ValueType;
 
 /********************************************************************
@@ -436,12 +222,13 @@ public:
      */
     Image(int width, int height, int channels=1);
 
+
      /*
      *  @property   拷贝构造函数
      *  @func       将图像进行初始化,
      *  @param_in   image1
      */
-     Image(Image<T> const& image)  ;
+     Image(ImageBase const& image);
 
      virtual ~Image();
 
@@ -550,15 +337,18 @@ public:
     *  @param_in   index    图像数据行索引值
     *  @return     T* 该行第一个数据的指针
     */
-    T* ptr(int row);
-    const T* ptr(int row) const;
+/*******************************************************************
+*~~~~~~~~~~~~~~~~~~~~~~~~~Image访问函数~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*******************************************************************/
+    T* ptr(int row=0);
+    const T* ptr(int row=0) const;
     /*
     *  @property   访问图像数据
     *  @func       线性访问图像数据
     *  @param_in   index    图像数据线性索引值
     *  @return     T const&
     */
-    const T& at(int index) const;
+    T at(int index) const;
     T& at(int index);
     /*
     *  @property   访问图像数据
@@ -567,8 +357,8 @@ public:
     *  @param_in   channel  待访问像素通道索引值
     *  @return     T const&
     */
-    const T& at(int index, int channel) const;
-    T& at(int index, int channel);
+    const T* at(int x, int y) const;
+    T* at(int x, int y);
      /*
      *  @property   访问图像数据
      *  @func       二维索引访问图像数据  更加耗时
@@ -577,7 +367,7 @@ public:
      *  @param_in   channel
      *  @return     T const&
      */
-     const T& at(int x, int y, int channel) const;
+     T at(int x, int y, int channel) const;
      T& at(int x, int y, int channel);
     /*
     *  @property    像素插值
@@ -606,79 +396,7 @@ public:
  *  @return     复制后图像引用
  */
 
- //    Image<T>& operator= (Image<T> const& image);
-
-     //通过 .at() /  .ptr() 访问数据
-
-//    /*
-//    *  @property   重载运算符[]
-//    *  @func       访问图像数据
-//    *  @param_in   index    图像数据线性索引值
-//    *  @return     T const&
-//    */
-//    T const& operator[] (int index) const;
-//
-//    /*
-//    *  @property   重载运算符[]
-//    *  @func       访问图像数据
-//    *  @param_in   index    图像数据线性索引值
-//    *  @return     T&
-//    */
-//     T& operator[] (int index);
-//
-//    /*
-//    *  @property   重载运算符()
-//    *  @func       访问图像数据
-//    *  @param_in   index    图像数据线性索引值
-//    *  @return     T const&
-//    */
-//    T const& operator() (int index) const;
-//
-//    /*
-//    *  @property   重载运算符()
-//    *  @func       访问图像数据
-//    *  @param_in   index    图像像素索引值
-//    *  @param_in   channel  图像像素通道索引值
-//    *  @return     T const&
-//    */
-//    T const& operator() (int index, int channel) const;
-//
-//    /*
-//    *  @property   重载运算符()
-//    *  @func       访问图像数据
-//    *  @param_in   x        图像像素x方向索引值
-//    *  @param_in   y        图像像素y方向索引值
-//    *  @param_in   channel  图像像素通道索引值
-//    *  @return     T const&
-//    */
-//    T const& operator() (int x, int y, int channel) const;
-//
-//    /*
-//    *  @property   重载运算符()
-//    *  @func       访问图像数据
-//    *  @param_in   index    图像数据线性索引值
-//    *  @return     T&
-//    */
-//    T& operator()(int index);
-//
-//    /*
-//    *  @property   重载运算符()
-//    *  @func       访问图像数据
-//    *  @param_in   index    图像像素索引值
-//    *  @param_in   channel  图像像素通道索引值
-//    *  @return     T&
-//    */
-//    T& operator()(int index, int channel);
-//
-//    /*
-//    *  @property   重载运算符()
-//    *  @func       访问图像数据
-//    *  @param_in   x        图像像素x方向索引值
-//    *  @param_in   y        图像像素y方向索引值
-//    *  @param_in   channel  图像像素通道索引值
-//    *  @return     T&
-//    */
-//    T& operator()(int x, int y, int channel);
+     Image<T>& operator= (Image<T> const& image);
 
  };
 
@@ -691,9 +409,20 @@ IMAGE_NAMESPACE_BEGIN
 
     inline
     ImageBase::ImageBase()
-            : m_w(0),m_h(0),m_c(0)
-    {
+            : m_w(0),
+            m_h(0),
+            m_c(0),
+            m_data_type(ImageType::IMAGE_TYPE_UNKNOWN),
+            m_data(NULL){    }
 
+    inline
+    ImageBase::ImageBase(int width ,int height,int channels,ImageType type)
+    {
+        m_w=width;
+        m_h=height;
+        m_c=channels;
+        m_data_type=type;
+        m_data=new char[m_w*m_h*m_c*depth()];
     }
     inline
     ImageBase:: ImageBase(const ImageBase& _img)//添加拷贝函数
@@ -701,14 +430,46 @@ IMAGE_NAMESPACE_BEGIN
         this->m_w=_img.m_w;
         this->m_h=_img.m_h;
         this->m_c=_img.m_c;
+        this->m_data_type=_img.m_data_type;
+        //if(m_data)
+        //    delete[] m_data;
+        size_t size = m_h*m_w*m_c*depth();
+        m_data=new char[size];
+        memcpy(this->m_data,_img.m_data,m_h*m_w*m_c*depth());
     }
     inline
     ImageBase::~ImageBase()
     {
+        if(m_data!=NULL)
+        {
+            delete[] m_data;
+            m_data=NULL;
+        }
+    }
+    inline
+    ImageBase& ImageBase::operator=(const ImageBase& src)
+    {
+        if(&src==this)
+            return *this;
+        this->m_w=src.m_w;
+        this->m_h=src.m_h;
+        this->m_c=src.m_c;
+        this->m_data_type=src.m_data_type;
+        if(m_data)
+            delete[] m_data;
+        size_t size = m_h*m_w*m_c*depth();
+        m_data=new char[size];
+        memcpy(this->m_data,src.m_data,size);
 
+        return *this;
     }
 
-
+    int inline ImageBase::getValueAmount() const{
+        return m_w*m_h*m_c;
+    }
+    int inline ImageBase::getPixelAmount() const {
+        return m_w*m_h;
+    }
     inline int
     ImageBase::width() const
     {
@@ -735,455 +496,122 @@ IMAGE_NAMESPACE_BEGIN
         return this->m_c;
     }
 
+    inline int
+    ImageBase::step() const{
+        return m_c*m_w*depth();
+    }
+
+    inline int
+    ImageBase::depth() const{
+        switch(m_data_type){
+            case IMAGE_TYPE_UNKNOWN:
+                return 0;
+            case IMAGE_TYPE_SINT8:
+            case IMAGE_TYPE_UINT8:
+                return 1;
+            case IMAGE_TYPE_SINT16:
+            case IMAGE_TYPE_UINT16:
+                return 2;
+            case IMAGE_TYPE_SINT32:
+            case IMAGE_TYPE_UINT32:
+            case IMAGE_TYPE_FLOAT:
+                return 4;
+            case IMAGE_TYPE_DOUBLE:
+                return 8;
+        }
+    }
+
     inline bool
     ImageBase::empty() const
     {
         return (m_w*m_h*m_c==0);
     }
-
-//
-//    inline std::size_t
-//    ImageBase::getByteSize() const
-//    {
-//        throw("Error::StsNotImplemented");
-//        return 0;
-//    }
-//
-//    inline char const*
-//    ImageBase::getBytePointer() const
-//    {
-//        throw("Error::StsNotImplemented");
-//        return nullptr;
-//    }
-//
-//    inline char *
-//    ImageBase::getBytePointer()
-//    {
-//        throw("Error::StsNotImplemented");
-//        return nullptr;
-//    }
-//
-//    inline ImageType
-//    ImageBase::getType() const
-//    {
-//        return IMAGE_TYPE_UNKNOWN;
-//    }
-//
-//    inline char const*
-//    ImageBase::getTypeString() const
-//    {
-//        return "unknown";
-//    }
-//
-//
-//    inline ImageType
-//    ImageBase::get_type_for_string(std::string const &type_string)
-//    {
-//        if (type_string == "sint8")
-//            return IMAGE_TYPE_SINT8;
-//        else if (type_string == "sint16")
-//            return IMAGE_TYPE_SINT16;
-//        else if (type_string == "sint32")
-//            return IMAGE_TYPE_SINT32;
-//        else if (type_string == "sint64")
-//            return IMAGE_TYPE_SINT64;
-//        else if (type_string == "uint8")
-//            return IMAGE_TYPE_UINT8;
-//        else if (type_string == "uint16")
-//            return IMAGE_TYPE_UINT16;
-//        else if (type_string == "uint32")
-//            return IMAGE_TYPE_UINT32;
-//        else if (type_string == "uint64")
-//            return IMAGE_TYPE_UINT64;
-//        else if (type_string == "float")
-//            return IMAGE_TYPE_FLOAT;
-//        else if (type_string == "double")
-//            return IMAGE_TYPE_DOUBLE;
-//        else
-//            return IMAGE_TYPE_UNKNOWN;
-//    }
-//
-
-/********************************************************************
-*~~~~~~~~~~~~~~~~~~~~~TypedImageBase成员函数实现~~~~~~~~~~~~~~~~~~~~~~~
-********************************************************************/
-
-    template <typename T>
-    inline
-    TypedImageBase<T>::TypedImageBase()
-    {
-
-    }
-
-    template <typename T>
-    inline
-    TypedImageBase<T>::TypedImageBase(TypedImageBase<T> const& typed_image_base)
-        : ImageBase(typed_image_base),m_data(typed_image_base.m_data)
-    {
-
-    }
-
-    template <typename T>
-    inline
-    TypedImageBase<T>::~TypedImageBase()
-    {
-
-    }
-
-    template <typename T>
-    TypedImageBase<T>& TypedImageBase<T>::operator = (TypedImageBase<T> const& image){
-        if(this==&image)
-            return *this;
-        this->m_w=image.m_w;
-        this->m_h=image.m_h;
-        this->m_c=image.m_c;
-        this->m_data.resize(image.m_data.size());
-        this->m_data.assign(image.m_data.begin(),image.m_data.end());
-        return *this;
-    };
-
-    template <typename T>
-    inline typename TypedImageBase<T>::TypedPtr
-    TypedImageBase<T>::duplicate() const
-    {
-        return TypedPtr(new TypedImageBase<T>(*this));
-    }
-
-    template <typename T>
     inline void
-    TypedImageBase<T>::release()
-    {
-        this->m_w = 0;
-        this->m_h = 0;
-        this->m_c = 0;
-        this->m_data.clear();
+    ImageBase::resize(int width, int height, int channels) {
+        if(width==m_w&&height==m_h&&channels==m_c)
+            return;
+        m_w=width;
+        m_h=height;
+        m_c=channels;
+        delete[] m_data;
+        m_data=new char[m_w*m_h*m_c*depth()];
     }
 
-    template <typename T>
-    inline void
-    TypedImageBase<T>::resize(int width, int height, int channels)
-    {
-        this->m_w = width;
-        this->m_h = height;
-        this->m_c = channels;
-        m_data.resize(width*height*channels);
-    }
-
-    template <typename T>
-    inline void
-    TypedImageBase<T>::allocate(int width, int height, int channels)
-    {
-        this->release();
-        this->resize(width,height,channels);
-    }
-
-    template <typename T>
-    inline void
-    TypedImageBase<T>::fill(const T &value)
-    {
-        std::fill(this->m_data.begin(),this->m_data.end(),value);
-    }
-
-    template <typename T>
-    inline void
-    TypedImageBase<T>::swap(image::TypedImageBase<T> &typed_image_base)
-    {
-        std::swap(this->m_w,typed_image_base.m_w);
-        std::swap(this->m_h,typed_image_base.m_h);
-        std::swap(this->m_c,typed_image_base.m_c);
-        std::swap(this->m_data,typed_image_base.m_data);
-    }
-
-    template <typename T>
-    inline typename TypedImageBase<T>::ImageData const&
-    TypedImageBase<T>::getData() const
-    {
-        return this->m_data;
-    }
-
-    template <typename T>
-    inline typename TypedImageBase<T>::ImageData&
-    TypedImageBase<T>::getData()
-    {
-        return this->m_data;
-    }
-
-    template <typename T>
-    inline T const*
-    TypedImageBase<T>::getDataPointer() const
-    {
-        if (this->m_data.empty())
-        {
-            return nullptr;
-        }
-        return (T const*)m_data.data();
-    }
-
-    template <typename T>
-    inline T *
-    TypedImageBase<T>::getDataPointer()
-    {
-        if (this->m_data.empty())
-        {
-            return nullptr;
-        }
-        return (T*)m_data.data();
-    }
-
-    template <typename T>
-    inline int
-    TypedImageBase<T>::getPixelAmount() const
-    {
-        return this->m_w * this->m_h;
-    }
-
-    template <typename T>
-    inline int
-    TypedImageBase<T>::getValueAmount() const
-    {
-        return this->m_w * this->m_h * this->m_c;
-    }
-
-    template <typename T>
-    inline size_t
-    TypedImageBase<T>::getByteSize() const
-    {
-        return this->m_w * this->m_h * this->m_c * sizeof(T);
-    }
-
-    template <typename T>
-    inline char const*
-    TypedImageBase<T>::getBytePointer() const
-    {
-        return reinterpret_cast<char const*>(this->getDataPointer());
-    }
-
-    template <typename T>
-    inline char *
-    TypedImageBase<T>::getBytePointer()
-    {
-        return reinterpret_cast<char *>(this->getDataPointer());
-    }
-
-    template <typename T>
-    inline char const*
-    TypedImageBase<T>::getTypeString() const
-    {
-        return "unknown";
-    }
-
-    template <>
-    inline char const*
-    TypedImageBase<int8_t>::getTypeString() const
-    {
-        return "sint8";
-    }
-
-    template <>
-    inline char const*
-    TypedImageBase<char>::getTypeString() const
-    {
-        return "sint8";
-    }
-
-    template <>
-    inline char const*
-    TypedImageBase<int16_t>::getTypeString() const
-    {
-        return "sint16";
-    }
-
-    template <>
-    inline char const*
-    TypedImageBase<int32_t>::getTypeString() const
-    {
-        return "sint32";
-    }
-
-    template <>
-    inline char const*
-    TypedImageBase<int64_t>::getTypeString() const
-    {
-        return "sint64";
-    }
-
-    template <>
-    inline char const*
-    TypedImageBase<uint8_t>::getTypeString() const
-    {
-        return "uint8";
-    }
-
-    template <>
-    inline char const*
-    TypedImageBase<uint16_t>::getTypeString() const
-    {
-        return "uint16";
-    }
-
-    template <>
-    inline char const*
-    TypedImageBase<uint32_t>::getTypeString() const
-    {
-        return "uint32";
-    }
-
-    template <>
-    inline char const*
-    TypedImageBase<uint64_t>::getTypeString() const
-    {
-        return "uint64";
-    }
-
-    template <>
-    inline char const*
-    TypedImageBase<float>::getTypeString() const
-    {
-        return "float";
-    }
-
-    template <>
-    inline char const*
-    TypedImageBase<double>::getTypeString() const
-    {
-        return "double";
-    }
-
-    template <typename T>
-    inline ImageType
-    TypedImageBase<T>::getType() const
-    {
-        return IMAGE_TYPE_UNKNOWN;
-    }
-
-    template <>
-    inline ImageType
-    TypedImageBase<int8_t>::getType() const
-    {
-        return IMAGE_TYPE_SINT8;
-    }
-
-    template <>
-    inline ImageType
-    TypedImageBase<int16_t>::getType() const
-    {
-        return IMAGE_TYPE_SINT16;
-    }
-
-    template <>
-    inline ImageType
-    TypedImageBase<int32_t>::getType() const
-    {
-        return IMAGE_TYPE_SINT32;
-    }
-
-    template <>
-    inline ImageType
-    TypedImageBase<int64_t>::getType() const
-    {
-        return IMAGE_TYPE_SINT64;
-    }
-
-    template <>
-    inline ImageType
-    TypedImageBase<uint8_t>::getType() const
-    {
-        return IMAGE_TYPE_UINT8;
-    }
-
-    template <>
-    inline ImageType
-    TypedImageBase<uint16_t>::getType() const
-    {
-        return IMAGE_TYPE_UINT16;
-    }
-
-    template <>
-    inline ImageType
-    TypedImageBase<uint32_t>::getType() const
-    {
-        return IMAGE_TYPE_UINT32;
-    }
-
-    template <>
-    inline ImageType
-    TypedImageBase<uint64_t>::getType() const
-    {
-        return IMAGE_TYPE_UINT64;
-    }
-
-    template <>
-    inline ImageType
-    TypedImageBase<float>::getType() const
-    {
-        return IMAGE_TYPE_FLOAT;
-    }
-
-    template <>
-    inline ImageType
-    TypedImageBase<double>::getType() const
-    {
-        return IMAGE_TYPE_DOUBLE;
-    }
 
 
     template <typename T>
-    inline T *
-    TypedImageBase<T>::begin()
-    {
-        return this->m_data.empty() ? nullptr : &this->m_data[0];
+    T* ImageBase::ptr(int row) {
+        if(row>=m_h||row<0)
+            throw("row index out of range\n");
+        T* data_ptr=(T*)m_data;
+        data_ptr+=row*m_w*m_c;
+        return data_ptr;
     }
-
     template <typename T>
-    inline T const*
-    TypedImageBase<T>::begin() const
-    {
-        return this->m_data.empty() ? nullptr : &this->m_data[0];
+    T* ImageBase::at(int x,int y){
+        if(y>=m_h||y<0||x>=m_w||x<0)
+            throw("index out of range\n");
+        T* data_ptr=(T*)m_data;
+        data_ptr+=y*m_w*m_c+x*m_c;
+        return data_ptr;
     }
-
     template <typename T>
-    inline T *
-    TypedImageBase<T>::end()
-    {
-        return this->m_data.empty() ? nullptr : &this->m_data[0] + this->m_data.size();
+    T& ImageBase::at(int x,int y,int channel){
+        if(y>=m_h||y<0||x>=m_w||x<0)
+            throw("index out of range\n");
+        T* data_ptr=(T*)m_data;
+        data_ptr+=y*m_w*m_c+x*m_c+channel;
+        return *data_ptr;
     }
-
     template <typename T>
-    inline T const*
-    TypedImageBase<T>::end() const
-    {
-        return this->m_data.empty() ? nullptr : &this->m_data[0] + this->m_data.size();
+    const T* ImageBase::ptr(int row) const{
+        if(row>=m_h||row<0)
+            throw("row index out of range\n");
+        T* data_ptr=(T*)m_data;
+        data_ptr+=row*m_w*m_c;
+        return data_ptr;
     }
-
+    template <typename T>
+    const T* ImageBase::at(int x,int y) const{
+        if(y>=m_h||y<0||y>=m_w||y<0)
+            throw("index out of range\n");
+        T* data_ptr=(T*)m_data;
+        data_ptr+=y*m_w*m_c+x*m_c;
+        return data_ptr;
+    }
+    template <typename T>
+    T ImageBase::at(int x,int y,int channel) const{
+        if(y>=m_h||y<0||x>=m_w||x<0)
+            throw("index out of range\n");
+        T* data_ptr=(T*)m_data;
+        data_ptr+=y*m_w*m_c+x*m_c+channel;
+        return *data_ptr;
+    }
 
 /********************************************************************
 *~~~~~~~~~~~~~~~~~~~~~Image成员函数实现~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ********************************************************************/
     template <typename T>
     inline
-    Image<T>::Image()
+    Image<T>::Image():ImageBase()
     {
-
+        m_data_type = getType(typeid(T).name());
     }
 
     template <typename T>
     inline
     Image<T>::Image(int width, int height, int channels)
+    :ImageBase(width,height,channels,getType(typeid(T).name()))
     {
-        this->allocate(width,height,channels);
     }
-
     template <typename T>
     inline
-    Image<T>::Image(Image<T> const& image1)
-        : TypedImageBase<T>(image1)
-    {
-
-    }
+    Image<T>::Image(ImageBase const& image1)
+        : ImageBase(image1){
+        }
 
     template <typename T>
     Image<T>::~Image() {
-
     }
 
     template <typename T>
@@ -1263,260 +691,214 @@ IMAGE_NAMESPACE_BEGIN
         delete[] color_arr;
         return ;
     }
-    template <typename T>
-    void
-    Image<T>::addChannels(int num_channels, const T &value)
-    {
-        if(num_channels<=0)
-        {
-            printf("ArgumentOutOfRangeException\n");
-            //TODO::抛出异常
-            return;
-        }
-
-        ImageData tmp(this->m_w * this->m_h * (this->m_c + num_channels));
-        typename ImageData::iterator iter_tmp = tmp.end();
-        typename ImageData::iterator iter_this = this->m_data.end();
-        //TODO::TO CUDA @YANG
-        for (int i = 0; i < this->getPixelAmount(); ++i)
-        {
-            for (int j = 0; j < num_channels; ++j)
-            {
-                *(--iter_tmp) = value;
-            }
-
-            for (int k = 0; k < this->m_c; ++k)
-            {
-                *(--iter_tmp) = *(--iter_this);
-            }
-        }
-
-        this->m_c += num_channels;
-
-        std::swap(this->m_data,tmp);
-    }
-    template <typename T>
-    void
-    Image<T>::addChannels(const std::vector<T> value,int front_back)
-    {
-        if(value.empty())
-            return;
-        int num_channels=value.size();
-        ImageData tmp(this->m_w * this->m_h * (this->m_c + num_channels));
-        typename ImageData::iterator iter_tmp = tmp.end();
-        typename ImageData::iterator iter_this = this->m_data.end();
-        //TODO::TO CUDA @YANG
-        if(front_back){
-            for (int i = 0; i < this->getPixelAmount(); ++i)
-            {
-                for (int j = num_channels-1; j >=0; j--)
-                {
-                    *(--iter_tmp) = value[j];
-                }
-
-                for (int k = 0; k < this->m_c; ++k)
-                {
-                    *(--iter_tmp) = *(--iter_this);
-                }
-            }
-        }
-        else{
-            for (int i = 0; i < this->getPixelAmount(); ++i)
-            {
-                for (int k = 0; k < this->m_c; ++k)
-                {
-                    *(--iter_tmp) = *(--iter_this);
-                }
-                for (int j = num_channels-1; j >=0; j--)
-                {
-                    *(--iter_tmp) = value[j];
-                }
-            }
-        }
-        std::swap(this->m_data,tmp);
-        this->m_c +=num_channels;
-    }
-    template <typename T>
-    void
-    Image<T>::swapChannels(int channel1, int channel2, SWAP_METHOD swap_method)
-    {
-        if (!this->valid() || channel1 == channel2)
-        {
-            return;
-        }
-        if(channel1<0||channel1>=this->m_c||channel2<0||channel2>=this->m_c)
-        {
-            printf("ArgumentOutOfRangeException\n");
-            //TODO::抛出异常
-            return;
-        }
-        if (swap_method != AT && swap_method != ITERATOR)
-        {
-            std::cout<<"交换方式错误!\n"<<std::endl;
-            return;
-        }
-
-        //TODO::TO CUDA @YANG
-        if (swap_method == AT)
-        {
-            for (int i = 0; i < this->getPixelAmount(); ++i)
-            {
-                std::swap(this->at(i,channel1),this->at(i,channel2));
-            }
-        } else
-        {
-            T* iter1 = &this->at(0,channel1);
-            T* iter2 = &this->at(0,channel2);
-            for (int i = 0; i < this->getPixelAmount(); iter1 += this->m_c, iter2 += this->m_c)
-            {
-                std::swap(*iter1,*iter2);
-            }
-        }
-    }
-
-    template <typename T>
-    void
-    Image<T>::copyChannel(int src, int dest)
-    {
-        if(src>=this->m_c||dest>=this->m_c)
-        {
-            printf("ArgumentOutOfRangeException\n");
-            //TODO::抛出异常
-        }
-        if(!this->valid() || src == dest)
-        {
-            return;
-        }
-
-        if (dest < 0)
-        {
-            this->addChannels(1);
-            dest = this->m_c;
-        }
-
-        T const* src_iter = &this->at(0,src);
-        T* dest_iter = &this->at(0,dest);
-        //TODO::TO CUDA @YANG
-        for (int i = 0; i < this->getPixelAmount(); src_iter += this->m_c, dest_iter += this->m_c,i++)
-        {
-            *dest_iter = *src_iter;
-        }
-    }
-
-    template <typename T>
-    void
-    Image<T>::deleteChannel(int channel)
-    {
-        if (channel < 0 || channel >= this->channels())
-        {
-            return;
-        }
-
-        T* src_iter = this->begin();
-        T* dest_iter = this->begin();
-        //TODO::TO CUDA @YANG
-        for (int i = 0; i < this->m_data.size(); ++i)
-        {
-            if(i % this->m_c == channel)
-            {
-                src_iter++;
-            } else
-            {
-                *(dest_iter++) = *(src_iter++);
-            }
-        }
-        this->resize(this->m_w, this->m_h, this->m_c - 1);
-    }
+//    template <typename T>
+//    void
+//    Image<T>::addChannels(int num_channels, const T &value)
+//    {
+//        if(num_channels<=0)
+//        {
+//            printf("ArgumentOutOfRangeException\n");
+//            //TODO::抛出异常
+//            return;
+//        }
+//
+//        ImageData tmp(this->m_w * this->m_h * (this->m_c + num_channels));
+//        typename ImageData::iterator iter_tmp = tmp.end();
+//        typename ImageData::iterator iter_this = this->m_data.end();
+//        //TODO::TO CUDA @YANG
+//        for (int i = 0; i < this->getPixelAmount(); ++i)
+//        {
+//            for (int j = 0; j < num_channels; ++j)
+//            {
+//                *(--iter_tmp) = value;
+//            }
+//
+//            for (int k = 0; k < this->m_c; ++k)
+//            {
+//                *(--iter_tmp) = *(--iter_this);
+//            }
+//        }
+//
+//        this->m_c += num_channels;
+//
+//        std::swap(this->m_data,tmp);
+//    }
+//    template <typename T>
+//    void
+//    Image<T>::addChannels(const std::vector<T> value,int front_back)
+//    {
+//        if(value.empty())
+//            return;
+//        int num_channels=value.size();
+//        ImageData tmp(this->m_w * this->m_h * (this->m_c + num_channels));
+//        typename ImageData::iterator iter_tmp = tmp.end();
+//        typename ImageData::iterator iter_this = this->m_data.end();
+//        //TODO::TO CUDA @YANG
+//        if(front_back){
+//            for (int i = 0; i < this->getPixelAmount(); ++i)
+//            {
+//                for (int j = num_channels-1; j >=0; j--)
+//                {
+//                    *(--iter_tmp) = value[j];
+//                }
+//
+//                for (int k = 0; k < this->m_c; ++k)
+//                {
+//                    *(--iter_tmp) = *(--iter_this);
+//                }
+//            }
+//        }
+//        else{
+//            for (int i = 0; i < this->getPixelAmount(); ++i)
+//            {
+//                for (int k = 0; k < this->m_c; ++k)
+//                {
+//                    *(--iter_tmp) = *(--iter_this);
+//                }
+//                for (int j = num_channels-1; j >=0; j--)
+//                {
+//                    *(--iter_tmp) = value[j];
+//                }
+//            }
+//        }
+//        std::swap(this->m_data,tmp);
+//        this->m_c +=num_channels;
+//    }
+//    template <typename T>
+//    void
+//    Image<T>::swapChannels(int channel1, int channel2, SWAP_METHOD swap_method)
+//    {
+//        if (this->empty() || channel1 == channel2)
+//        {
+//            return;
+//        }
+//        if(channel1<0||channel1>=this->m_c||channel2<0||channel2>=this->m_c)
+//        {
+//            printf("ArgumentOutOfRangeException\n");
+//            //TODO::抛出异常
+//            return;
+//        }
+//        if (swap_method != AT && swap_method != ITERATOR)
+//        {
+//            std::cout<<"交换方式错误!\n"<<std::endl;
+//            return;
+//        }
+//
+//        //TODO::TO CUDA @YANG
+//        if (swap_method == AT)
+//        {
+//            for (int i = 0; i < this->getPixelAmount(); ++i)
+//            {
+//                std::swap(this->at(i,channel1),this->at(i,channel2));
+//            }
+//        } else
+//        {
+//            T* iter1 = &this->at(0,channel1);
+//            T* iter2 = &this->at(0,channel2);
+//            for (int i = 0; i < this->getPixelAmount(); iter1 += this->m_c, iter2 += this->m_c)
+//            {
+//                std::swap(*iter1,*iter2);
+//            }
+//        }
+//    }
+//    template <typename T>
+//    void
+//    Image<T>::copyChannel(int src, int dest)
+//    {
+//        if(src>=this->m_c||dest>=this->m_c)
+//        {
+//            printf("ArgumentOutOfRangeException\n");
+//            //TODO::抛出异常
+//        }
+//        if(this->empty() || src == dest)
+//        {
+//            return;
+//        }
+//
+//        if (dest < 0)
+//        {
+//            this->addChannels(1);
+//            dest = this->m_c;
+//        }
+//
+//        T const* src_iter = &this->at(0,src);
+//        T* dest_iter = &this->at(0,dest);
+//        //TODO::TO CUDA @YANG
+//        for (int i = 0; i < this->getPixelAmount(); src_iter += this->m_c, dest_iter += this->m_c,i++)
+//        {
+//            *dest_iter = *src_iter;
+//        }
+//    }
+//    template <typename T>
+//    void
+//    Image<T>::deleteChannel(int channel)
+//    {
+//        if (channel < 0 || channel >= this->channels())
+//        {
+//            return;
+//        }
+//
+//        T* src_iter = this->begin();
+//        T* dest_iter = this->begin();
+//        //TODO::TO CUDA @YANG
+//        for (int i = 0; i < this->m_data.size(); ++i)
+//        {
+//            if(i % this->m_c == channel)
+//            {
+//                src_iter++;
+//            } else
+//            {
+//                *(dest_iter++) = *(src_iter++);
+//            }
+//        }
+//        this->resize(this->m_w, this->m_h, this->m_c - 1);
+//    }
     template <typename T>
     T* Image<T>::ptr(int row){
-        if(row>=this->m_h) {
-            throw("row_index out image range\n");
-        }
-        T* data_ptr = this->m_data.data();
-        data_ptr+=row*this->m_w*this->m_c;
+        T* data_ptr=ImageBase::ptr<T>(row);
         return data_ptr;
     };
     template <typename T>
     const T* Image<T>::ptr(int row) const{
-        if(row>=this->m_h) {
-            throw("row_index out image range\n");
-        }
-        const T* data_ptr = this->m_data.data();
-        data_ptr+=row*this->m_w*this->m_c;
+        const T* data_ptr=ImageBase::ptr<T>(row);
         return data_ptr;
     };
 
     template <typename T>
-    inline const T&
+    inline T
     Image<T>::at(int index) const
     {
-        if(index<0||index>=this->m_data.size())
-        {
-            printf("ArgumentOutOfRangeException\n");
-            //TODO:此处抛出异常
-        }
-        return this->m_data[index];
+        return *(((T*)m_data)+index);
     }
     template <typename T>
     inline T&
     Image<T>::at(int index)
     {
-        if(index<0||index>=this->m_data.size())
-        {
-            printf("ArgumentOutOfRangeException\n");
-            //TODO:此处抛出异常
-        }
-        return this->m_data[index];
+        return *(((T*)m_data)+index);
     }
     template <typename T>
-    inline const T&
-    Image<T>::at(int index,  int channel) const
+    inline const T*
+    Image<T>::at(int x,  int y) const
     {
-        if(index<0||channel<0||index>this->m_w*this->m_h||channel>this->m_c)
-        {
-            printf("ArgumentOutOfRangeException\n");
-            //TODO:此处抛出异常
-        }
-        int offset = index * this->m_c + channel;
-        return this->m_data[offset];
+        return ImageBase::at<T>(x,y);
     }
     template <typename T>
-    inline T&
-    Image<T>::at(int index,  int channel)
+    inline T*
+    Image<T>::at(int x,  int y)
     {
-        if(index<0||channel<0||index>this->m_w*this->m_h||channel>this->m_c)
-        {
-            printf("ArgumentOutOfRangeException\n");
-            //TODO:此处抛出异常
-        }
-        int offset = index * this->m_c + channel;
-        return this->m_data[offset];
+        return ImageBase::at<T>(x,y);
     }
     template <typename T>
-    inline const T&
-    Image<T>::at(int x, int y, int channel) const
+    inline T
+    Image<T>::at(int x,  int y, int channel) const
     {
-        if(x<0||y<0||channel<0
-        ||x>=this->m_w||y>=this->m_h||channel>=this->m_c)
-        {
-            printf("ArgumentOutOfRangeException\n");
-            //TODO:此处抛出异常
-        }
-        int offset = y * this->m_w * this->m_c + x * this->m_c + channel;
-        return this->m_data[offset];
+        return ImageBase::at<T>(x,y,channel);
     }
     template <typename T>
     inline T&
-    Image<T>::at(int x, int y, int channel)
+    Image<T>::at(int x,  int y, int channel)
     {
-        if(x<0||y<0||channel<0
-           ||x>=this->m_w||y>=this->m_h||channel>=this->m_c)
-        {
-            printf("ArgumentOutOfRangeException\n");
-            //TODO:此处抛出异常
-        }
-        int offset = y * this->m_w * this->m_c + x * this->m_c + channel;
-        return this->m_data[offset];
+        return ImageBase::at<T>(x,y,channel);
     }
     template <typename T>
     T
@@ -1567,17 +949,13 @@ IMAGE_NAMESPACE_BEGIN
             px[i] = this->linearAt(x,y,1 + i);
         }
     }
-//    template <typename T>
-//    Image<T>& Image<T>::operator = (Image<T> const& image){
-//        if(this==&image)
-//            return *this;
-//        this->m_w=image.m_w;
-//        this->m_h=image.m_h;
-//        this->m_c=image.m_c;
-//        this->m_data.resize(image.m_data.size());
-//        this->m_data.assign(image.m_data.begin(),image.m_data.end());
-//        return *this;
-//    };
+    template <typename T>
+    Image<T>& Image<T>::operator = (Image<T> const& image){
+        if(this==&image)
+            return *this;
+        ImageBase::operator=(image);
+        return *this;
+    };
 //    template <typename T>
 //    inline T const&
 //    Image<T>::operator[](int index) const

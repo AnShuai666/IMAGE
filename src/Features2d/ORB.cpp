@@ -165,25 +165,56 @@ static void getAngles(const vector<UCMat>& image_pyramid,std::vector<KeyPoint>& 
 {
     size_t ptidx, ptsize = pts.size();
 
+
     for( ptidx = 0; ptidx < ptsize; ptidx++ )
     {
+        int m_01 = 0, m_10 = 0;
         int x0 = round(pts[ptidx].m_pt.x);
         int y0 = round(pts[ptidx].m_pt.y);
         const UCMat& img=image_pyramid[pts[ptidx].m_octave];
-        int m_01 = 0, m_10 = 0;
-
-        for (int y = -half_k; y <= half_k; ++y)
+        const unsigned char* center=img.ptr(y0)+x0;
+        // Treat the center line differently, v=0
+        for (int u = -half_k; u <= half_k; ++u)
+            m_10 += u * center[u];
+        // Go line by line in the circular patch
+        for (int v = 1; v <= half_k; ++v)
         {
-            const unsigned char* ptr=img.ptr(y+y0);
-            for (int x = -half_k; x <= half_k; ++x)
+            // 同时计算中心对称的上下两行
+            int v_sum = 0;
+            const unsigned char* top=img.ptr(y0-v)+x0;
+            const unsigned char* down=img.ptr(y0+v)+x0;
+            for (int u = -half_k; u <= half_k; ++u)
             {
-               m_01+=y*ptr[x0+x];
-               m_10+=x*ptr[x0+x];
+                int val_plus = down[u], val_minus = top[u];
+                v_sum += (val_plus - val_minus);
+                m_10 += u * (val_plus + val_minus);
             }
+            m_01 += v * v_sum;
         }
 
         pts[ptidx].m_angle = atan((float)m_01, (float)m_10);
+
     }
+
+//    for( ptidx = 0; ptidx < ptsize; ptidx++ )
+//    {
+//        int x0 = round(pts[ptidx].m_pt.x);
+//        int y0 = round(pts[ptidx].m_pt.y);
+//        const UCMat& img=image_pyramid[pts[ptidx].m_octave];
+//        int m_01 = 0, m_10 = 0;
+//
+//        for (int y = -half_k; y <= half_k; ++y)
+//        {
+//            const unsigned char* ptr=img.ptr(y+y0);
+//            for (int x = -half_k; x <= half_k; ++x)
+//            {
+//               m_01+=y*ptr[x0+x];
+//               m_10+=x*ptr[x0+x];
+//            }
+//        }
+//
+//        pts[ptidx].m_angle = atan((float)m_01, (float)m_10);
+//    }
 }
 
 
@@ -513,13 +544,13 @@ class ORBImpl : public ORB
 private:
 
     void computeOrbDescriptors( const vector<UCMat>& image_pyramid, std::vector<KeyPoint>& keypoints,
-                               Mat& descriptors, const std::vector<Point>& _pattern, int dsize );
+                               UCMat& descriptors, const std::vector<Point>& _pattern, int dsize );
     void computeKeyPoints(vector<UCMat>& image_pyramid,std::vector<KeyPoint>& all_keypoints,UCInputArray& mask);
     void buildPyramid( const UCMat& base, std::vector<UCMat>& pyr, int nlayers ) const;
     // Compute the ORBImpl features and descriptors on an image
     void detectOrCompute( UCInputArray& image, UCInputArray& mask,
                           std::vector<KeyPoint>& keypoints,
-                          OutputArray& descriptors,
+                          UCOutputArray& descriptors,
                           bool use_provided_keypoints=false )override;
 
 };
@@ -542,7 +573,7 @@ int ORBImpl::defaultNorm() const
 
 void ORBImpl::
 computeOrbDescriptors( const vector<UCMat>& image_pyramid, std::vector<KeyPoint>& keypoints,
-                       Mat& descriptors, const std::vector<Point>& pattern_vec, int dsize )
+                       UCMat& descriptors, const std::vector<Point>& pattern_vec, int dsize )
 {
     int j, i, keypoints_num = (int)keypoints.size();
     const float PI=3.141592653;
@@ -558,7 +589,7 @@ computeOrbDescriptors( const vector<UCMat>& image_pyramid, std::vector<KeyPoint>
         float x, y;
         int ix, iy;
         const Point* pattern = &pattern_vec[0];
-        float* desc = descriptors.ptr(j);
+        u_char* desc = descriptors.ptr(j);
         int step=image_pyramid[kpt.m_octave].cols();
 #define GET_VALUE(idx) \
        (x = pattern[idx].x*a - pattern[idx].y*b, \
@@ -589,7 +620,7 @@ computeOrbDescriptors( const vector<UCMat>& image_pyramid, std::vector<KeyPoint>
                 val |= (t0 < t1) << 6;
                 t0 = GET_VALUE(14); t1 = GET_VALUE(15);
                 val |= (t0 < t1) << 7;
-                desc[i] = (float)val;
+                desc[i] = (u_char)val;
             }
         }
 #undef GET_VALUE
@@ -720,7 +751,7 @@ void ORBImpl::buildPyramid(const UCMat &base, vector<UCMat> &pyr, int nLevels) c
  */
 void ORBImpl::detectOrCompute( UCInputArray& image, UCInputArray& mask,
                                  std::vector<KeyPoint>& keypoints,
-                                 OutputArray& descriptors, bool use_provided_keypoints )
+                                 UCOutputArray& descriptors, bool use_provided_keypoints )
 {
     bool do_descriptors = !descriptors.empty();
 
@@ -791,7 +822,6 @@ void ORBImpl::detectOrCompute( UCInputArray& image, UCInputArray& mask,
         keypoints_num = (int)keypoints.size();
         if( keypoints_num == 0 )
         {
-            descriptors.release();
             return;
         }
 
